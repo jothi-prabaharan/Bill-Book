@@ -5,6 +5,13 @@ using Reporting.Repository;
 
 namespace Reporting.Repository.Repositories;
 
+/// <summary>
+/// The Journal Report as the catalog serves it, for export, saved views and
+/// scheduled emails: one row for each line of each manual journal in the period,
+/// drafts and reversed ones included. The page (TK-217) reads the ledger, so it also
+/// lists the postings documents made; this reads the journal documents. <b>The
+/// period is required</b> (D-67): both dates, and an end no earlier than the start.
+/// </summary>
 public sealed class JournalReportSourceRepository : ReportSource<JournalReportRow>
 {
     private readonly BatchedNameResolverRepository _resolver;
@@ -24,8 +31,8 @@ public sealed class JournalReportSourceRepository : ReportSource<JournalReportRo
 
     public override IReadOnlyList<ReportParameterRepository> Parameters =>
     [
-        new() { Name = "from", Label = "From", DataType = ColumnDataType.Date },
-        new() { Name = "to", Label = "To", DataType = ColumnDataType.Date },
+        new() { Name = "from", Label = "From", DataType = ColumnDataType.Date, IsRequired = true },
+        new() { Name = "to", Label = "To", DataType = ColumnDataType.Date, IsRequired = true },
     ];
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -103,20 +110,10 @@ public sealed class JournalReportSourceRepository : ReportSource<JournalReportRo
     protected override IQueryable<JournalReportRow> Build(
         ReportParameters parameters, ReportingDbContext db)
     {
-        DateOnly? start = parameters.Date("from");
-        DateOnly? end = parameters.Date("to");
+        (DateOnly start, DateOnly end) = TrialBalanceSourceRepository.PeriodOf(parameters);
 
-        IQueryable<Repository.ReadModels.JournalRead> journals = db.Journals;
-
-        if (start is DateOnly from)
-        {
-            journals = journals.Where(j => j.JournalDate >= from);
-        }
-
-        if (end is DateOnly to)
-        {
-            journals = journals.Where(j => j.JournalDate <= to);
-        }
+        IQueryable<Repository.ReadModels.JournalRead> journals = db.Journals
+            .Where(j => j.JournalDate >= start && j.JournalDate <= end);
 
         // A contact does not sit on the line directly — it sits behind the
         // sub-account the line posted to, and only when that sub-account's

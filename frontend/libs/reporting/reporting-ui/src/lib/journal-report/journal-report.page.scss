@@ -1,0 +1,157 @@
+/* The Journal Report (TK-217): the filters, the period's totals, then one card for each journal. */
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.page-head h1 {
+  font-size: 1.3rem;
+  margin: 0.2rem 0 0;
+}
+
+.subtitle,
+.period,
+.empty {
+  margin: 0;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--space-2) var(--space-3);
+  align-items: start;
+  padding: var(--space-3);
+}
+
+.filters__field {
+  min-width: 0;
+}
+
+/* The button sits level with the inputs, below their labels. */
+.filters__actions {
+  align-self: end;
+  padding-bottom: var(--space-1);
+}
+
+.journal {
+  padding: 0;
+  overflow: hidden;
+}
+
+.journal__head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface-muted);
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.journal__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px var(--space-2);
+}
+
+.journal__number {
+  font-size: 1rem;
+}
+
+.journal__text {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-3);
+  margin: 0;
+  font-size: 13px;
+}
+
+.journal__reference {
+  font-weight: 600;
+}
+
+.journal__audit {
+  margin: 0;
+  font-size: 12px;
+}
+
+.journal__reversal {
+  margin-left: var(--space-2);
+  color: var(--color-warning);
+}
+
+.account {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px var(--space-2);
+}
+
+.account__code {
+  font-size: 12px;
+}
+
+.foreign {
+  display: block;
+  font-size: 12px;
+}
+
+.side {
+  font-size: 11px;
+  color: var(--color-text-subtle);
+}
+
+.more {
+  display: flex;
+  justify-content: center;
+}
+
+/* Phone: each line is an account on the left and its debit or credit on the right. */
+.lines {
+  list-style: none;
+  margin: 0;
+  padding: var(--space-1) var(--space-3);
+}
+
+.lines__row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-1) 0;
+  border-bottom: 1px solid var(--color-divider);
+  font-size: 13px;
+}
+
+.lines__account {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.lines__amount {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.journal__total {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-top: 2px solid var(--color-divider);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .filters__actions .btn {
+    width: 100%;
+  }
+}

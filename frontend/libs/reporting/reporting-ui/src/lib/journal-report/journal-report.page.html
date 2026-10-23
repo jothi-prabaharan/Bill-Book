@@ -1,0 +1,144 @@
+<header class="page-head">
+  <div>
+    <h1>Journal Report</h1>
+    <p class="subtitle text-muted">
+      Every journal posted in a period with its lines, who created and posted it and its status, in the branch's base currency.
+    </p>
+  </div>
+</header>
+
+<form class="filters card" [formGroup]="filters" (ngSubmit)="run()" novalidate>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'jr-from'" label="From" formControlName="fromDate" [required]="true"
+                          [error]="err('fromDate', 'From date')" />
+  </div>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'jr-to'" label="To" formControlName="toDate" [required]="true"
+                          [error]="err('toDate', 'To date')" />
+  </div>
+  <div class="filters__field">
+    <bb-select [id]="'jr-source'" label="Source" placeholder="All sources" [options]="sourceOptions()"
+               [loading]="!choicesLoaded()" emptyText="No sources" formControlName="source"
+               [error]="err('source', 'Source')" />
+  </div>
+  <div class="filters__field">
+    <bb-select [id]="'jr-status'" label="Status" placeholder="Posted and reversed" [options]="statusOptions"
+               formControlName="status" [error]="err('status', 'Status')" />
+  </div>
+  <div class="filters__field">
+    <bb-select [id]="'jr-account'" label="Account" placeholder="All accounts" [options]="accountOptions()"
+               [loading]="!choicesLoaded()" emptyText="No accounts" formControlName="accountId"
+               [error]="err('accountId', 'Account')" />
+  </div>
+  <div class="filters__actions">
+    <button class="btn btn-primary" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Running…' : 'Run report' }}
+    </button>
+  </div>
+</form>
+
+@if (messages().length > 0) {
+  <bb-message-box [messages]="messages()" />
+}
+
+@if (result(); as report) {
+  <p class="period text-muted">
+    {{ report.fromDate | registerDate }} to {{ report.toDate | registerDate }}.
+    @if (report.totalJournals > journals().length) {
+      Showing {{ journals().length }} of {{ report.totalJournals }} journals; the totals above are of all of them.
+    }
+  </p>
+
+  @if (journals().length === 0) {
+    <p class="empty text-muted">No journals match these filters.</p>
+  }
+
+  @for (entry of journals(); track trackEntry(entry)) {
+    <section class="journal card" [attr.aria-label]="entry.number">
+      <header class="journal__head">
+        <div class="journal__title">
+          <strong class="journal__number">{{ entry.number }}</strong>
+          <span class="tag tag-outline">{{ sourceLabel(entry.sourceCode) }}</span>
+          <span class="tag" [class.tag-neutral]="entry.status === 'Posted'" [class.tag-warning]="entry.status === 'Reversed'" [class.tag-accent]="entry.status === 'Draft'">{{ entry.status }}</span>
+          @if (!entry.isBalanced) {
+            <span class="tag tag-danger">Out of balance</span>
+          }
+          <span class="journal__date text-muted">{{ entry.date | registerDate }}</span>
+        </div>
+        @if (entry.reference || entry.narration) {
+          <p class="journal__text">
+            @if (entry.reference) { <span class="journal__reference">{{ entry.reference }}</span> }
+            @if (entry.narration) { <span>{{ entry.narration }}</span> }
+          </p>
+        }
+        <p class="journal__audit text-muted">
+          {{ audit(entry) }}
+          @if (reversalNote(entry); as note) {
+            <span class="journal__reversal">{{ note }}</span>
+          }
+        </p>
+      </header>
+
+      @if (narrow()) {
+        <ul class="lines">
+          @for (line of entry.lines; track $index) {
+            <li class="lines__row">
+              <div class="lines__account">
+                <span>{{ account(line) }}</span>
+                @if (line.contactName) { <small class="text-muted">{{ line.contactName }}</small> }
+                @if (line.description) { <small class="text-muted">{{ line.description }}</small> }
+                @if (sourceNote(line)) { <small class="text-muted">{{ sourceNote(line) }}</small> }
+              </div>
+              <div class="lines__amount">
+                @if (line.debit !== 0) {
+                  <span><small class="side">Dr</small> <bb-money-cell [value]="line.debit" /></span>
+                }
+                @if (line.credit !== 0) {
+                  <span><small class="side">Cr</small> <bb-money-cell [value]="line.credit" /></span>
+                }
+              </div>
+            </li>
+          }
+        </ul>
+        <p class="journal__total">
+          <span>Total</span>
+          <span><small class="side">Dr</small> <bb-money-cell [value]="entry.totalDebit" /></span>
+          <span><small class="side">Cr</small> <bb-money-cell [value]="entry.totalCredit" /></span>
+        </p>
+      } @else {
+        <bb-data-grid flush [columns]="columns" [data]="entry.lines" [sortable]="false" [showColumnFilters]="false"
+                      [showCount]="false" [paged]="false" [label]="'Lines of ' + entry.number">
+          <ng-template bbCellTemplate="account" let-line>
+            <span class="account">
+              <span class="account__code text-muted">{{ line.accountCode }}</span>
+              <span>{{ line.accountName }}</span>
+            </span>
+          </ng-template>
+          <ng-template bbCellTemplate="contactName" let-line>{{ line.contactName }}</ng-template>
+          <ng-template bbCellTemplate="description" let-line>
+            {{ line.description }}
+            @if (sourceNote(line)) { <small class="foreign text-muted">{{ sourceNote(line) }}</small> }
+          </ng-template>
+          <ng-template bbCellTemplate="debit" let-line><bb-money-cell [value]="blankZero(line.debit)" /></ng-template>
+          <ng-template bbCellTemplate="credit" let-line><bb-money-cell [value]="blankZero(line.credit)" /></ng-template>
+
+          <ng-template bbGridFooter>
+            <tr>
+              <th scope="row" colspan="3">Total</th>
+              <td class="numeric"><bb-money-cell [value]="entry.totalDebit" /></td>
+              <td class="numeric"><bb-money-cell [value]="entry.totalCredit" /></td>
+            </tr>
+          </ng-template>
+        </bb-data-grid>
+      }
+    </section>
+  }
+
+  @if (moreToLoad()) {
+    <div class="more">
+      <button class="btn" type="button" (click)="loadMore()" [disabled]="busy()">
+        {{ busy() ? 'Loading…' : 'Show more journals' }}
+      </button>
+    </div>
+  }
+}

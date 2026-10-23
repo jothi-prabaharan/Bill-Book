@@ -198,6 +198,23 @@ Budget Monthly Trend has its own page at `/reports/budget-monthly-trend` (TK-214
 
 The catalog's **Budget vs Actual**, **Budget vs Actual by Project** and **Budget Monthly Trend** reports, used for export and scheduled emails, give the same figures as their pages for active accounts. Budget Monthly Trend's now needs a **Budget** and an **As at** date, and refuses a run without them, a budget that is not the branch's, or a date outside the budget's year. Until TK-207 the first two failed to run.
 
+## Journal Report
+
+The Journal Report has its own page at `/reports/journal-report` (TK-217), under **Reports › Accounting**. Besides access to reports it needs **accounting.view**. It is the audit view of what reached the ledger: every journal posted in a period, whether someone keyed it or an invoice, a bill, a payment or a stock adjustment made it, with its lines, who created and posted it, and its status.
+
+- **From** and **To** are both required. The page opens on the financial year to date and runs straight away. A **To** before **From** is refused under **To**.
+- **Source** narrows the report to one kind of document: manual journals, sales invoices, bills, spend money and so on. **Status** is **Posted and reversed** (the default), **Posted**, **Reversed** or **Draft**. **Account** keeps the journals that have a line on that account, each with all its lines, so it still balances.
+- Above the journals, one sentence says how many there are and that debits and credits come to the same figure. When they do not, the sentence turns red and says so. The figures are of every journal the filters match, not only those on the screen.
+- Each journal is a card: its number, the kind of document that posted it, its status and its date; its reference and narration; **Created by** and **Posted by** with the dates; and the journal that reverses it or that it reverses. Beneath are its lines: account, contact, description, and debit and credit in the branch's currency, with a total that balances. A line booked in another currency also shows, under its description, its amount in that currency and the rate it was booked at, such as *USD 10.00 @ 83.5*.
+- A document's own posting shows the document's number. A posting written before the ledger kept numbers shows its type and id, such as `INV-42`. Its creator and poster are the user who posted it.
+- A manual journal that has been reversed is **Reversed** and says *Reversed by* the journal that undid it; that journal says *Reverses* the first. Both are in the totals, which is how they cancel.
+- **Draft** lists journals saved but not posted. They have not reached the ledger, so they are never in the figures of any other status, and they are numbered *Draft* with their id because they have no number yet. A draft's lines show no contact.
+- With no filter, the period's debits and credits equal the **Trial balance's** movement and the **General ledger** summary's totals for the same dates.
+- The page shows 25 journals at a time. **Show more journals** adds the next 25 under them, for the same filters; the totals do not change.
+- On a phone each journal's lines are listed with the account on the left and its debit or credit on the right.
+
+The catalog's **Journal Report**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It lists the lines of manual journals, drafts included, with their status, and not the postings that documents make: use the page for those. Until TK-213 it failed to run on any branch with journals.
+
 ## Project reports
 
 Four reports read project accounting, under **Projects** in the list. Running them needs **projects.view** as well as access to reports.
