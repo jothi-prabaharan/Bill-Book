@@ -1,0 +1,203 @@
+<header class="page-head">
+  <div>
+    <h1>Account Transaction</h1>
+    <p class="subtitle text-muted">
+      Every posting in a period, account by account, with its contact, tax rate and a running balance, in the branch's base currency.
+    </p>
+  </div>
+</header>
+
+<form class="filters card" [formGroup]="filters" (ngSubmit)="run()" novalidate>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'at-from'" label="From" formControlName="fromDate" [required]="true"
+                          [error]="err('fromDate', 'From date')" />
+  </div>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'at-to'" label="To" formControlName="toDate" [required]="true"
+                          [error]="err('toDate', 'To date')" />
+  </div>
+  <div class="filters__field">
+    <bb-select [id]="'at-source'" label="Source" placeholder="All sources" [options]="sourceOptions()"
+               [loading]="!choicesLoaded()" emptyText="No sources" formControlName="source"
+               [error]="err('source', 'Source')" />
+  </div>
+  <div class="filters__field">
+    <bb-select [id]="'at-contact'" label="Contact" placeholder="All contacts" [options]="contactOptions()"
+               [loading]="!choicesLoaded()" emptyText="No contacts" formControlName="contactId"
+               [error]="err('contactId', 'Contact')" />
+  </div>
+  <div class="filters__field">
+    <bb-select [id]="'at-tax'" label="Tax rate" placeholder="All rates" [options]="taxOptions()"
+               [loading]="!choicesLoaded()" emptyText="No tax rates" formControlName="taxGroupId"
+               [error]="err('taxGroupId', 'Tax rate')" />
+  </div>
+  <div class="filters__field">
+    <bb-select [id]="'at-account'" label="Add an account" placeholder="All accounts" [options]="addableAccounts()"
+               [loading]="!choicesLoaded()" emptyText="No accounts" formControlName="addAccount"
+               [error]="accountError()" />
+  </div>
+
+  @if (chosenChips().length > 0) {
+    <div class="chosen">
+      <span class="chosen__label text-muted">Only these accounts:</span>
+      <ul class="chosen__list">
+        @for (chip of chosenChips(); track chip.id) {
+          <li class="tag tag-outline chosen__chip">
+            <span>{{ chip.label }}</span>
+            <button type="button" class="chosen__remove" (click)="removeAccount(chip.id)"
+                    [attr.aria-label]="'Remove ' + chip.label">×</button>
+          </li>
+        }
+      </ul>
+      <button type="button" class="btn btn-ghost" (click)="clearAccounts()">All accounts</button>
+    </div>
+  }
+
+  <div class="filters__actions">
+    <button class="btn btn-primary" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Running…' : 'Run report' }}
+    </button>
+    <button class="btn" type="button" (click)="choosingColumns.set(true)">Columns</button>
+  </div>
+</form>
+
+@if (messages().length > 0) {
+  <bb-message-box [messages]="messages()" />
+}
+
+@if (result(); as report) {
+  <p class="period text-muted">
+    {{ report.fromDate | registerDate }} to {{ report.toDate | registerDate }}. Each balance is on its account's normal side, marked Dr or Cr;
+    an income or expense account opens at what was posted since {{ report.financialYearStart | registerDate }}, the start of the financial year.
+    @if (moreToLoad()) {
+      Showing the first postings of {{ report.totalPostings }}; the totals above are of all of them.
+    }
+  </p>
+
+  @if (blocks().length === 0) {
+    <p class="empty text-muted">No postings match these filters.</p>
+  }
+
+  @for (block of blocks(); track block.account.accountId) {
+    <section class="account card" [attr.aria-label]="block.account.accountName">
+      <header class="account__head">
+        <div class="account__title">
+          <span class="account__code text-muted">{{ block.account.accountCode }}</span>
+          <strong>{{ block.account.accountName }}</strong>
+          @if (block.account.isContra) {
+            <span class="tag tag-outline" title="Normal balance runs opposite its type">Contra</span>
+          }
+          <span class="tag tag-neutral">{{ block.account.normalSide }} balance</span>
+        </div>
+        <p class="account__count text-muted">
+          {{ block.account.postingCount }} {{ block.account.postingCount === 1 ? 'posting' : 'postings' }}
+        </p>
+      </header>
+
+      @if (narrow()) {
+        <div class="cards" role="list" [attr.aria-label]="'Postings to ' + block.account.accountName">
+          @for (row of block.rows; track $index) {
+            <article class="entry" role="listitem"
+                     [class.entry--opening]="row.kind === 'opening'" [class.entry--closing]="row.kind === 'closing'">
+              <header class="entry__head">
+                @if (row.kind === 'posting') {
+                  <span class="entry__date">{{ row.date | registerDate }}</span>
+                  <span class="tag tag-outline">{{ sourceLabel(row.sourceCode) }}</span>
+                  <span>{{ row.documentNo }}</span>
+                } @else {
+                  <strong>{{ row.description }}</strong>
+                }
+              </header>
+              @if (row.kind === 'posting') {
+                @if (row.description) {
+                  <p class="entry__text">{{ row.description }}</p>
+                }
+                @if (row.relatedAccount || row.contactName || row.tax || row.foreign || row.reference || row.permitNo) {
+                  <p class="entry__meta text-muted">
+                    @if (row.relatedAccount) { <span>Against {{ row.relatedAccount }}</span> }
+                    @if (row.contactName) { <span>{{ row.contactName }}</span> }
+                    @if (row.tax) { <span>{{ row.tax }}</span> }
+                    @if (row.permitNo) { <span>Permit {{ row.permitNo }}</span> }
+                    @if (row.reference) { <span>Ref {{ row.reference }}</span> }
+                    @if (row.foreign) { <span>{{ row.foreign }}</span> }
+                  </p>
+                }
+              }
+              <dl class="figures">
+                @if (row.debit !== null) {
+                  <div class="figures__row"><dt>{{ row.kind === 'closing' ? 'Debits' : 'Debit' }}</dt><dd><bb-money-cell [value]="row.debit" /></dd></div>
+                }
+                @if (row.credit !== null) {
+                  <div class="figures__row"><dt>{{ row.kind === 'closing' ? 'Credits' : 'Credit' }}</dt><dd><bb-money-cell [value]="row.credit" /></dd></div>
+                }
+                <div class="figures__row figures__row--balance">
+                  <dt>Balance ({{ sideOf(block.account.normalSide) }})</dt><dd><bb-money-cell [value]="row.balance" /></dd>
+                </div>
+              </dl>
+            </article>
+          }
+        </div>
+      } @else {
+        <div class="matrix">
+          <bb-data-grid flush [columns]="block.columns" [data]="block.rows" [rowClass]="rowClass" [sortable]="false"
+                        [showColumnFilters]="false" [showCount]="false" [paged]="false"
+                        [label]="'Postings to ' + block.account.accountName">
+            <ng-template bbCellTemplate="date" let-row>
+              @if (row.kind === 'posting') { {{ row.date | registerDate }} }
+            </ng-template>
+            <ng-template bbCellTemplate="documentNo" let-row>
+              @if (row.kind === 'posting') {
+                <span class="document">
+                  @if (row.journalId) { <a class="link" [routerLink]="['/accounting/journals', row.journalId]">{{ row.documentNo }}</a> }
+                  @else { <span>{{ row.documentNo }}</span> }
+                </span>
+              }
+            </ng-template>
+            <ng-template bbCellTemplate="source" let-row>
+              @if (row.kind === 'posting') { <span class="tag tag-outline">{{ sourceLabel(row.sourceCode) }}</span> }
+            </ng-template>
+            <ng-template bbCellTemplate="relatedAccount" let-row>{{ row.relatedAccount }}</ng-template>
+            <ng-template bbCellTemplate="contact" let-row>{{ row.contactName }}</ng-template>
+            <ng-template bbCellTemplate="description" let-row>
+              @if (row.kind === 'posting') { {{ row.description }} } @else { <strong>{{ row.description }}</strong> }
+            </ng-template>
+            <ng-template bbCellTemplate="reference" let-row>{{ row.reference }}</ng-template>
+            <ng-template bbCellTemplate="tax" let-row>{{ row.tax }}</ng-template>
+            <ng-template bbCellTemplate="permitNo" let-row>{{ row.permitNo }}</ng-template>
+            <ng-template bbCellTemplate="foreign" let-row>{{ row.foreign }}</ng-template>
+            <ng-template bbCellTemplate="debit" let-row><bb-money-cell [value]="row.debit" /></ng-template>
+            <ng-template bbCellTemplate="credit" let-row><bb-money-cell [value]="row.credit" /></ng-template>
+            <ng-template bbCellTemplate="balance" let-row><bb-money-cell [value]="row.balance" /></ng-template>
+          </bb-data-grid>
+        </div>
+      }
+    </section>
+  }
+
+  @if (moreToLoad()) {
+    <div class="more">
+      <button class="btn" type="button" (click)="loadMore()" [disabled]="busy()">
+        {{ busy() ? 'Loading…' : 'Show more postings' }}
+      </button>
+    </div>
+  }
+
+  @if (report.totalPostings > 0) {
+    <section class="grand card" aria-label="Totals">
+      <h2 class="grand__title">Total</h2>
+      <dl class="grand__figures">
+        <div><dt>Postings</dt><dd>{{ report.totalPostings }}</dd></div>
+        <div><dt>Accounts</dt><dd>{{ report.totalAccounts }}</dd></div>
+        <div><dt>Debits</dt><dd><bb-money-cell [value]="report.totalDebit" /></dd></div>
+        <div><dt>Credits</dt><dd><bb-money-cell [value]="report.totalCredit" /></dd></div>
+      </dl>
+    </section>
+  }
+}
+
+@if (choosingColumns()) {
+  <div class="overlay">
+    <bb-column-chooser [available]="availableColumns" [selected]="visibleColumns()"
+                       (selectedChange)="onColumnsChange($event)" (closed)="choosingColumns.set(false)" />
+  </div>
+}

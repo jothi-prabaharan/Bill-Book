@@ -12,3 +12,4 @@ export * from './lib/budget-vs-actual-by-project/budget-vs-actual-by-project-rep
 export * from './lib/budget-monthly-trend/budget-monthly-trend-report.page';
 export * from './lib/salary-increment/salary-increment-report.page';
 export * from './lib/journal-report/journal-report.page';
+export * from './lib/account-transaction/account-transaction.page';

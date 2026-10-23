@@ -24,3 +24,5 @@ export * from './lib/budget-monthly-trend/budget-monthly-trend-report.models';
 export * from './lib/budget-monthly-trend/budget-monthly-trend-report.service';
 export * from './lib/journal-report/journal-report.models';
 export * from './lib/journal-report/journal-report.service';
+export * from './lib/account-transaction/account-transaction.models';
+export * from './lib/account-transaction/account-transaction.service';

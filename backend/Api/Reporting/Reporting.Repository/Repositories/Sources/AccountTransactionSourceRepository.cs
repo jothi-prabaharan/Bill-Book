@@ -49,8 +49,8 @@ public sealed class AccountTransactionSourceRepository : ReportSource<AccountTra
 
     public override IReadOnlyList<ReportParameterRepository> Parameters =>
     [
-        new() { Name = "from", Label = "From", DataType = ColumnDataType.Date },
-        new() { Name = "to", Label = "To", DataType = ColumnDataType.Date },
+        new() { Name = "from", Label = "From", DataType = ColumnDataType.Date, IsRequired = true },
+        new() { Name = "to", Label = "To", DataType = ColumnDataType.Date, IsRequired = true },
         new()
         {
             Name = "accountId",
@@ -145,21 +145,13 @@ public sealed class AccountTransactionSourceRepository : ReportSource<AccountTra
     protected override IQueryable<AccountTransactionRow> Build(
         ReportParameters parameters, ReportingDbContext db)
     {
-        DateOnly? start = parameters.Date("from");
-        DateOnly? end = parameters.Date("to");
+        // Both dates are required (D-67, TK-218): an export, a saved view and a
+        // scheduled email take a period as the page does.
+        (DateOnly start, DateOnly end) = TrialBalanceSourceRepository.PeriodOf(parameters);
         long? accountId = parameters.Id("accountId");
 
-        IQueryable<Repository.ReadModels.JournalLedgerRead> ledger = db.Ledger;
-
-        if (start is DateOnly from)
-        {
-            ledger = ledger.Where(l => l.LedgerDate >= from);
-        }
-
-        if (end is DateOnly to)
-        {
-            ledger = ledger.Where(l => l.LedgerDate <= to);
-        }
+        IQueryable<Repository.ReadModels.JournalLedgerRead> ledger = db.Ledger
+            .Where(l => l.LedgerDate >= start && l.LedgerDate <= end);
 
         if (accountId is long account)
         {
@@ -197,22 +189,32 @@ public sealed class AccountTransactionSourceRepository : ReportSource<AccountTra
                            .Select(ra => ra.AccountName)
                            .FirstOrDefault())
                        .FirstOrDefault(),
+                   // A tax sub-account's reference is the tax group, which every
+                   // revision of a rate shares, so the rate is the revision in force
+                   // on the leg's own date.
                    TaxRate = db.SubAccounts
                        .Where(s => s.SubAccountId == l.SubAccountId
                            && s.ReferenceType == TaxReference)
                        .SelectMany(s => db.TaxMasters
-                           .Where(tm => tm.TaxMasterId == s.ReferenceId)
+                           .Where(tm => tm.TaxGroupId == s.ReferenceId
+                               && tm.EffectiveFrom <= l.LedgerDate
+                               && (tm.EffectiveTo == null || tm.EffectiveTo >= l.LedgerDate))
+                           .OrderByDescending(tm => tm.EffectiveFrom)
                            .Select(tm => (decimal?)tm.TotalRate))
                        .FirstOrDefault(),
                    TaxRateName = db.SubAccounts
                        .Where(s => s.SubAccountId == l.SubAccountId
                            && s.ReferenceType == TaxReference)
                        .SelectMany(s => db.TaxMasters
-                           .Where(tm => tm.TaxMasterId == s.ReferenceId)
+                           .Where(tm => tm.TaxGroupId == s.ReferenceId
+                               && tm.EffectiveFrom <= l.LedgerDate
+                               && (tm.EffectiveTo == null || tm.EffectiveTo >= l.LedgerDate))
+                           .OrderByDescending(tm => tm.EffectiveFrom)
                            .Select(tm => tm.TaxName))
                        .FirstOrDefault(),
                    PermitNo = db.ContactLicences
-                       .Where(cl => cl.ContactId == l.ContactId && cl.IsActive)
+                       .Where(cl => cl.ContactId == l.ContactId && cl.IsActive
+                           && (cl.ExpiresOn == null || cl.ExpiresOn >= l.LedgerDate))
                        .OrderBy(cl => cl.ContactLicenceId)
                        .Select(cl => cl.LicenceNumber)
                        .FirstOrDefault(),

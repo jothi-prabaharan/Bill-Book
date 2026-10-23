@@ -215,6 +215,22 @@ The Journal Report has its own page at `/reports/journal-report` (TK-217), under
 
 The catalog's **Journal Report**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It lists the lines of manual journals, drafts included, with their status, and not the postings that documents make: use the page for those. Until TK-213 it failed to run on any branch with journals.
 
+## Account Transaction
+
+The Account Transaction report has its own page at `/reports/account-transaction` (TK-218), under **Reports › Accounting**. Besides access to reports it needs **accounting.view**. It is the detailed general ledger across many accounts at once: every posting in a period, account by account, with its contact, tax rate and a running balance.
+
+- **From** and **To** are both required. The page opens on the financial year to date and runs straight away. A **To** before **From** is refused under **To**.
+- **Source**, **Contact** and **Tax rate** narrow the postings. The tax rate shows the tax postings of that rate, whichever revision of it was in force on the day. To look at particular accounts, choose each under **Add an account**; they appear under *Only these accounts* and are taken off again with their ×, or all together with **All accounts**, up to 100. With none chosen, every account that has a posting in the period is shown.
+- An account you choose is listed even when nothing was posted to it in the period, so that its balance can be read. When a contact, a tax rate or a source is chosen, only the accounts with matching postings are listed.
+- Each account is a card with its code and name, a *Contra* tag when its normal balance runs opposite its type, the side its balance is on, and how many postings it has. Its grid begins with the **Opening balance**, has a row for each posting in date order, and ends with the **Closing balance** with the period's debits and credits.
+- Balances are on the account's normal side, marked **Dr** or **Cr** in the heading, so a credit account no longer reads in minus. A balance-sheet account opens at everything before **From**; an income or expense account at what was posted since its financial year began, as on the **General ledger** and the **Trial balance**. With no contact, tax rate or source chosen, an account's closing balance is its closing balance there for the same dates. A narrowing filter narrows the opening balance too, so opening plus debits less credits is still the closing balance of what is shown.
+- **Columns** chooses what a posting shows. The page opens with **Date**, **Document**, **Contact**, **Description**, **Debit**, **Credit** and **Balance**. Others can be added: **Source**; **Related account**, the account the other side of the document was posted to, or *Various* when it went to several; **Reference**, a manual journal's own; **Tax rate**, the rate in force on the day of a tax posting; **Permit no.**, the contact's licence that was valid on the day; and **Foreign amount**, such as *USD 10.00 @ 83.5* for a posting in another currency. Columns can be reordered by dragging, and the choice lasts while the page is open.
+- Above the accounts one sentence says how many postings went to how many accounts and what the debits and credits came to, and a **Total** card at the foot repeats it. The figures are of every posting the filters match, not only those on the screen.
+- The page loads 100 postings at a time. **Show more postings** adds the next 100 under them. An account that runs over a page is still one card, with its opening balance at the top and its closing balance when its last posting has loaded.
+- On a phone each posting is a card, with the account's balance after it.
+
+The catalog's **Account Transaction**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. Its **Tax rate** is the revision in force on the posting's day, and its **Permit no.** is a licence that was valid then. Its **Running balance** is a running total of the rows it lists, in debit terms, and does not start from the account's opening balance: read balances from the page. Until TK-213 it failed to run on any branch with postings.
+
 ## Project reports
 
 Four reports read project accounting, under **Projects** in the list. Running them needs **projects.view** as well as access to reports.

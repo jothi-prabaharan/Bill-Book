@@ -75,6 +75,13 @@ export const reportingRoutes: Routes = [
     data: { access: { permission: 'reports.view' } },
   },
   {
+    // Its own page on its own endpoint (TK-218), ahead of the shared host.
+    path: 'account-transaction',
+    loadComponent: () =>
+      import('./account-transaction/account-transaction.page').then((m) => m.AccountTransactionPage),
+    data: { access: { permission: 'reports.view' } },
+  },
+  {
     path: 'balance-sheet',
     loadComponent: () =>
       import('./balance-sheet/balance-sheet-report.page').then((m) => m.BalanceSheetReportPage),
