@@ -5,15 +5,16 @@ using Reporting.Repository;
 
 namespace Reporting.Repository.Repositories;
 
+/// <summary>
+/// The Bank Summary for export, saved views and scheduled emails (TK-219). Its
+/// figures are the page's, from <see cref="BankSummaryReportRepository"/>'s builders:
+/// the opening ledger balance of each bank account, what it received and spent in
+/// the period with any revaluation taken out, the revaluation, and the closing
+/// balance. <b>The period is required</b> (D-67). The ledger is summed once for all
+/// the accounts, not once for each, which is what answered 500 here.
+/// </summary>
 public sealed class BankSummarySourceRepository : ReportSource<BankSummaryRow>
 {
-    private readonly BatchedNameResolverRepository _resolver;
-
-    public BankSummarySourceRepository(BatchedNameResolverRepository resolver)
-    {
-        _resolver = resolver;
-    }
-
     public override string ReportKey => "bank-summary";
 
     public override string Title => "Bank Summary";
@@ -26,8 +27,8 @@ public sealed class BankSummarySourceRepository : ReportSource<BankSummaryRow>
 
     public override IReadOnlyList<ReportParameterRepository> Parameters =>
     [
-        new() { Name = "from", Label = "From", DataType = ColumnDataType.Date },
-        new() { Name = "to", Label = "To", DataType = ColumnDataType.Date },
+        new() { Name = "from", Label = "From", DataType = ColumnDataType.Date, IsRequired = true },
+        new() { Name = "to", Label = "To", DataType = ColumnDataType.Date, IsRequired = true },
     ];
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -63,30 +64,45 @@ public sealed class BankSummarySourceRepository : ReportSource<BankSummaryRow>
     protected override IQueryable<BankSummaryRow> Build(
         ReportParameters parameters, ReportingDbContext db)
     {
-        DateOnly? start = parameters.Date("from");
-        DateOnly? end = parameters.Date("to");
+        (DateOnly start, DateOnly end) = TrialBalanceSourceRepository.PeriodOf(parameters);
+        IQueryable<BankFigures> figures = BankSummaryReportRepository.Figures(db.Ledger, db.Accounts, db.BankAccounts, start, end);
 
-        return from b in db.BankAccounts
-               join a in db.Accounts on b.LedgerAccountId equals a.AccountId
-               where a.IsActive
-               let openingLegs = db.Ledger.Where(l => l.AccountId == a.AccountId && (start == null || l.LedgerDate < start))
-               let periodLegs = db.Ledger.Where(l => l.AccountId == a.AccountId && (start == null || l.LedgerDate >= start) && (end == null || l.LedgerDate <= end))
-               select new BankSummaryRow
-               {
-                   BankAccountId = b.BankAccountId,
-                   AccountId = a.AccountId,
-                   AccountTypeId = a.AccountTypeId,
-                   AccountName = a.AccountName,
-                   CurrencyCode = b.CurrencyCode,
-                   // For a bank account (asset), Debit is Received, Credit is Spent
-                   OpeningBalance = openingLegs.Sum(l => l.DebitAmountBase) - openingLegs.Sum(l => l.CreditAmountBase),
-                   Received = periodLegs.Sum(l => l.DebitAmountBase),
-                   Spent = periodLegs.Sum(l => l.CreditAmountBase),
-                   ClosingBalance = (openingLegs.Sum(l => l.DebitAmountBase) - openingLegs.Sum(l => l.CreditAmountBase)) + 
-                                    (periodLegs.Sum(l => l.DebitAmountBase) - periodLegs.Sum(l => l.CreditAmountBase)),
-                   // Bank Revaluation is usually computed differently, but for now we set it to 0 as it might be complex or unsupported directly in this simple report
-                   BankRevaluation = 0m,
-               };
+        // Accounts with a leg, then accounts switched on with none: a left join with a null
+        // check translates for the rows and not for the totals the runner sums over it.
+        IQueryable<BankSummaryRow> posted =
+            from b in db.BankAccounts
+            join f in figures on b.BankAccountId equals f.BankAccountId
+            where b.IsActive || f.OpeningBase != 0m || f.Count > 0
+            select new BankSummaryRow
+            {
+                BankAccountId = b.BankAccountId,
+                BankAccountType = b.AccountType,
+                AccountName = b.AccountName,
+                CurrencyCode = b.CurrencyCode,
+                OpeningBalance = f.OpeningBase,
+                Received = f.ReceivedBase,
+                Spent = f.SpentBase,
+                BankRevaluation = f.RevaluationBase,
+                ClosingBalance = f.OpeningBase + f.ReceivedBase - f.SpentBase + f.RevaluationBase,
+            };
+
+        IQueryable<BankSummaryRow> idle =
+            from b in db.BankAccounts
+            where b.IsActive && !figures.Any(f => f.BankAccountId == b.BankAccountId)
+            select new BankSummaryRow
+            {
+                BankAccountId = b.BankAccountId,
+                BankAccountType = b.AccountType,
+                AccountName = b.AccountName,
+                CurrencyCode = b.CurrencyCode,
+                OpeningBalance = 0m,
+                Received = 0m,
+                Spent = 0m,
+                BankRevaluation = 0m,
+                ClosingBalance = 0m,
+            };
+
+        return posted.Concat(idle);
     }
 
     protected override LambdaExpression DefaultOrder =>
@@ -96,24 +112,22 @@ public sealed class BankSummarySourceRepository : ReportSource<BankSummaryRow>
         IQueryable<BankSummaryRow> rowsBeforeThisPage, CancellationToken ct) =>
         await rowsBeforeThisPage.SumAsync(r => r.OpeningBalance, ct);
 
-    protected override async Task FormatRowsAsync(IReadOnlyList<BankSummaryRow> page, CancellationToken ct)
+    /// <summary>The kind of account is the bank account's own (savings, current, wallet, cash), not the chart's type for its ledger account.</summary>
+    protected override Task FormatRowsAsync(IReadOnlyList<BankSummaryRow> page, CancellationToken ct)
     {
-        Dictionary<int, string> types = await _resolver.GetAccountTypeNamesAsync(ct);
-        foreach (var row in page)
+        foreach (BankSummaryRow row in page)
         {
-            if (types.TryGetValue(row.AccountTypeId, out string? typeName))
-            {
-                row.AccountType = typeName;
-            }
+            row.AccountType = row.BankAccountType.ToString();
         }
+
+        return Task.CompletedTask;
     }
 }
 
 public sealed class BankSummaryRow
 {
     public long BankAccountId { get; set; }
-    public long AccountId { get; set; }
-    public int AccountTypeId { get; set; }
+    public BankAccountType BankAccountType { get; set; }
     public string AccountName { get; set; } = null!;
     public string AccountType { get; set; } = string.Empty;
     public string CurrencyCode { get; set; } = null!;

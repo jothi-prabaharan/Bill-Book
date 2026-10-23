@@ -231,6 +231,22 @@ The Account Transaction report has its own page at `/reports/account-transaction
 
 The catalog's **Account Transaction**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. Its **Tax rate** is the revision in force on the posting's day, and its **Permit no.** is a licence that was valid then. Its **Running balance** is a running total of the rows it lists, in debit terms, and does not start from the account's opening balance: read balances from the page. Until TK-213 it failed to run on any branch with postings.
 
+## Bank Summary
+
+The Bank Summary has its own page at `/reports/bank-summary` (TK-219), under **Reports › Accounting**. Besides access to reports it needs **accounting.view**. For each bank and cash account it shows what the account held when the period began, what came in, what went out, any revaluation of a foreign currency account, and what it holds at the end.
+
+- **From** and **To** are both required. The page opens on the financial year to date and runs straight away. A **To** before **From** is refused under **To**. **Bank account** narrows the report to one account.
+- Each account is a row with its name, its kind and number, its currency, and its **Opening**, **Received**, **Spent**, **Revaluation** and **Closing** balances in the branch's base currency, with a **Total** row when there is more than one account. Above the rows, one sentence adds the totals up: opening plus received, less spent, plus any revaluation, equals closing.
+- **Opening** and **Closing** are the account's ledger balance before the period and at its end, so an account's closing balance is the balance in the books on the last day on the **Reconciliation Report** for that date.
+- **Received** is the period's debits and **Spent** its credits, so a transfer between two bank accounts is spent from one and received by the other.
+- **Revaluation** is the net of the period's postings on documents that also post to Unrealized FX Gain/Loss, such as a manual journal that revalues a foreign account: positive when the account is worth more in base currency. It is not counted as received or spent. Nothing posts one automatically yet.
+- An account in another currency also shows its own-currency figures in smaller type under each base figure: what it held, received and spent in that currency and what it holds. A revaluation does not change them.
+- A credit card or overdraft shows what is held, so what is owed reads negative.
+- Every account that is switched on is listed. One switched off is listed only if it still holds a balance or had postings in the period, or if you choose it.
+- On a phone each account is a card.
+
+The catalog's **Bank Summary**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It gives the page's figures, with the account's own kind (savings, current, wallet and so on) in the type column. Until TK-219 it failed to run on any branch with a bank account, and its revaluation column was always nothing.
+
 ## Project reports
 
 Four reports read project accounting, under **Projects** in the list. Running them needs **projects.view** as well as access to reports.

@@ -16,7 +16,7 @@ public class ReportSourceTests
     private static readonly TrialBalanceSourceRepository TrialBalance = new(OfflineResolver());
     private static readonly GeneralLedgerSummarySourceRepository GeneralLedgerSummary = new(new StubFinancialYear());
     private static readonly JournalReportSourceRepository JournalReport = new(OfflineResolver());
-    private static readonly BankSummarySourceRepository BankSummary = new(OfflineResolver());
+    private static readonly BankSummarySourceRepository BankSummary = new();
     private static readonly ReconciliationSourceRepository Reconciliation = new();
     private static readonly InventoryAgingSourceRepository InventoryAging = new();
     private static readonly ItemListSourceRepository ItemList = new(OfflineResolver());

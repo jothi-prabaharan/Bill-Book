@@ -26,3 +26,5 @@ export * from './lib/journal-report/journal-report.models';
 export * from './lib/journal-report/journal-report.service';
 export * from './lib/account-transaction/account-transaction.models';
 export * from './lib/account-transaction/account-transaction.service';
+export * from './lib/bank-summary/bank-summary.models';
+export * from './lib/bank-summary/bank-summary.service';

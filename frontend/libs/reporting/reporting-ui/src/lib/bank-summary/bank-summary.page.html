@@ -1,0 +1,130 @@
+<header class="page-head">
+  <div>
+    <h1>Bank Summary</h1>
+    <p class="subtitle text-muted">
+      What each bank and cash account held when the period began, what came in and went out, and what it holds at the end, in the branch's base currency.
+    </p>
+  </div>
+</header>
+
+<form class="filters card" [formGroup]="filters" (ngSubmit)="run()" novalidate>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'bs-from'" label="From" formControlName="fromDate" [required]="true"
+                          [error]="err('fromDate', 'From date')" />
+  </div>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'bs-to'" label="To" formControlName="toDate" [required]="true"
+                          [error]="err('toDate', 'To date')" />
+  </div>
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'bs-account'" label="Bank account" placeholder="All bank accounts" [options]="accountOptions()"
+               [loading]="!choicesLoaded()" emptyText="No bank accounts" formControlName="bankAccountId"
+               [error]="err('bankAccountId', 'Bank account')" />
+  </div>
+  <div class="filters__actions">
+    <button class="btn btn-primary" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Running…' : 'Run report' }}
+    </button>
+  </div>
+</form>
+
+@if (messages().length > 0) {
+  <bb-message-box [messages]="messages()" />
+}
+
+@if (result(); as report) {
+  <p class="period text-muted">
+    {{ report.fromDate | registerDate }} to {{ report.toDate | registerDate }}, in {{ report.baseCurrencyCode }}.
+  </p>
+
+  @if (rows().length === 0) {
+    <p class="empty text-muted">This branch has no bank or cash account to show.</p>
+  } @else if (narrow()) {
+    <div class="cards" role="list" aria-label="Bank summary">
+      @for (row of rows(); track row.bankAccountId) {
+        <article class="card entry" role="listitem" [class.entry--total]="row.kind === 'total'">
+          <header class="entry__head">
+            <strong>{{ row.name }}</strong>
+            @if (row.kind === 'account') {
+              <span class="entry__detail text-muted">{{ row.detail }}</span>
+              <span class="tag tag-outline">{{ row.currencyCode }}</span>
+              @if (!row.isActive) { <span class="tag tag-neutral">Inactive</span> }
+            }
+          </header>
+          <dl class="figures">
+            <div class="figures__row"><dt>Opening</dt>
+              <dd><bb-money-cell [value]="row.openingBalance" />
+                @if (row.isForeign) { <small class="own"><bb-money-cell [value]="row.ownOpeningBalance" [currency]="row.currencyCode" /></small> }</dd></div>
+            <div class="figures__row"><dt>Received</dt>
+              <dd><bb-money-cell [value]="row.received" />
+                @if (row.isForeign) { <small class="own"><bb-money-cell [value]="row.ownReceived" [currency]="row.currencyCode" /></small> }</dd></div>
+            <div class="figures__row"><dt>Spent</dt>
+              <dd><bb-money-cell [value]="row.spent" />
+                @if (row.isForeign) { <small class="own"><bb-money-cell [value]="row.ownSpent" [currency]="row.currencyCode" /></small> }</dd></div>
+            @if (row.revaluation !== null) {
+              <div class="figures__row"><dt>Revaluation</dt><dd><bb-money-cell [value]="row.revaluation" /></dd></div>
+            }
+            <div class="figures__row figures__row--balance"><dt>Closing</dt>
+              <dd><bb-money-cell [value]="row.closingBalance" />
+                @if (row.isForeign) { <small class="own"><bb-money-cell [value]="row.ownClosingBalance" [currency]="row.currencyCode" /></small> }</dd></div>
+          </dl>
+        </article>
+      }
+    </div>
+  } @else {
+    <div class="matrix">
+      <bb-data-grid flush [columns]="columns" [data]="rows()" [rowClass]="rowClass" [sortable]="false"
+                    [showColumnFilters]="false" [showCount]="false" [paged]="false" label="Bank summary">
+        <ng-template bbCellTemplate="account" let-row>
+          <span class="account">
+            <strong class="account__name">{{ row.name }}</strong>
+            @if (row.kind === 'account') {
+              <span class="account__detail text-muted">
+                {{ row.detail }}
+                <span class="tag tag-outline">{{ row.currencyCode }}</span>
+                @if (!row.isActive) { <span class="tag tag-neutral">Inactive</span> }
+              </span>
+            }
+          </span>
+        </ng-template>
+        <ng-template bbCellTemplate="openingBalance" let-row>
+          <span class="amount">
+            <bb-money-cell [value]="row.openingBalance" />
+            @if (row.isForeign) { <small class="own"><bb-money-cell [value]="row.ownOpeningBalance" [currency]="row.currencyCode" /></small> }
+          </span>
+        </ng-template>
+        <ng-template bbCellTemplate="received" let-row>
+          <span class="amount">
+            <bb-money-cell [value]="row.received" />
+            @if (row.isForeign) { <small class="own"><bb-money-cell [value]="row.ownReceived" [currency]="row.currencyCode" /></small> }
+          </span>
+        </ng-template>
+        <ng-template bbCellTemplate="spent" let-row>
+          <span class="amount">
+            <bb-money-cell [value]="row.spent" />
+            @if (row.isForeign) { <small class="own"><bb-money-cell [value]="row.ownSpent" [currency]="row.currencyCode" /></small> }
+          </span>
+        </ng-template>
+        <ng-template bbCellTemplate="revaluation" let-row><bb-money-cell [value]="row.revaluation" /></ng-template>
+        <ng-template bbCellTemplate="closingBalance" let-row>
+          <span class="amount">
+            <bb-money-cell [value]="row.closingBalance" />
+            @if (row.isForeign) { <small class="own"><bb-money-cell [value]="row.ownClosingBalance" [currency]="row.currencyCode" /></small> }
+          </span>
+        </ng-template>
+      </bb-data-grid>
+    </div>
+  }
+
+  @if (rows().length > 0) {
+    <p class="notes text-muted">
+      Opening and closing are each account's ledger balance, so the closing balance is the balance in the books on the last day, as on the Reconciliation Report.
+      Received is the debits and spent the credits of the period, so a transfer between two bank accounts is spent from one and received by the other.
+      A revaluation is a posting on a document that also posts to Unrealized FX Gain/Loss; it has its own column and is not counted as received or spent.
+      A credit card or overdraft shows what is held, so what is owed reads negative.
+      @if (foreignNote()) {
+        An account in another currency shows its own-currency figures in smaller type under each base figure.
+      }
+    </p>
+  }
+}
