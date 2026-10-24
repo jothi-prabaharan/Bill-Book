@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { FormatSettingsService } from '@bill-book/currency-format';
 import {
   JOURNAL_STATUS_CHOICES,
@@ -56,7 +55,6 @@ type FilterName = 'fromDate' | 'toDate' | 'source' | 'status' | 'accountId';
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    RouterLink,
     BranchDateInputComponent,
     SelectComponent,
     MessageBoxComponent,

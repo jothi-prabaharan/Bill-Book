@@ -1,0 +1,210 @@
+/* The Foreign Currency Gain or Loss report (TK-220): the filters, the revaluation rates, the period's sentence, then one block for each currency. */
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.page-head h1 {
+  font-size: 1.3rem;
+  margin: 0.2rem 0 0;
+}
+
+.subtitle,
+.period,
+.empty,
+.notes {
+  margin: 0;
+}
+
+.notes {
+  font-size: 12px;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--space-2) var(--space-3);
+  align-items: start;
+  padding: var(--space-3);
+}
+
+.filters__field {
+  min-width: 0;
+}
+
+/* The button sits level with the inputs, below their labels. */
+.filters__actions {
+  align-self: end;
+  padding-bottom: var(--space-1);
+}
+
+/* One rate field for each currency, side by side while they fit. */
+.rates {
+  padding: var(--space-3);
+}
+
+.rates__title {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.rates__lead {
+  margin: var(--space-1) 0 var(--space-2);
+  font-size: 12px;
+}
+
+.rates__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: var(--space-2) var(--space-3);
+  align-items: start;
+}
+
+.matrix {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.matrix bb-data-grid {
+  min-width: 50rem;
+}
+
+/* A currency's heading: its code, its rate, and a tag when it has none. */
+.heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px var(--space-2);
+}
+
+.heading__detail {
+  font-size: 12px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.account {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* An account sits under its currency's heading. */
+.account--indent {
+  padding-left: var(--space-3);
+}
+
+.account__detail {
+  font-size: 12px;
+}
+
+.no-rate {
+  font-size: 12px;
+}
+
+/* A loss reads in the danger colour; a gain is left as the figure it is. */
+.loss {
+  color: var(--color-danger);
+}
+
+/* Phone: one card for each currency. */
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.entry {
+  padding: var(--space-2) var(--space-3);
+}
+
+.entry__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px var(--space-2);
+  font-size: 14px;
+  padding-bottom: var(--space-1);
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.entry__detail {
+  font-size: 12px;
+}
+
+.line {
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.line:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.line--subtotal,
+.line--total {
+  background: var(--color-surface-muted);
+  margin: 0 calc(var(--space-3) * -1);
+  padding-left: var(--space-3);
+  padding-right: var(--space-3);
+}
+
+.line--total {
+  border-top: 2px solid var(--color-divider);
+}
+
+.line__name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px var(--space-2);
+  font-size: 13px;
+}
+
+.line__detail {
+  font-size: 12px;
+}
+
+.figures {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: var(--space-1) 0 0;
+  font-size: 13px;
+}
+
+.figures__row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+
+.figures dt {
+  color: var(--color-text-muted);
+}
+
+.figures dd {
+  margin: 0;
+  display: flex;
+  justify-content: flex-end;
+  font-variant-numeric: tabular-nums;
+}
+
+.figures__row--balance {
+  padding-top: var(--space-1);
+  border-top: 1px solid var(--color-divider);
+  font-weight: 600;
+}
+
+.figures__row--balance dt {
+  color: inherit;
+}

@@ -88,6 +88,13 @@ export const reportingRoutes: Routes = [
     data: { access: { permission: 'reports.view' } },
   },
   {
+    // Its own page on its own endpoint (TK-220), ahead of the shared host.
+    path: 'foreign-currency-gain-or-loss',
+    loadComponent: () =>
+      import('./foreign-currency-gain-or-loss/foreign-currency-gain-or-loss.page').then((m) => m.ForeignCurrencyGainLossPage),
+    data: { access: { permission: 'reports.view' } },
+  },
+  {
     path: 'balance-sheet',
     loadComponent: () =>
       import('./balance-sheet/balance-sheet-report.page').then((m) => m.BalanceSheetReportPage),

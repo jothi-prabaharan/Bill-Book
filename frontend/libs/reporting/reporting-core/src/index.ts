@@ -28,3 +28,5 @@ export * from './lib/account-transaction/account-transaction.models';
 export * from './lib/account-transaction/account-transaction.service';
 export * from './lib/bank-summary/bank-summary.models';
 export * from './lib/bank-summary/bank-summary.service';
+export * from './lib/foreign-currency-gain-or-loss/foreign-currency-gain-or-loss.models';
+export * from './lib/foreign-currency-gain-or-loss/foreign-currency-gain-or-loss.service';

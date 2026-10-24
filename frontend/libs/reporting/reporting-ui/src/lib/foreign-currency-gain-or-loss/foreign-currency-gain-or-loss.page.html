@@ -1,0 +1,150 @@
+<header class="page-head">
+  <div>
+    <h1>Foreign Currency Gain or Loss</h1>
+    <p class="subtitle text-muted">
+      What exchange rates have gained or lost on foreign-currency balances: realized when a settlement posted a difference, and unrealized on what is still open, at a rate you give for each currency.
+    </p>
+  </div>
+</header>
+
+<form class="filters card" [formGroup]="filters" (ngSubmit)="run()" novalidate>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'fx-from'" label="From" formControlName="fromDate" [required]="true"
+                          [error]="err('fromDate', 'From date')" />
+  </div>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'fx-asat'" label="As at" formControlName="asAtDate" [required]="true"
+                          [error]="err('asAtDate', 'As at date')" />
+  </div>
+  <div class="filters__field">
+    <bb-select [id]="'fx-currency'" label="Currency" placeholder="All currencies" [options]="currencyOptions()"
+               [loading]="!choicesLoaded()" emptyText="No foreign-currency balances" formControlName="currencyCode"
+               [error]="err('currencyCode', 'Currency')" />
+  </div>
+  <div class="filters__actions">
+    <button class="btn btn-primary" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Running…' : 'Run report' }}
+    </button>
+  </div>
+</form>
+
+@if (rateCurrencies().length > 0) {
+  <section class="rates card" aria-labelledby="fx-rates-title">
+    <h2 id="fx-rates-title" class="rates__title">Revaluation rates</h2>
+    <p class="rates__lead text-muted">
+      The rate each currency is revalued at, in {{ baseCurrency() }} for one unit of it. Each starts from the rate master's rate for the as-at date and can be changed here; nothing is posted.
+    </p>
+    <div class="rates__grid">
+      @for (code of rateCurrencies(); track code) {
+        <bb-exchange-rate-input [id]="'fx-rate-' + code" [label]="code" [fromCurrency]="code" [toCurrency]="baseCurrency()"
+                                [formControl]="rateControl(code)" [hint]="rateHint(code)" [error]="rateError(code)" />
+      }
+    </div>
+  </section>
+}
+
+@if (messages().length > 0) {
+  <bb-message-box [messages]="messages()" />
+}
+
+@if (result(); as report) {
+  <p class="period text-muted">
+    Realized {{ report.fromDate | registerDate }} to {{ report.asAtDate | registerDate }}; balances and unrealized as at {{ report.asAtDate | registerDate }}, in {{ report.baseCurrencyCode }}.
+  </p>
+
+  @if (rows().length === 0) {
+    <p class="empty text-muted">This branch has no foreign-currency balance and no exchange difference for these dates.</p>
+  } @else if (narrow()) {
+    <div class="cards" role="list" aria-label="Foreign currency gain or loss">
+      @for (group of groups(); track group[0].key) {
+        <article class="card entry" role="listitem">
+          @for (row of group; track row.key) {
+            @if (row.kind === 'heading') {
+              <header class="entry__head">
+                <strong>{{ row.name }}</strong>
+                @if (row.detail) { <span class="entry__detail text-muted">{{ row.detail }}</span> }
+                @if (row.needsRate) { <span class="tag tag-neutral">No rate</span> }
+              </header>
+            } @else {
+              <div class="line" [class.line--subtotal]="row.kind === 'subtotal'" [class.line--total]="row.kind === 'total'">
+                <div class="line__name">
+                  <strong>{{ row.name }}</strong>
+                  @if (row.detail) { <span class="line__detail text-muted">{{ row.detail }}</span> }
+                </div>
+                <dl class="figures">
+                  @if (row.dueSource !== null) {
+                    <div class="figures__row"><dt>Due in currency</dt><dd><bb-money-cell [value]="row.dueSource" [currency]="row.currencyCode" /></dd></div>
+                  }
+                  @if (row.carryingBase !== null) {
+                    <div class="figures__row"><dt>At booked rates</dt><dd><bb-money-cell [value]="row.carryingBase" /></dd></div>
+                  }
+                  @if (row.revaluedBase !== null) {
+                    <div class="figures__row"><dt>At revaluation rate</dt><dd><bb-money-cell [value]="row.revaluedBase" /></dd></div>
+                  }
+                  @if (row.unrealized !== null) {
+                    <div class="figures__row"><dt>Unrealized</dt><dd [class.loss]="row.unrealized < 0"><bb-money-cell [value]="row.unrealized" /></dd></div>
+                  }
+                  @if (row.realized !== null) {
+                    <div class="figures__row"><dt>Realized</dt><dd [class.loss]="row.realized < 0"><bb-money-cell [value]="row.realized" /></dd></div>
+                  }
+                  @if (row.net !== null) {
+                    <div class="figures__row figures__row--balance"><dt>Net</dt><dd [class.loss]="row.net < 0"><bb-money-cell [value]="row.net" /></dd></div>
+                  }
+                </dl>
+              </div>
+            }
+          }
+        </article>
+      }
+    </div>
+  } @else {
+    <div class="matrix">
+      <bb-data-grid flush [columns]="columns" [data]="rows()" [rowClass]="rowClass" [sortable]="false"
+                    [showColumnFilters]="false" [showCount]="false" [paged]="false" label="Foreign currency gain or loss">
+        <ng-template bbCellTemplate="account" let-row>
+          @if (row.kind === 'heading') {
+            <span class="heading">
+              <strong>{{ row.name }}</strong>
+              @if (row.detail) { <span class="heading__detail text-muted">{{ row.detail }}</span> }
+              @if (row.needsRate) { <span class="tag tag-neutral">No rate</span> }
+            </span>
+          } @else {
+            <span class="account" [class.account--indent]="row.kind === 'account'">
+              <strong class="account__name">{{ row.name }}</strong>
+              @if (row.detail) { <span class="account__detail text-muted">{{ row.detail }}</span> }
+            </span>
+          }
+        </ng-template>
+        <ng-template bbCellTemplate="dueSource" let-row>
+          @if (row.dueSource !== null) { <bb-money-cell [value]="row.dueSource" [currency]="row.currencyCode" /> }
+        </ng-template>
+        <ng-template bbCellTemplate="carryingBase" let-row>
+          @if (row.carryingBase !== null) { <bb-money-cell [value]="row.carryingBase" /> }
+        </ng-template>
+        <ng-template bbCellTemplate="revaluedBase" let-row>
+          @if (row.revaluedBase !== null) {
+            <bb-money-cell [value]="row.revaluedBase" />
+          } @else if (row.kind === 'account' && row.needsRate) {
+            <span class="no-rate text-muted">no rate</span>
+          }
+        </ng-template>
+        <ng-template bbCellTemplate="unrealized" let-row>
+          @if (row.unrealized !== null) { <span [class.loss]="row.unrealized < 0"><bb-money-cell [value]="row.unrealized" /></span> }
+        </ng-template>
+        <ng-template bbCellTemplate="realized" let-row>
+          @if (row.realized !== null) { <span [class.loss]="row.realized < 0"><bb-money-cell [value]="row.realized" /></span> }
+        </ng-template>
+        <ng-template bbCellTemplate="net" let-row>
+          @if (row.net !== null) { <span [class.loss]="row.net < 0"><bb-money-cell [value]="row.net" /></span> }
+        </ng-template>
+      </bb-data-grid>
+    </div>
+  }
+
+  @if (rows().length > 0) {
+    <p class="notes text-muted">
+      A balance is what the books hold in the currency: money owed to the branch is positive and money it owes is negative. At booked rates is that balance in {{ report.baseCurrencyCode }} at the rates the documents were booked at; at the revaluation rate it is the balance times the rate above. Unrealized is the second less the first, so a rising rate is a gain on a receivable and a loss on a payable. Nothing is posted for it.
+      Realized is what settlements in the period posted to Realized FX Gain/Loss, and its total is that account's movement on the Profit and Loss for the same dates. A posting with no foreign-currency balance, such as a manual journal, belongs to no currency and is shown on its own line.
+    </p>
+  }
+}

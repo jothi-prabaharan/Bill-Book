@@ -650,7 +650,7 @@ public sealed class ReportCatalogSeeder
             Title = "Foreign Currency Gain or Loss",
             Module = ReportModule.Accounting,
             RequiredPermission = "accounting.view",
-            Description = "Realized and unrealized FX gain/loss per account and currency. Unrealized columns are null until period-end revaluation job exists.",
+            Description = "Foreign-currency balances per account and currency, in the currency and at booked rates, with the realized FX gain or loss of a period. The revaluation columns need a rate and are on the report's own page.",
             SortOrder = 100,
             Columns =
             [
