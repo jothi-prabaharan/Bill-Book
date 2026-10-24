@@ -7567,6 +7567,20 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** `docs/Backend_Api_Audit.md` counts, per service, the controllers, actions and lines, lists the rule violations found, and ranks the shortening opportunities in a suggested order with the lines each would save, what each would change (nothing visible) and how it would be verified. It counts the endpoints per service and does not list all 1,181, to stay short; each opportunity that is taken up becomes its own card.
 - **Notes:** Nothing is changed by this card. The owner picks what to shorten from the report; each pick is its own card.
 
+### TK-261 · Backend shortening 1: remove the dead code the audit found
+- [~] working (Claude Sonnet 5.5) — since 2026-10-24
+- **Issue:** [#250](https://github.com/jothi-prabaharan/Bill-Book/issues/250)
+- **Group:** Z · Owner request of 24 October 2026 ("Implementation one by one"): the shortening items of `docs/Backend_Api_Audit.md` section 4, in order, each its own card. This is item 1.
+- **Lanes:** none (deletions only; no file another card edits) · **Depends on:** TK-260 · **Decision:** the owner's answers of 24 October 2026: less code, same endpoints
+- **Where:** `backend/shared/Shared.Infrastructure`; `backend/worker/BillBook.Worker/BackgroundWorkerService.cs`; `AudienceRepository.ResolveForAudienceAsync`; `TableReservationRulesRepository.HoldsTable`; the report `docs/Backend_Api_Audit.md`.
+- **Sub-tasks:**
+  - [ ] Delete the orphan folder `Shared.Infrastructure` (no project, not in the solution, Syncfusion dropped by D-11) and the unregistered template worker `BackgroundWorkerService`.
+  - [ ] Delete the two public methods nothing calls.
+  - [ ] Keep `EInvoiceCredentials` (the documented credential names for the real provider, D-24) and `LeaveRepository.AccrueLeaveAsync` (the only code that adds to a leave balance), and correct section 3 of the audit to say so.
+  - [ ] Build the solution clean.
+- **Done when:** the four are gone, `dotnet build` of the solution is clean, and the audit says what was removed and why two items were kept.
+- **Notes:** found on the way: the TimeLeave card (about line 2038) says leave accrual and rollover run as a hosted job, but no job exists and nothing calls `AccrueLeaveAsync`, so leave balances never accrue. That is a missing feature rather than dead code and needs its own card, which the owner has not asked for.
+
 ## 3. Decisions from the owner
 
 These aren't tasks, and an agent never answers one itself. When a decision is made, record the
