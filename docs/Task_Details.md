@@ -7553,18 +7553,18 @@ The queue below is one list in card-number order. Each card names its group.
 - **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
 
 ### TK-260 · Backend API audit: every service, and what can be shortened
-- [~] working (Claude Sonnet 5.5) — since 2026-10-24
+- [x] completed (Claude Sonnet 5.5) · read-only, no code changed — 2026-10-24
 - **Issue:** [#249](https://github.com/jothi-prabaharan/Bill-Book/issues/249)
 - **Group:** Z · Owner request of 24 October 2026: "Check all backend api. Make it short without losing any features." Answered in the session as an audit report with no code changes, aimed at less code and the same endpoints, across every service.
 - **Lanes:** none (read-only; the one file it writes is `docs/Backend_Api_Audit.md`) · **Depends on:** — · **Decision:** the owner's answers of 24 October 2026
 - **Where:** every controller, repository and `Program.cs` under `backend/Api`; the report `docs/Backend_Api_Audit.md`.
-- **State:** checked 24 October 2026: 23 services, 296 controllers, about 1,300 actions, 211,000 lines of C# outside migrations.
+- **State:** checked 24 October 2026: 23 services, 296 controllers, 1,181 actions, 211,000 lines of C# outside migrations (147,000 once comments and blanks are left out). Report: `docs/Backend_Api_Audit.md`.
 - **Sub-tasks:**
-  - [ ] Inventory: controllers, actions, lines and guards for each service.
-  - [ ] Check the hard rules in CLAUDE.md by script (raw SQL, entity shape, annotation messages, transactions, catch blocks, cross-service references, query-filter bypasses, endpoint guards) and list every violation found.
-  - [ ] Measure duplicated code between files and services, and rank what can be shortened without changing a route, a permission or an answer.
-  - [ ] Write the ranked report with numbers and examples.
-- **Done when:** `docs/Backend_Api_Audit.md` lists, per service, the endpoints, the rule violations found and the shortening opportunities in order of lines saved, and says what each would change (nothing visible) and how it would be verified.
+  - [x] Inventory: controllers, actions, lines and guards for each service.
+  - [x] Check the hard rules in CLAUDE.md by script (raw SQL, entity shape, annotation messages, transactions, catch blocks, cross-service references, query-filter bypasses, endpoint guards) and list every violation found.
+  - [x] Measure duplicated code between files and services, and rank what can be shortened without changing a route, a permission or an answer.
+  - [x] Write the ranked report with numbers and examples.
+- **Done when:** `docs/Backend_Api_Audit.md` counts, per service, the controllers, actions and lines, lists the rule violations found, and ranks the shortening opportunities in a suggested order with the lines each would save, what each would change (nothing visible) and how it would be verified. It counts the endpoints per service and does not list all 1,181, to stay short; each opportunity that is taken up becomes its own card.
 - **Notes:** Nothing is changed by this card. The owner picks what to shorten from the report; each pick is its own card.
 
 ## 3. Decisions from the owner

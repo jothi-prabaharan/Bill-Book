@@ -6,7 +6,7 @@ rewrites and stages it whenever the details file changes. **Never edit it by han
 status, edit the card's first line in the details file; the card there holds the rules, lanes,
 where to start, sub-tasks and notes.
 
-**Summary:** 203 completed, 1 working, 51 open, and 2 blocked (257 cards).
+**Summary:** 204 completed, 0 working, 51 open, and 2 blocked (257 cards).
 
 | Card | Title | Group | Status | Completed by | Completed at | Tests | Issue | Note |
 | :--- | :--- | :--- | :---: | :--- | :--- | :--- | :---: | :--- |
@@ -266,4 +266,4 @@ where to start, sub-tasks and notes.
 | [TK-257](./Task_Details.md#tk-257--project-budget-vs-actual-its-own-endpoint-and-page) | Project Budget vs Actual: its own endpoint and page | Z | 🟪 open | — | — | — | [#244](https://github.com/jothi-prabaharan/Bill-Book/issues/244) | — |
 | [TK-258](./Task_Details.md#tk-258--project-unbilled-work-its-own-endpoint-and-page) | Project Unbilled Work: its own endpoint and page | Z | 🟪 open | — | — | — | [#245](https://github.com/jothi-prabaharan/Bill-Book/issues/245) | — |
 | [TK-259](./Task_Details.md#tk-259--project-time-by-user-its-own-endpoint-and-page) | Project Time by User: its own endpoint and page | Z | 🟪 open | — | — | — | [#246](https://github.com/jothi-prabaharan/Bill-Book/issues/246) | — |
-| [TK-260](./Task_Details.md#tk-260--backend-api-audit-every-service-and-what-can-be-shortened) | Backend API audit: every service, and what can be shortened | Z | 🔶 working | Claude Sonnet 5.5 (working) | since 2026-10-24 | — | [#249](https://github.com/jothi-prabaharan/Bill-Book/issues/249) | — |
+| [TK-260](./Task_Details.md#tk-260--backend-api-audit-every-service-and-what-can-be-shortened) | Backend API audit: every service, and what can be shortened | Z | ✅ completed | Claude Sonnet 5.5 | 2026-10-24 | — | [#249](https://github.com/jothi-prabaharan/Bill-Book/issues/249) | read-only, no code changed |
