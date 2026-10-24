@@ -2,7 +2,7 @@
 
 TK-260, 24 October 2026. Read-only: no code was changed. Every figure was measured by script over the C# in `backend/` (migrations, tests and build output left out) and is repeatable; the heuristic ones say so.
 
-**The short answer.** The backend is not full of waste. It is broad: 23 services, 296 controllers, 1,181 actions, about 134,000 lines of code in the services and 147,000 with Shared.Kernel and the worker. The repeated code that can go **without losing a feature or changing a route** is about **10,300 to 11,900 lines, 7 to 8%**. Going further would mean removing features. Some of that saving is mechanical and provable by a diff (section 4, items 1 to 4); the rest touches posting logic and needs the owner's test runs.
+**The short answer.** The backend is not full of waste. It is broad: 23 services, 296 controllers, 1,181 actions, about 134,000 lines of code in the services and 147,000 with Shared.Kernel and the worker. The repeated code that can go **without losing a feature or changing a route** is about **10,200 to 11,800 lines, 7 to 8%**. Going further would mean removing features. Some of that saving is mechanical and provable by a diff (section 4, items 1 to 4); the rest touches posting logic and needs the owner's test runs.
 
 ## 1. The backend in numbers
 
@@ -59,11 +59,13 @@ Ranked by what could hurt first.
 5. **Rule 3.** 57 annotations with no `ErrorMessage`, for example `Sales.Entity/TableEntities/SalesRegister.cs` and `ReminderProfile.cs`.
 6. **Rule 1.** `Master.Api/Services/DatabaseMigrationService.cs:513` builds `SELECT 1 FROM pg_database WHERE datname = '{targetDatabase}'` by string interpolation (the value is a shard name from configuration, and `CREATE DATABASE` itself is allowed, but the check should be parameterised). `Shared.Kernel/Tenancy/TenantDatabaseResolver.cs:124` is a raw, parameterised `SELECT` through `NpgsqlCommand`, outside the rule's four exceptions (CLAUDE.md already records it).
 7. **Rule 13.** `worker/BillBook.Worker/Costing/CostingWorker.cs:306` calls `BeginTransactionAsync` directly instead of `BeginScopeAsync`.
-8. **Orphan code.** `backend/shared/Shared.Infrastructure` holds two `.cs` files, has no project file and is not in the solution; its `SyncfusionPdfGenerator` belongs to a library D-11 dropped. `worker/BillBook.Worker/BackgroundWorkerService.cs` is the project template's stub (it logs every five seconds) and is never registered. Six public members have no caller anywhere in the backend: `AudienceRepository.ResolveForAudienceAsync` (Customer), `TableReservationRulesRepository.HoldsTable` (Sales), `LeaveRepository.AccrueLeaveAsync` (TimeLeave) and `EInvoiceCredentials.UsernameKey`, `ClientIdKey` and `ClientSecretKey` (Sales; `PasswordKey` is called only from a test, so the e-invoice credential names are not yet used by any production code).
+8. **Orphan code. Removed by TK-261 (91 lines).** `backend/shared/Shared.Infrastructure` (two files, no project, not in the solution, a Syncfusion generator for a library D-11 dropped), `worker/BillBook.Worker/BackgroundWorkerService.cs` (the project template's stub, never registered), `AudienceRepository.ResolveForAudienceAsync` and `TableReservationRulesRepository.HoldsTable` (no caller; the query states the same test itself). **Two items first listed here were not dead and were kept:** `EInvoiceCredentials` is the documented credential-name scheme for the real e-invoice provider (D-24), used by the sandbox test and waiting for the provider; `LeaveRepository.AccrueLeaveAsync` is the only code in the product that adds to a leave balance (finding 12).
 9. **Encoding.** 16 files in `Reporting.Repository/ReadModels` are Windows-1252, not UTF-8 (an em dash in comments). They compile; they show garbled in a UTF-8 editor or a diff.
 10. **Possible N+1.** 45 loops await a database call inside the loop (Site 9, Customer 5, Accounting 5, Sales 4, Inventory 4, worker 4, Fee 3, TimeLeave 3). Heuristic: some are right (posting a ledger's legs one by one), so each needs a human look.
 
 11. **Known from TK-219, not part of the scan.** The Reconciliation Report's own-currency `bookBalance` still counts revaluation postings, so it can differ from Bank Summary's closing balance for a foreign-currency bank account. The fix is to leave those postings out, reusing `BankSummaryReportRepository.RevaluationLegs`. It needs its own card.
+
+12. **Found by TK-261: leave never accrues.** The TimeLeave card says leave accrual and rollover run as a hosted job. No such job exists, nothing calls `LeaveRepository.AccrueLeaveAsync` and nothing in the worker mentions accrual or rollover, so `Accrued` stays at zero and `CarryForwardKind` is stored and never applied. This is a missing feature and needs its own card.
 
 ## 4. What can be shortened
 
@@ -71,7 +73,7 @@ Same routes, same permissions, same answers. Estimates are conservative and from
 
 | # | Change | Lines saved | Risk | How to prove nothing changed |
 |---|---|---:|---|---|
-| 1 | **Remove the dead code** in finding 8. | ~150 | None | Build. |
+| 1 | **Remove the dead code** in finding 8. **Done, TK-261: 91 lines.** | 91 | None | Solution built clean, 0 warnings. |
 | 2 | **Per-service copies become shared code.** `Program.cs` (2,668 lines, 63% repeated) takes one `AddBillBookService<TContext>` extension. `EditLogController` (23 copies, 440 lines), `InternalSeedController` (23, 945), `HttpCurrentUser` (23, 475), `DatabaseMigrationService` (22, 465 beyond Master's own) and `HttpCallerPermissions` (8, 105) become generic classes in Shared.Kernel. | ~3,000 | Low | Dump every route and DI registration before and after and diff; every host starts; the endpoint-guard tests. |
 | 3 | **DbContext conventions.** 302 `HasKey`, 235 `HasColumnType`, 141 `HasConversion<string>().HasMaxLength(20)` and 156 `OnDelete` lines say the same thing per entity; model conventions and a helper say it once. 6,026 lines, 39% repeated. | ~1,500 | Low | The EF model snapshot of each of the 26 contexts must not change: `dotnet ef migrations has-pending-model-changes` and `MigrationModelTests`. A machine can prove this one. |
 | 4 | **The report catalog states each column's key and type once.** A source's `Columns` and the 2,700-line `ReportCatalogSeeder` both name every column and its data type (checked on Bank Summary). Headers, order and defaults live only in the seeder, so only the overlap can go, not the whole list; `reports.json` feeds a separate table and is left alone. | ~800–1,000 | Moderate | Seed a fresh database before and after: `rpt.Reports` and `rpt.ReportDetails` identical; `POST api/reports/{key}/query` identical for every key. Check the overlap across more than one report before starting. |
@@ -79,9 +81,9 @@ Same routes, same permissions, same answers. Estimates are conservative and from
 | 6 | **Twins merge.** `ReceiveMoney` and `SpendMoney` (1,083 lines, almost the same), `TransferMoney` beside them, and `RecurringBilling` in Sales and in Purchase (878 lines, about 90% the same). | ~800–1,000 | Moderate | Local round trips on PostgreSQL with the ledger diffed; the owner's suites. |
 | 7 | **Request and response models.** The Quote, SalesOrder and PurchaseOrder families, and the `ListItem` and `Response` pairs that carry the same fields: 11,932 lines, 31% repeated. | ~1,500–2,000 | Moderate | Serialise every response type before and after and compare the JSON. |
 | 8 | **Sales and Purchase document repositories.** Nine files, 7,806 lines, share the same header and line saving, numbering, status and conversion steps. A shared document base would hold them once. | ~2,000–2,500 | **High** | Posting, stock and ledger live here: the owner's suites plus a round trip for each document type with the ledger and stock diffed. Do this last. |
-| | **Total** | **~10,300–11,900** | | |
+| | **Total** | **~10,200–11,800** | | |
 
-Suggested order: 1, 2, 3, 4 (each provable by a diff), then 5, then 7, 6 and 8.
+Suggested order: 1, 2, 3, 4 (each provable by a diff), then 5, then 7, 6 and 8. Item 1 is done; the rest are taken one at a time, each as its own card.
 
 ## 5. Left alone, and why
 

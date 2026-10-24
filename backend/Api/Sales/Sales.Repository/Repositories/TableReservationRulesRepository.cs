@@ -18,10 +18,6 @@ public static class TableReservationRulesRepository
     public static bool Overlaps(DateTime start, int minutes, DateTime otherStart, int otherMinutes) =>
         start < otherStart.AddMinutes(otherMinutes) && otherStart < start.AddMinutes(minutes);
 
-    /// <summary>A booking that still holds its table: booked, or seated and not yet over.</summary>
-    public static bool HoldsTable(ReservationStatus status) =>
-        status is ReservationStatus.Booked or ReservationStatus.Seated;
-
     /// <summary>Only a booking still booked can be changed, cancelled, marked a no-show or seated.</summary>
     public static string? ChangeRefusal(ReservationStatus status) => status switch
     {

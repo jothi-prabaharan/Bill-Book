@@ -291,15 +291,6 @@ public sealed class AudienceRepository
         };
     }
 
-    public async Task<AudiencePreviewResponse?> ResolveForAudienceAsync(long id, CancellationToken ct)
-    {
-        var audience = await _db.Audiences.AsNoTracking().FirstOrDefaultAsync(x => x.AudienceId == id, ct);
-        if (audience is null) return null;
-
-        var dto = MapToDto(audience);
-        return await ResolvePreviewAsync(dto.Rules, ct);
-    }
-
     private static AudienceDto MapToDto(Audience a)
     {
         AudienceRules parsedRules;
