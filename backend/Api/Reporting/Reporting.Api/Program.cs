@@ -252,6 +252,7 @@ builder.Services.AddScoped<JournalReportRepository>();
 builder.Services.AddScoped<AccountTransactionReportRepository>();
 builder.Services.AddScoped<BankSummaryReportRepository>();
 builder.Services.AddScoped<ForeignCurrencyGainLossReportRepository>();
+builder.Services.AddScoped<ForeignCurrencyGainLossDetailsReportRepository>();
 
 // The report builder's datasets (TK-113). Their custom field columns come
 // from Master's definitions, cached five minutes per branch and kind.

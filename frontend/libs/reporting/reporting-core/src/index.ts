@@ -30,3 +30,5 @@ export * from './lib/bank-summary/bank-summary.models';
 export * from './lib/bank-summary/bank-summary.service';
 export * from './lib/foreign-currency-gain-or-loss/foreign-currency-gain-or-loss.models';
 export * from './lib/foreign-currency-gain-or-loss/foreign-currency-gain-or-loss.service';
+export * from './lib/foreign-currency-gain-or-loss-details/foreign-currency-gain-or-loss-details.models';
+export * from './lib/foreign-currency-gain-or-loss-details/foreign-currency-gain-or-loss-details.service';

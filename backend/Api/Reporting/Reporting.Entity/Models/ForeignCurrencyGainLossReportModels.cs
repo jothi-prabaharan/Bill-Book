@@ -150,6 +150,13 @@ public sealed class ForeignCurrencyChoiceDto
 
     /// <summary>How many accounts hold a balance in it.</summary>
     public int Accounts { get; set; }
+
+    /// <summary>
+    /// The currency still has a balance, so a rate is asked for it. Always true on the
+    /// summary's lookup, which lists only currencies with one; the details report lists every
+    /// currency with a posting so a fully settled one can still be chosen.
+    /// </summary>
+    public bool HasBalance { get; set; }
 }
 
 /// <summary>The branch's base currency and the foreign currencies it holds a balance in at a date.</summary>

@@ -236,7 +236,10 @@ export function foreignCurrencyRows(result: ForeignCurrencyGainLossResult): Fore
  * and the net. Money is formatted by the caller so the sentence reads in the branch's own
  * currency. A gain reads as itself and a loss with a minus sign.
  */
-export function foreignCurrencySentence(result: ForeignCurrencyGainLossResult, money: (value: number) => string): string {
+export function foreignCurrencySentence(
+  result: Pick<ForeignCurrencyGainLossResult, 'totalRealized' | 'totalUnrealized' | 'totalNet'>,
+  money: (value: number) => string,
+): string {
   const signed = (value: number): string => (value < 0 ? `−${money(Math.abs(value))}` : money(value));
 
   return `Realized ${signed(result.totalRealized)} + unrealized ${signed(result.totalUnrealized)} = net ${signed(result.totalNet)}.`;

@@ -159,7 +159,7 @@ public sealed class ForeignCurrencyGainLossReportRepository
     /// currency is not one, whatever a document in a foreign currency tagged its leg
     /// with.
     /// </summary>
-    private static IQueryable<ForeignLeg> ForeignLegs(
+    public static IQueryable<ForeignLeg> ForeignLegs(
         IQueryable<JournalLedgerRead> ledger, IQueryable<AccountRead> accounts, string baseCurrency) =>
         from l in ledger
         join a in accounts on l.AccountId equals a.AccountId
@@ -169,8 +169,12 @@ public sealed class ForeignCurrencyGainLossReportRepository
                   || (a.IsBank && l.CurrencyCode == a.CurrencyCode))
         select new ForeignLeg
         {
+            LedgerId = l.LedgerId,
             Code = l.TransactionTypeCode,
             Id = l.TransactionId,
+            DetailId = l.TransactionDetailId,
+            ContactId = l.ContactId,
+            DocumentNo = l.DocumentNo,
             LedgerDate = l.LedgerDate,
             CurrencyCode = l.CurrencyCode,
             AccountId = l.AccountId,
@@ -266,6 +270,11 @@ public sealed class ForeignCurrencyGainLossReportRepository
     /// <param name="realizedTotal">Every posting to Realized FX Gain/Loss in the period, credits less debits.</param>
     /// <param name="rates">Base currency per unit, by upper-case currency code.</param>
     /// <param name="only">One currency asked for, or null for all.</param>
+    /// <param name="alsoShow">
+    /// Currency and account pairs to list even when they hold nothing and posted nothing,
+    /// because the details report has document rows under them: an open invoice and an
+    /// unapplied advance can net to nought on the account and are still two documents.
+    /// </param>
     public static ForeignCurrencyGainLossReportResultDto Compose(
         DateOnly from,
         DateOnly asAt,
@@ -275,7 +284,8 @@ public sealed class ForeignCurrencyGainLossReportRepository
         IReadOnlyList<FxRealized> realized,
         decimal realizedTotal,
         IReadOnlyDictionary<string, decimal> rates,
-        string? only)
+        string? only,
+        IReadOnlyCollection<(string Currency, long AccountId)>? alsoShow = null)
     {
         Dictionary<long, AccountRead> accountById = accounts.ToDictionary(a => a.AccountId);
         Dictionary<(string Currency, long AccountId), (decimal Due, decimal Carrying, decimal Realized)> figures = [];
@@ -293,10 +303,19 @@ public sealed class ForeignCurrencyGainLossReportRepository
             figures[(r.CurrencyCode, r.AccountId)] = (due, carrying, already + r.Amount);
         }
 
+        foreach ((string currency, long accountId) in alsoShow ?? [])
+        {
+            if (!figures.ContainsKey((currency, accountId)))
+            {
+                figures[(currency, accountId)] = (0m, 0m, 0m);
+            }
+        }
+
+        HashSet<(string Currency, long AccountId)> shown = [.. alsoShow ?? []];
         List<ForeignCurrencyBlockDto> blocks = [];
 
         foreach (IGrouping<string, KeyValuePair<(string Currency, long AccountId), (decimal Due, decimal Carrying, decimal Realized)>> group in
-                 figures.Where(f => f.Value.Due != 0m || f.Value.Carrying != 0m || f.Value.Realized != 0m)
+                 figures.Where(f => f.Value.Due != 0m || f.Value.Carrying != 0m || f.Value.Realized != 0m || shown.Contains(f.Key))
                      .GroupBy(f => f.Key.Currency)
                      .OrderBy(g => g.Key, StringComparer.Ordinal))
         {
@@ -372,11 +391,12 @@ public sealed class ForeignCurrencyGainLossReportRepository
                     .Where(b => b.DueSource != 0m || b.CarryingBase != 0m)
                     .GroupBy(b => b.CurrencyCode)
                     .OrderBy(g => g.Key, StringComparer.Ordinal)
-                    .Select(g => new ForeignCurrencyChoiceDto { CurrencyCode = g.Key, Accounts = g.Count() }),
+                    .Select(g => new ForeignCurrencyChoiceDto { CurrencyCode = g.Key, Accounts = g.Count(), HasBalance = true }),
             ],
         };
 
-    private static ForeignAccountKind KindOf(AccountRead? account) => account?.AccountSystemName switch
+    /// <summary>What kind of account an account is, from its system name; a bank account otherwise.</summary>
+    public static ForeignAccountKind KindOf(AccountRead? account) => account?.AccountSystemName switch
     {
         ReceivableAccountName => ForeignAccountKind.Receivable,
         PayableAccountName => ForeignAccountKind.Payable,
@@ -387,9 +407,19 @@ public sealed class ForeignCurrencyGainLossReportRepository
 /// <summary>One leg that is a foreign-currency balance, with what the grouping needs of its account.</summary>
 public sealed class ForeignLeg
 {
+    public long LedgerId { get; set; }
+
     public string Code { get; set; } = string.Empty;
 
     public long Id { get; set; }
+
+    /// <summary>The line of the document the leg belongs to; a money document's line number.</summary>
+    public long DetailId { get; set; }
+
+    public long? ContactId { get; set; }
+
+    /// <summary>The number on the document's face, when the ledger row carries one.</summary>
+    public string? DocumentNo { get; set; }
 
     public DateOnly LedgerDate { get; set; }
 

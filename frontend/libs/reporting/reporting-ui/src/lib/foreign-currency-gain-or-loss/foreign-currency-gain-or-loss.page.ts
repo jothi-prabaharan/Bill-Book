@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
-import { AbstractControl, FormControl, FormGroup, FormRecord, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormatSettingsService } from '@bill-book/currency-format';
 import {
   ForeignCurrencyChoices,
@@ -11,7 +11,6 @@ import {
   foreignCurrencySentence,
   missingRatesSentence,
   rateKeyCurrency,
-  ratesOf,
 } from '@bill-book/reporting-core';
 import {
   BbSelectOption,
@@ -26,9 +25,10 @@ import {
   SelectComponent,
   UiMessage,
   rangeForPreset,
-  registerDate,
   toIsoDate,
 } from '@bill-book/ui-components';
+
+import { FxRateFields } from './fx-rate-fields';
 
 type FilterName = 'fromDate' | 'asAtDate' | 'currencyCode';
 
@@ -79,13 +79,10 @@ export class ForeignCurrencyGainLossPage implements OnInit {
   });
 
   /** One revaluation rate for each currency with a balance at the as-at date, by currency code. */
-  protected readonly rates = new FormRecord<FormControl<number | null>>({});
+  protected readonly rates = new FxRateFields((currency, base, on) => this.report.masterRate(currency, base, on));
 
   protected readonly choices = signal<ForeignCurrencyChoices>({ baseCurrencyCode: '', currencies: [] });
   protected readonly choicesLoaded = signal(false);
-
-  /** Where each currency's starting rate came from, for the hint under its field. */
-  private readonly rateSources = signal<Record<string, string>>({});
 
   protected readonly result = signal<ForeignCurrencyGainLossResult | null>(null);
   protected readonly busy = signal(false);
@@ -191,11 +188,11 @@ export class ForeignCurrencyGainLossPage implements OnInit {
   }
 
   protected rateControl(code: string): FormControl<number | null> {
-    return this.rates.controls[code];
+    return this.rates.controls.controls[code];
   }
 
   protected rateHint(code: string): string {
-    return this.rateSources()[code] ?? '';
+    return this.rates.hint(code);
   }
 
   protected rateError(code: string): string {
@@ -221,7 +218,7 @@ export class ForeignCurrencyGainLossPage implements OnInit {
           fromDate: value.fromDate as string,
           asAtDate: value.asAtDate as string,
           currencyCode: value.currencyCode,
-          rates: ratesOf(this.rates.getRawValue()),
+          rates: this.rates.values(),
         }),
       );
     } catch (err: unknown) {
@@ -253,65 +250,19 @@ export class ForeignCurrencyGainLossPage implements OnInit {
       }
 
       this.choices.set(choices);
-      this.syncRateControls(choices.currencies.map((c) => c.currencyCode));
-      await this.startFromMasterRates(choices, asAt, run);
+      const codes = choices.currencies.map((c) => c.currencyCode);
+      this.rates.sync(codes);
+      await this.rates.startFromMaster(codes, choices.baseCurrencyCode, asAt, () => run === this.choiceRun);
     } catch {
       if (run === this.choiceRun) {
         this.choices.set({ baseCurrencyCode: '', currencies: [] });
-        this.syncRateControls([]);
+        this.rates.sync([]);
       }
     } finally {
       if (run === this.choiceRun) {
         this.choicesLoaded.set(true);
       }
     }
-  }
-
-  private syncRateControls(codes: string[]): void {
-    for (const code of Object.keys(this.rates.controls)) {
-      if (!codes.includes(code)) {
-        this.rates.removeControl(code);
-      }
-    }
-
-    for (const code of codes) {
-      if (!this.rates.contains(code)) {
-        this.rates.addControl(code, new FormControl<number | null>(null));
-      }
-    }
-  }
-
-  private async startFromMasterRates(choices: ForeignCurrencyChoices, asAt: string, run: number): Promise<void> {
-    const found = await Promise.all(
-      choices.currencies.map(async (c) => ({
-        code: c.currencyCode,
-        rate: await this.report.masterRate(c.currencyCode, choices.baseCurrencyCode, asAt).catch(() => null),
-      })),
-    );
-
-    if (run !== this.choiceRun) {
-      return;
-    }
-
-    const sources: Record<string, string> = {};
-    for (const { code, rate } of found) {
-      const control = this.rates.controls[code];
-      if (!control) {
-        continue;
-      }
-
-      if (control.dirty) {
-        sources[code] = 'The rate you entered.';
-      } else if (rate !== null) {
-        control.setValue(rate, { emitEvent: false });
-        sources[code] = `The rate master's rate for ${registerDate(asAt)}.`;
-      } else {
-        control.setValue(null, { emitEvent: false });
-        sources[code] = `No rate on file for ${registerDate(asAt)}: enter one.`;
-      }
-    }
-
-    this.rateSources.set(sources);
   }
 
   /** A field's refusal goes to that field, a rate's to its currency; anything else to the message box. */

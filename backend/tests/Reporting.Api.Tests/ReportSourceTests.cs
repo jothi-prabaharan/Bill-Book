@@ -30,7 +30,7 @@ public class ReportSourceTests
     private static readonly WarehouseTrackingDetailSourceRepository WarehouseTrackingDetail = new();
     private static readonly SalesRegisterSourceRepository SalesRegister = new();
     private static readonly FxGainLossSourceRepository FxGainLoss = new(new FixedBaseCurrency("INR"));
-    private static readonly FxGainLossDetailsSourceRepository FxGainLossDetails = new();
+    private static readonly FxGainLossDetailsSourceRepository FxGainLossDetails = new(new FixedBaseCurrency("INR"));
     private static readonly ArAgingSummarySourceRepository ArAgingSummary = new();
     private static readonly ApAgingSummarySourceRepository ApAgingSummary = new();
     private static readonly CustomerStatementSourceRepository CustomerStatement = new();
