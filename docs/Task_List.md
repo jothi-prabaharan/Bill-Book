@@ -6,7 +6,7 @@ rewrites and stages it whenever the details file changes. **Never edit it by han
 status, edit the card's first line in the details file; the card there holds the rules, lanes,
 where to start, sub-tasks and notes.
 
-**Summary:** 208 completed, 0 working, 49 open, and 2 blocked (259 cards).
+**Summary:** 208 completed, 1 working, 48 open, and 2 blocked (259 cards).
 
 | Card | Title | Group | Status | Completed by | Completed at | Tests | Issue | Note |
 | :--- | :--- | :--- | :---: | :--- | :--- | :--- | :---: | :--- |
@@ -228,7 +228,7 @@ where to start, sub-tasks and notes.
 | [TK-219](./Task_Details.md#tk-219--bank-summary-its-own-endpoint-and-page) | Bank Summary: its own endpoint and page | Z | ✅ completed | Claude Sonnet 5.5 | 2026-10-23 | written, not run | [#206](https://github.com/jothi-prabaharan/Bill-Book/issues/206) | — |
 | [TK-220](./Task_Details.md#tk-220--foreign-currency-gain-or-loss-its-own-endpoint-and-page) | Foreign Currency Gain or Loss: its own endpoint and page | Z | ✅ completed | Claude Sonnet 5.5 | 2026-10-24 | written, not run | [#207](https://github.com/jothi-prabaharan/Bill-Book/issues/207) | — |
 | [TK-221](./Task_Details.md#tk-221--foreign-currency-gain-or-loss-details-its-own-endpoint-and-page) | Foreign Currency Gain or Loss Details: its own endpoint and page | Z | ✅ completed | Claude Sonnet 5.5 | 2026-10-25 | written, not run | [#208](https://github.com/jothi-prabaharan/Bill-Book/issues/208) | — |
-| [TK-222](./Task_Details.md#tk-222--aged-receivables-summary-its-own-endpoint-and-page) | Aged Receivables Summary: its own endpoint and page | Z | 🟪 open | — | — | — | [#209](https://github.com/jothi-prabaharan/Bill-Book/issues/209) | — |
+| [TK-222](./Task_Details.md#tk-222--aged-receivables-summary-its-own-endpoint-and-page) | Aged Receivables Summary: its own endpoint and page | Z | 🔶 working | Claude Sonnet 5.5 (working) | since 2026-10-26 | — | [#209](https://github.com/jothi-prabaharan/Bill-Book/issues/209) | — |
 | [TK-223](./Task_Details.md#tk-223--aged-receivables-detail-its-own-endpoint-and-page) | Aged Receivables Detail: its own endpoint and page | Z | 🟪 open | — | — | — | [#210](https://github.com/jothi-prabaharan/Bill-Book/issues/210) | — |
 | [TK-224](./Task_Details.md#tk-224--receivable-invoice-summary-its-own-endpoint-and-page) | Receivable Invoice Summary: its own endpoint and page | Z | 🟪 open | — | — | — | [#211](https://github.com/jothi-prabaharan/Bill-Book/issues/211) | — |
 | [TK-225](./Task_Details.md#tk-225--receivable-invoice-detail-its-own-endpoint-and-page) | Receivable Invoice Detail: its own endpoint and page | Z | 🟪 open | — | — | — | [#212](https://github.com/jothi-prabaharan/Bill-Book/issues/212) | — |
