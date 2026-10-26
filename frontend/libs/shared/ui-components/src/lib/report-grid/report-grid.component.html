@@ -58,7 +58,7 @@
               >
                 @if (isNumeric(column)) {
                   <span class="amount">{{
-                    numeric(row, column) | number: format(column)
+                    number(column, numeric(row, column))
                   }}</span>
                 } @else {
                   {{ display(row, column) }}
@@ -91,7 +91,7 @@
                   <small>({{ footer.rowCount }})</small>
                 } @else if (aggregate(footer, column.key) !== null) {
                   <span class="amount">{{
-                    aggregate(footer, column.key) | number: format(column)
+                    number(column, aggregate(footer, column.key))
                   }}</span>
                 }
               </td>
@@ -111,7 +111,7 @@
                   Total <small>({{ total.rowCount }})</small>
                 } @else if (aggregate(total, column.key) !== null) {
                   <span class="amount">{{
-                    aggregate(total, column.key) | number: format(column)
+                    number(column, aggregate(total, column.key))
                   }}</span>
                 }
               </td>

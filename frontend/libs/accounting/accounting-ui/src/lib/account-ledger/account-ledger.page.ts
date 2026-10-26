@@ -20,8 +20,8 @@ import {
   DataGridCellTemplateDirective,
   DataGridComponent,
   MessageBoxComponent,
-  MoneyCellComponent,
-  RegisterDatePipe,
+  ReportAmountComponent,
+  ReportDatePipe,
   SelectComponent,
   UiMessage,
   rangeForPreset,
@@ -87,8 +87,8 @@ interface ProjectOption {
     MessageBoxComponent,
     DataGridComponent,
     DataGridCellTemplateDirective,
-    MoneyCellComponent,
-    RegisterDatePipe,
+    ReportAmountComponent,
+    ReportDatePipe,
   ],
   templateUrl: './account-ledger.page.html',
   styleUrl: './account-ledger.page.scss',
@@ -144,7 +144,7 @@ export class AccountLedgerPage implements OnInit {
 
   protected readonly ledgerGridRows = computed<LedgerGridRow[]>(() => {
     const report = this.ledger();
-    return report ? ledgerRows(report) : [];
+    return report ? ledgerRows(report, (value) => this.formats.formatAmount(value)) : [];
   });
 
   protected readonly summaryGridRows = computed<SummaryGridRow[]>(() => {

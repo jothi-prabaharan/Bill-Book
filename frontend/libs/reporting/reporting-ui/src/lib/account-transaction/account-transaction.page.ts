@@ -27,8 +27,8 @@ import {
   DataGridCellTemplateDirective,
   DataGridComponent,
   MessageBoxComponent,
-  MoneyCellComponent,
-  RegisterDatePipe,
+  ReportAmountComponent,
+  ReportDatePipe,
   SelectComponent,
   UiMessage,
   rangeForPreset,
@@ -69,8 +69,8 @@ interface AccountBlock {
     MessageBoxComponent,
     DataGridComponent,
     DataGridCellTemplateDirective,
-    MoneyCellComponent,
-    RegisterDatePipe,
+    ReportAmountComponent,
+    ReportDatePipe,
     ColumnChooserDialog,
   ],
   templateUrl: './account-transaction.page.html',
@@ -155,7 +155,7 @@ export class AccountTransactionPage implements OnInit {
 
     return result.accounts.map((account) => ({
       account,
-      rows: transactionRows(account),
+      rows: transactionRows(account, (value) => this.formats.formatAmount(value)),
       columns: this.columnsFor(account),
     }));
   });

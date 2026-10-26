@@ -42,7 +42,7 @@
 
 @if (result(); as report) {
   <p class="period text-muted">
-    {{ report.fromDate | registerDate }} to {{ report.toDate | registerDate }} ({{ report.days }} days)@if (report.compareFromDate) {, compared with {{ report.compareFromDate | registerDate }} to {{ report.compareToDate | registerDate }} ({{ report.compareDays }} days)}.
+    {{ report.fromDate | reportDate }} to {{ report.toDate | reportDate }} ({{ report.days }} days)@if (report.compareFromDate) {, compared with {{ report.compareFromDate | reportDate }} to {{ report.compareToDate | reportDate }} ({{ report.compareDays }} days)}.
     Balances are at the end of each period.
   </p>
 

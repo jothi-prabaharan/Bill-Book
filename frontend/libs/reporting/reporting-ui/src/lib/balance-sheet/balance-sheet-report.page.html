@@ -36,8 +36,8 @@
 
 @if (result(); as sheet) {
   <p class="as-at text-muted">
-    As at {{ sheet.asOfDate | registerDate }}@if (sheet.compareAsOfDate) {, compared with {{ sheet.compareAsOfDate | registerDate }}}.
-    The financial year began {{ sheet.financialYearStart | registerDate }}.
+    As at {{ sheet.asOfDate | reportDate }}@if (sheet.compareAsOfDate) {, compared with {{ sheet.compareAsOfDate | reportDate }}}.
+    The financial year began {{ sheet.financialYearStart | reportDate }}.
   </p>
 
   @for (section of sheet.sections; track section.section) {
@@ -57,15 +57,15 @@
             }
           </span>
         </ng-template>
-        <ng-template bbCellTemplate="balance" let-line><bb-money-cell [value]="line.balance" /></ng-template>
-        <ng-template bbCellTemplate="compareBalance" let-line><bb-money-cell [value]="line.compareBalance" /></ng-template>
+        <ng-template bbCellTemplate="balance" let-line><bb-report-amount [value]="line.balance" /></ng-template>
+        <ng-template bbCellTemplate="compareBalance" let-line><bb-report-amount [value]="line.compareBalance" /></ng-template>
 
         <ng-template bbGridFooter>
           <tr>
             <th scope="row">Total {{ section.title.toLowerCase() }}</th>
-            <td class="numeric"><bb-money-cell [value]="section.total" /></td>
+            <td class="numeric"><bb-report-amount [value]="section.total" /></td>
             @if (sheet.compareAsOfDate) {
-              <td class="numeric"><bb-money-cell [value]="section.compareTotal" /></td>
+              <td class="numeric"><bb-report-amount [value]="section.compareTotal" /></td>
             }
           </tr>
         </ng-template>
@@ -76,37 +76,37 @@
   <dl class="summary card" [class.summary--compare]="!!sheet.compareAsOfDate">
     <div class="summary__head" aria-hidden="true">
       <span></span>
-      <span>{{ sheet.asOfDate | registerDate }}</span>
+      <span>{{ sheet.asOfDate | reportDate }}</span>
       @if (sheet.compareAsOfDate) {
-        <span>{{ sheet.compareAsOfDate | registerDate }}</span>
+        <span>{{ sheet.compareAsOfDate | reportDate }}</span>
       }
     </div>
     <div class="summary__line">
       <dt>Total assets</dt>
-      <dd><bb-money-cell [value]="sheet.totals.totalAssets" /></dd>
+      <dd><bb-report-amount [value]="sheet.totals.totalAssets" /></dd>
       @if (sheet.compareAsOfDate) {
-        <dd><bb-money-cell [value]="sheet.totals.compareTotalAssets" /></dd>
+        <dd><bb-report-amount [value]="sheet.totals.compareTotalAssets" /></dd>
       }
     </div>
     <div class="summary__line">
       <dt>Total liabilities</dt>
-      <dd><bb-money-cell [value]="sheet.totals.totalLiabilities" /></dd>
+      <dd><bb-report-amount [value]="sheet.totals.totalLiabilities" /></dd>
       @if (sheet.compareAsOfDate) {
-        <dd><bb-money-cell [value]="sheet.totals.compareTotalLiabilities" /></dd>
+        <dd><bb-report-amount [value]="sheet.totals.compareTotalLiabilities" /></dd>
       }
     </div>
     <div class="summary__line">
       <dt>Total equity</dt>
-      <dd><bb-money-cell [value]="sheet.totals.totalEquity" /></dd>
+      <dd><bb-report-amount [value]="sheet.totals.totalEquity" /></dd>
       @if (sheet.compareAsOfDate) {
-        <dd><bb-money-cell [value]="sheet.totals.compareTotalEquity" /></dd>
+        <dd><bb-report-amount [value]="sheet.totals.compareTotalEquity" /></dd>
       }
     </div>
     <div class="summary__line summary__line--total">
       <dt>Total liabilities and equity</dt>
-      <dd><bb-money-cell [value]="sheet.totals.totalLiabilitiesAndEquity" /></dd>
+      <dd><bb-report-amount [value]="sheet.totals.totalLiabilitiesAndEquity" /></dd>
       @if (sheet.compareAsOfDate) {
-        <dd><bb-money-cell [value]="sheet.totals.compareTotalLiabilitiesAndEquity" /></dd>
+        <dd><bb-report-amount [value]="sheet.totals.compareTotalLiabilitiesAndEquity" /></dd>
       }
     </div>
     <div class="summary__check" [class.summary__check--off]="!sheet.isBalanced">

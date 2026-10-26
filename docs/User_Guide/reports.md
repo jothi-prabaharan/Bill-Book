@@ -26,6 +26,16 @@ Some reports set their own order and refuse to be re-sorted. A running balance i
 
 Subtotals and the grand total are computed over the **whole** result, not the page you are looking at. A subtotal is therefore right even when its group runs across a page boundary.
 
+## Dates and amounts
+
+A report shows dates and amounts the way your branch is set up, not in a format of its own. The date pattern is the **Date Format** in **Settings › Configuration** (`dd/MM/yyyy`, `yyyy-MM-dd` and so on), and the amounts follow your base currency in **Settings › Currencies**: its symbol, on the side it is written, the grouping (`12,34,567.89` or `1,234,567.89`) and its decimal places. Every amount keeps its decimals, so a whole figure reads `80,000.00` and never `80,000`.
+
+- **The date fields** above a report, the dates in its rows and the period it names in a sentence all use the same pattern.
+- **An amount in another currency**, such as `USD 1,000.00 @ 83.5` under a posting or `150.00 EUR` beside a document, is written with your grouping and decimal places and its own currency code, not your branch's symbol.
+- **On the reports that have no page of their own**, the amount columns show the number without a symbol: the report's heading names the currency, and a few columns are in the currency of each document.
+
+What is not changed: the **document registers** (invoices, bills and the other lists) keep their own compact look, quantity, rate and percentage columns keep their own decimals, and the **Excel** and **CSV** files keep the plain form described below, so a spreadsheet can read them.
+
 ## Exporting
 
 Two formats, and both export the whole result — every row the filters allow, not just the page on screen. Whichever you choose, the file is the report as you have it set up: the same filters, the same sorting, the same grouping or pivot, the same columns in the same order, with the paging removed.

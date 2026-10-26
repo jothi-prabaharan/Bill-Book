@@ -41,7 +41,7 @@
   <p class="count text-muted">
     {{ report.totals.revisionCount }} {{ report.totals.revisionCount === 1 ? 'revision' : 'revisions' }}
     for {{ report.totals.employeeCount }} {{ report.totals.employeeCount === 1 ? 'employee' : 'employees' }},
-    effective {{ report.fromDate | registerDate }} to {{ report.toDate | registerDate }}.
+    effective {{ report.fromDate | reportDate }} to {{ report.toDate | reportDate }}.
   </p>
 
   <bb-data-grid [columns]="columns" [data]="report.rows" [loading]="busy()" [paged]="false"
@@ -55,11 +55,11 @@
         }
       </span>
     </ng-template>
-    <ng-template bbCellTemplate="effectiveDate" let-row>{{ row.effectiveDate | registerDate }}</ng-template>
-    <ng-template bbCellTemplate="previousSalary" let-row><bb-money-cell [value]="row.previousSalary" /></ng-template>
-    <ng-template bbCellTemplate="incrementAmount" let-row><bb-money-cell [value]="row.incrementAmount" /></ng-template>
+    <ng-template bbCellTemplate="effectiveDate" let-row>{{ row.effectiveDate | reportDate }}</ng-template>
+    <ng-template bbCellTemplate="previousSalary" let-row><bb-report-amount [value]="row.previousSalary" /></ng-template>
+    <ng-template bbCellTemplate="incrementAmount" let-row><bb-report-amount [value]="row.incrementAmount" /></ng-template>
     <ng-template bbCellTemplate="incrementPercent" let-row>{{ percent(row.incrementPercent) }}</ng-template>
-    <ng-template bbCellTemplate="revisedSalary" let-row><bb-money-cell [value]="row.revisedSalary" /></ng-template>
+    <ng-template bbCellTemplate="revisedSalary" let-row><bb-report-amount [value]="row.revisedSalary" /></ng-template>
     <ng-template bbCellTemplate="recordedBy" let-row>
       <span class="stack">
         <span>{{ row.recordedBy ?? '—' }}</span>
@@ -73,12 +73,12 @@
       <ng-template bbGridFooter>
         <tr class="total">
           <th scope="row" colspan="4" class="total__label">Total</th>
-          <td class="numeric" data-label="Total previous CTC"><bb-money-cell [value]="report.totals.totalPreviousSalary" /></td>
-          <td class="numeric" data-label="Total increment"><bb-money-cell [value]="report.totals.totalIncrementAmount" /></td>
+          <td class="numeric" data-label="Total previous CTC"><bb-report-amount [value]="report.totals.totalPreviousSalary" /></td>
+          <td class="numeric" data-label="Total increment"><bb-report-amount [value]="report.totals.totalIncrementAmount" /></td>
           <td class="numeric" data-label="Average increment %">
             <span class="total__hint text-muted">avg</span> {{ percent(report.totals.averageIncrementPercent) }}
           </td>
-          <td class="numeric" data-label="Total revised CTC"><bb-money-cell [value]="report.totals.totalRevisedSalary" /></td>
+          <td class="numeric" data-label="Total revised CTC"><bb-report-amount [value]="report.totals.totalRevisedSalary" /></td>
           <td class="total__spare"></td>
         </tr>
       </ng-template>

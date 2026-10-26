@@ -140,16 +140,18 @@ function at(value: string | null, when: (value: string) => string): string {
 /**
  * A line's amount in its own currency with the rate it was booked at, such as
  * "USD 10.00 @ 83.5", written under the description of a line booked in another currency; empty in the base currency.
+ * `amount` writes the figure: the page passes the branch's format (TK-262), and the default is two places.
  */
 export function sourceNote(
   line: Pick<JournalReportLine, 'currencyCode' | 'exchangeRate' | 'debitSource' | 'creditSource'>,
+  amount: (value: number) => string = (value) => value.toFixed(2),
 ): string {
   if (line.exchangeRate === 1) {
     return '';
   }
 
-  const amount = line.debitSource !== 0 ? line.debitSource : line.creditSource;
-  return `${line.currencyCode} ${amount.toFixed(2)} @ ${line.exchangeRate}`;
+  const figure = line.debitSource !== 0 ? line.debitSource : line.creditSource;
+  return `${line.currencyCode} ${amount(figure)} @ ${line.exchangeRate}`;
 }
 
 /** An empty side of a line reads blank rather than as a nought. */

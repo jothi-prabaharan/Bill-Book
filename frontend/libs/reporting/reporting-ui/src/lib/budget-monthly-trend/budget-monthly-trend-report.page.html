@@ -37,7 +37,7 @@
 
 @if (result(); as report) {
   <p class="period text-muted">
-    {{ report.budget.name }}: actuals from {{ report.fromDate | registerDate }} to {{ report.throughDate | registerDate }};
+    {{ report.budget.name }}: actuals from {{ report.fromDate | reportDate }} to {{ report.throughDate | reportDate }};
     the months after show their budget only. A positive variance is favourable.
   </p>
 
@@ -52,12 +52,12 @@
       <ng-template bbCellTemplate="label" let-row>
         <span>{{ row.label }}</span>
       </ng-template>
-      <ng-template bbCellTemplate="budget" let-row><bb-money-cell [value]="row.cell.budget" /></ng-template>
-      <ng-template bbCellTemplate="actual" let-row><bb-money-cell [value]="row.cell.actual" /></ng-template>
+      <ng-template bbCellTemplate="budget" let-row><bb-report-amount [value]="row.cell.budget" /></ng-template>
+      <ng-template bbCellTemplate="actual" let-row><bb-report-amount [value]="row.cell.actual" /></ng-template>
       <ng-template bbCellTemplate="variance" let-row>
         <span class="figure figure--stacked" [class.variance--favourable]="tone(row.cell.variance) === 'favourable'"
               [class.variance--adverse]="tone(row.cell.variance) === 'adverse'">
-          <bb-money-cell [value]="row.cell.variance" />
+          <bb-report-amount [value]="row.cell.variance" />
           @if (row.cell.variancePercent !== null) {
             <small class="figure__percent">{{ percent(row.cell.variancePercent) }}</small>
           }
@@ -124,7 +124,7 @@
           @if (row.kind !== 'section') {
             <span class="figure figure--stacked" [class.variance--favourable]="row.measure === 'Variance' && tone(row.yearToDate) === 'favourable'"
                   [class.variance--adverse]="row.measure === 'Variance' && tone(row.yearToDate) === 'adverse'">
-              <bb-money-cell [value]="row.yearToDate" />
+              <bb-report-amount [value]="row.yearToDate" />
               @if (row.yearToDatePercent !== null) {
                 <small class="figure__percent">{{ percent(row.yearToDatePercent) }}</small>
               }
@@ -133,7 +133,7 @@
         </ng-template>
         <ng-template bbCellTemplate="yearBudget" let-row>
           @if (row.kind !== 'section' && row.yearBudget !== null) {
-            <bb-money-cell [value]="row.yearBudget" />
+            <bb-report-amount [value]="row.yearBudget" />
           }
         </ng-template>
       </bb-data-grid>
@@ -146,7 +146,7 @@
     <span class="figure" [class.figure--future]="row.future[i]"
           [class.variance--favourable]="row.measure === 'Variance' && tone(row.months[i]) === 'favourable'"
           [class.variance--adverse]="row.measure === 'Variance' && tone(row.months[i]) === 'adverse'">
-      <bb-money-cell [value]="row.months[i]" />
+      <bb-report-amount [value]="row.months[i]" />
     </span>
   }
 </ng-template>

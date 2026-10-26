@@ -45,8 +45,8 @@
 
 @if (result(); as report) {
   <p class="period text-muted">
-    {{ report.from | registerDate }} to {{ report.to | registerDate }}@if (report.compareFrom) {, compared with {{ report.compareFrom | registerDate }} to {{ report.compareTo | registerDate }}}.
-    Income and expense accounts open from {{ report.financialYearStart | registerDate }}, the start of the financial year; earlier years' profit is carried into equity.
+    {{ report.from | reportDate }} to {{ report.to | reportDate }}@if (report.compareFrom) {, compared with {{ report.compareFrom | reportDate }} to {{ report.compareTo | reportDate }}}.
+    Income and expense accounts open from {{ report.financialYearStart | reportDate }}, the start of the financial year; earlier years' profit is carried into equity.
   </p>
 
   @if (rows().length === 0) {
@@ -76,24 +76,24 @@
               <div class="figures__heads" aria-hidden="true"><span></span><span>Debit</span><span>Credit</span></div>
               <div class="figures__row">
                 <dt>Opening</dt>
-                <dd><span class="visually-hidden">Debit</span><bb-money-cell [value]="row.openingDebit" /></dd>
-                <dd><span class="visually-hidden">Credit</span><bb-money-cell [value]="row.openingCredit" /></dd>
+                <dd><span class="visually-hidden">Debit</span><bb-report-amount [value]="row.openingDebit" /></dd>
+                <dd><span class="visually-hidden">Credit</span><bb-report-amount [value]="row.openingCredit" /></dd>
               </div>
               <div class="figures__row">
                 <dt>Period</dt>
-                <dd><span class="visually-hidden">Debit</span><bb-money-cell [value]="row.movementDebit" /></dd>
-                <dd><span class="visually-hidden">Credit</span><bb-money-cell [value]="row.movementCredit" /></dd>
+                <dd><span class="visually-hidden">Debit</span><bb-report-amount [value]="row.movementDebit" /></dd>
+                <dd><span class="visually-hidden">Credit</span><bb-report-amount [value]="row.movementCredit" /></dd>
               </div>
               <div class="figures__row figures__row--closing">
                 <dt>Closing</dt>
-                <dd><span class="visually-hidden">Debit</span><bb-money-cell [value]="row.closingDebit" /></dd>
-                <dd><span class="visually-hidden">Credit</span><bb-money-cell [value]="row.closingCredit" /></dd>
+                <dd><span class="visually-hidden">Debit</span><bb-report-amount [value]="row.closingDebit" /></dd>
+                <dd><span class="visually-hidden">Credit</span><bb-report-amount [value]="row.closingCredit" /></dd>
               </div>
               @if (comparing()) {
                 <div class="figures__row figures__row--compare">
                   <dt>Compared</dt>
-                  <dd><span class="visually-hidden">Debit</span><bb-money-cell [value]="row.compareDebit" /></dd>
-                  <dd><span class="visually-hidden">Credit</span><bb-money-cell [value]="row.compareCredit" /></dd>
+                  <dd><span class="visually-hidden">Debit</span><bb-report-amount [value]="row.compareDebit" /></dd>
+                  <dd><span class="visually-hidden">Credit</span><bb-report-amount [value]="row.compareCredit" /></dd>
                 </div>
               }
             </dl>
@@ -119,14 +119,14 @@
             <span [class.account--computed]="row.isComputed">{{ row.accountName }}</span>
           }
         </ng-template>
-        <ng-template bbCellTemplate="openingDebit" let-row><bb-money-cell [value]="row.openingDebit" /></ng-template>
-        <ng-template bbCellTemplate="openingCredit" let-row><bb-money-cell [value]="row.openingCredit" /></ng-template>
-        <ng-template bbCellTemplate="movementDebit" let-row><bb-money-cell [value]="row.movementDebit" /></ng-template>
-        <ng-template bbCellTemplate="movementCredit" let-row><bb-money-cell [value]="row.movementCredit" /></ng-template>
-        <ng-template bbCellTemplate="closingDebit" let-row><bb-money-cell [value]="row.closingDebit" /></ng-template>
-        <ng-template bbCellTemplate="closingCredit" let-row><bb-money-cell [value]="row.closingCredit" /></ng-template>
-        <ng-template bbCellTemplate="compareDebit" let-row><bb-money-cell [value]="row.compareDebit" /></ng-template>
-        <ng-template bbCellTemplate="compareCredit" let-row><bb-money-cell [value]="row.compareCredit" /></ng-template>
+        <ng-template bbCellTemplate="openingDebit" let-row><bb-report-amount [value]="row.openingDebit" /></ng-template>
+        <ng-template bbCellTemplate="openingCredit" let-row><bb-report-amount [value]="row.openingCredit" /></ng-template>
+        <ng-template bbCellTemplate="movementDebit" let-row><bb-report-amount [value]="row.movementDebit" /></ng-template>
+        <ng-template bbCellTemplate="movementCredit" let-row><bb-report-amount [value]="row.movementCredit" /></ng-template>
+        <ng-template bbCellTemplate="closingDebit" let-row><bb-report-amount [value]="row.closingDebit" /></ng-template>
+        <ng-template bbCellTemplate="closingCredit" let-row><bb-report-amount [value]="row.closingCredit" /></ng-template>
+        <ng-template bbCellTemplate="compareDebit" let-row><bb-report-amount [value]="row.compareDebit" /></ng-template>
+        <ng-template bbCellTemplate="compareCredit" let-row><bb-report-amount [value]="row.compareCredit" /></ng-template>
       </bb-data-grid>
     </div>
   }

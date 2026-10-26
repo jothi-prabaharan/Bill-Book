@@ -44,7 +44,7 @@
 
 @if (result(); as report) {
   <p class="period text-muted">
-    {{ report.fromDate | registerDate }} to {{ report.toDate | registerDate }}@if (report.compareFromDate) {, compared with {{ report.compareFromDate | registerDate }} to {{ report.compareToDate | registerDate }}}.
+    {{ report.fromDate | reportDate }} to {{ report.toDate | reportDate }}@if (report.compareFromDate) {, compared with {{ report.compareFromDate | reportDate }} to {{ report.compareToDate | reportDate }}}.
   </p>
 
   @for (section of report.sections; track section.section) {
@@ -59,15 +59,15 @@
             <span>{{ line.accountName }}</span>
           </span>
         </ng-template>
-        <ng-template bbCellTemplate="amount" let-line><bb-money-cell [value]="line.amount" /></ng-template>
-        <ng-template bbCellTemplate="compareAmount" let-line><bb-money-cell [value]="line.compareAmount" /></ng-template>
+        <ng-template bbCellTemplate="amount" let-line><bb-report-amount [value]="line.amount" /></ng-template>
+        <ng-template bbCellTemplate="compareAmount" let-line><bb-report-amount [value]="line.compareAmount" /></ng-template>
 
         <ng-template bbGridFooter>
           <tr>
             <th scope="row">Total {{ section.title.toLowerCase() }}</th>
-            <td class="numeric"><bb-money-cell [value]="section.total" /></td>
+            <td class="numeric"><bb-report-amount [value]="section.total" /></td>
             @if (report.compareFromDate) {
-              <td class="numeric"><bb-money-cell [value]="section.compareTotal" /></td>
+              <td class="numeric"><bb-report-amount [value]="section.compareTotal" /></td>
             }
           </tr>
         </ng-template>
@@ -78,9 +78,9 @@
       <dl class="profit card" [class.profit--compare]="!!report.compareFromDate" aria-label="Gross profit">
         <div class="profit__line">
           <dt>Gross profit</dt>
-          <dd><bb-money-cell [value]="report.totals.grossProfit" /></dd>
+          <dd><bb-report-amount [value]="report.totals.grossProfit" /></dd>
           @if (report.compareFromDate) {
-            <dd><bb-money-cell [value]="report.totals.compareGrossProfit" /></dd>
+            <dd><bb-report-amount [value]="report.totals.compareGrossProfit" /></dd>
           }
         </div>
         <div class="profit__line profit__line--margin">
@@ -97,9 +97,9 @@
   <dl class="profit profit--net card" [class.profit--compare]="!!report.compareFromDate" aria-label="Net profit">
     <div class="profit__line">
       <dt>Net profit</dt>
-      <dd><bb-money-cell [value]="report.totals.netProfit" /></dd>
+      <dd><bb-report-amount [value]="report.totals.netProfit" /></dd>
       @if (report.compareFromDate) {
-        <dd><bb-money-cell [value]="report.totals.compareNetProfit" /></dd>
+        <dd><bb-report-amount [value]="report.totals.compareNetProfit" /></dd>
       }
     </div>
     <div class="profit__line profit__line--margin">

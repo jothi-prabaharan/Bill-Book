@@ -114,6 +114,12 @@ describe('foreignNote', () => {
     expect(foreignNote(row({ currencyCode: 'USD', exchangeRate: 83.5, creditAmount: 12.5 }))).toBe('USD 12.50 at 83.5');
   });
 
+  it('GL-06b: the amount is written as the caller says, so a page can pass the branch’s format (TK-262)', () => {
+    const branch = (value: number): string => (value === 1234567.5 ? '12,34,567.50' : String(value));
+
+    expect(foreignNote(row({ currencyCode: 'USD', exchangeRate: 83.5, debitAmount: 1234567.5 }), branch)).toBe('USD 12,34,567.50 at 83.5');
+  });
+
   it('GL-07: a posting at a rate of one, or with no currency, says nothing', () => {
     expect(foreignNote(row({ currencyCode: 'INR', exchangeRate: 1, debitAmount: 100 }))).toBeNull();
     expect(foreignNote(row({ currencyCode: '', exchangeRate: 2, debitAmount: 100 }))).toBeNull();

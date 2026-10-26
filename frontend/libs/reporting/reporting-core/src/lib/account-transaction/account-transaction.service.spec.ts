@@ -168,6 +168,12 @@ describe('Account Transaction helpers', () => {
     expect(foreignAmount(row())).toBe('');
   });
 
+  it('AT-06b: the amount is written as the caller says, so a page can pass the branch’s format (TK-262)', () => {
+    const branch = (value: number): string => (value === 1234567.5 ? '12,34,567.50' : String(value));
+
+    expect(foreignAmount(row({ currencyCode: 'USD', exchangeRate: 83.5, debitSource: 1234567.5, creditSource: 0 }), branch)).toBe('USD 12,34,567.50 @ 83.5');
+  });
+
   it('AT-07: a tax leg is named once, with its rate unless the name already says it', () => {
     expect(taxLabel(row({ taxName: 'GST 18%', taxRate: 18 }))).toBe('GST 18%');
     expect(taxLabel(row({ taxName: 'Output GST', taxRate: 18 }))).toBe('Output GST (18%)');

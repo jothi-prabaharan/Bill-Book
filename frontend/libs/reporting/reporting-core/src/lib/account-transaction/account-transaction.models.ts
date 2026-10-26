@@ -132,13 +132,14 @@ export function sideOf(side: AccountSide): 'Dr' | 'Cr' {
  */
 export function foreignAmount(
   row: Pick<AccountTransactionRow, 'currencyCode' | 'exchangeRate' | 'debitSource' | 'creditSource'>,
+  amount: (value: number) => string = (value) => value.toFixed(2),
 ): string {
   if (row.exchangeRate === 1) {
     return '';
   }
 
-  const amount = row.debitSource !== 0 ? row.debitSource : row.creditSource;
-  return `${row.currencyCode} ${amount.toFixed(2)} @ ${row.exchangeRate}`;
+  const figure = row.debitSource !== 0 ? row.debitSource : row.creditSource;
+  return `${row.currencyCode} ${amount(figure)} @ ${row.exchangeRate}`;
 }
 
 /** A tax leg's rate as the tax master names it, such as "GST 18% (18%)" trimmed to "GST 18%" when the name already says it; empty on any other leg. */
@@ -189,7 +190,10 @@ function blankZero(value: number): number | null {
  * period's debit and credit totals unless more postings are still to come. The
  * figures are the server's; nothing here is worked out beyond the layout.
  */
-export function transactionRows(account: AccountTransactionAccount): TransactionGridRow[] {
+export function transactionRows(
+  account: AccountTransactionAccount,
+  amount: (value: number) => string = (value) => value.toFixed(2),
+): TransactionGridRow[] {
   const blank = {
     ledgerId: 0,
     date: null,
@@ -222,7 +226,7 @@ export function transactionRows(account: AccountTransactionAccount): Transaction
       reference: row.reference,
       tax: taxLabel(row),
       permitNo: row.permitNo,
-      foreign: foreignAmount(row),
+      foreign: foreignAmount(row, amount),
       debit: blankZero(row.debit),
       credit: blankZero(row.credit),
       balance: row.runningBalance,

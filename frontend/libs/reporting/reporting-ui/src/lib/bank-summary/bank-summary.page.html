@@ -34,7 +34,7 @@
 
 @if (result(); as report) {
   <p class="period text-muted">
-    {{ report.fromDate | registerDate }} to {{ report.toDate | registerDate }}, in {{ report.baseCurrencyCode }}.
+    {{ report.fromDate | reportDate }} to {{ report.toDate | reportDate }}, in {{ report.baseCurrencyCode }}.
   </p>
 
   @if (rows().length === 0) {
@@ -53,20 +53,20 @@
           </header>
           <dl class="figures">
             <div class="figures__row"><dt>Opening</dt>
-              <dd><bb-money-cell [value]="row.openingBalance" />
-                @if (row.isForeign) { <small class="own"><bb-money-cell [value]="row.ownOpeningBalance" [currency]="row.currencyCode" /></small> }</dd></div>
+              <dd><bb-report-amount [value]="row.openingBalance" />
+                @if (row.isForeign) { <small class="own"><bb-report-amount [value]="row.ownOpeningBalance" [currency]="row.currencyCode" /></small> }</dd></div>
             <div class="figures__row"><dt>Received</dt>
-              <dd><bb-money-cell [value]="row.received" />
-                @if (row.isForeign) { <small class="own"><bb-money-cell [value]="row.ownReceived" [currency]="row.currencyCode" /></small> }</dd></div>
+              <dd><bb-report-amount [value]="row.received" />
+                @if (row.isForeign) { <small class="own"><bb-report-amount [value]="row.ownReceived" [currency]="row.currencyCode" /></small> }</dd></div>
             <div class="figures__row"><dt>Spent</dt>
-              <dd><bb-money-cell [value]="row.spent" />
-                @if (row.isForeign) { <small class="own"><bb-money-cell [value]="row.ownSpent" [currency]="row.currencyCode" /></small> }</dd></div>
+              <dd><bb-report-amount [value]="row.spent" />
+                @if (row.isForeign) { <small class="own"><bb-report-amount [value]="row.ownSpent" [currency]="row.currencyCode" /></small> }</dd></div>
             @if (row.revaluation !== null) {
-              <div class="figures__row"><dt>Revaluation</dt><dd><bb-money-cell [value]="row.revaluation" /></dd></div>
+              <div class="figures__row"><dt>Revaluation</dt><dd><bb-report-amount [value]="row.revaluation" /></dd></div>
             }
             <div class="figures__row figures__row--balance"><dt>Closing</dt>
-              <dd><bb-money-cell [value]="row.closingBalance" />
-                @if (row.isForeign) { <small class="own"><bb-money-cell [value]="row.ownClosingBalance" [currency]="row.currencyCode" /></small> }</dd></div>
+              <dd><bb-report-amount [value]="row.closingBalance" />
+                @if (row.isForeign) { <small class="own"><bb-report-amount [value]="row.ownClosingBalance" [currency]="row.currencyCode" /></small> }</dd></div>
           </dl>
         </article>
       }
@@ -89,27 +89,27 @@
         </ng-template>
         <ng-template bbCellTemplate="openingBalance" let-row>
           <span class="amount">
-            <bb-money-cell [value]="row.openingBalance" />
-            @if (row.isForeign) { <small class="own"><bb-money-cell [value]="row.ownOpeningBalance" [currency]="row.currencyCode" /></small> }
+            <bb-report-amount [value]="row.openingBalance" />
+            @if (row.isForeign) { <small class="own"><bb-report-amount [value]="row.ownOpeningBalance" [currency]="row.currencyCode" /></small> }
           </span>
         </ng-template>
         <ng-template bbCellTemplate="received" let-row>
           <span class="amount">
-            <bb-money-cell [value]="row.received" />
-            @if (row.isForeign) { <small class="own"><bb-money-cell [value]="row.ownReceived" [currency]="row.currencyCode" /></small> }
+            <bb-report-amount [value]="row.received" />
+            @if (row.isForeign) { <small class="own"><bb-report-amount [value]="row.ownReceived" [currency]="row.currencyCode" /></small> }
           </span>
         </ng-template>
         <ng-template bbCellTemplate="spent" let-row>
           <span class="amount">
-            <bb-money-cell [value]="row.spent" />
-            @if (row.isForeign) { <small class="own"><bb-money-cell [value]="row.ownSpent" [currency]="row.currencyCode" /></small> }
+            <bb-report-amount [value]="row.spent" />
+            @if (row.isForeign) { <small class="own"><bb-report-amount [value]="row.ownSpent" [currency]="row.currencyCode" /></small> }
           </span>
         </ng-template>
-        <ng-template bbCellTemplate="revaluation" let-row><bb-money-cell [value]="row.revaluation" /></ng-template>
+        <ng-template bbCellTemplate="revaluation" let-row><bb-report-amount [value]="row.revaluation" /></ng-template>
         <ng-template bbCellTemplate="closingBalance" let-row>
           <span class="amount">
-            <bb-money-cell [value]="row.closingBalance" />
-            @if (row.isForeign) { <small class="own"><bb-money-cell [value]="row.ownClosingBalance" [currency]="row.currencyCode" /></small> }
+            <bb-report-amount [value]="row.closingBalance" />
+            @if (row.isForeign) { <small class="own"><bb-report-amount [value]="row.ownClosingBalance" [currency]="row.currencyCode" /></small> }
           </span>
         </ng-template>
       </bb-data-grid>

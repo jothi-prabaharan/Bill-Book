@@ -41,7 +41,7 @@
 
 @if (result(); as statement) {
   <p class="period text-muted">
-    {{ statement.fromDate | registerDate }} to {{ statement.toDate | registerDate }}@if (statement.compareFromDate) {, compared with {{ statement.compareFromDate | registerDate }} to {{ statement.compareToDate | registerDate }}}.
+    {{ statement.fromDate | reportDate }} to {{ statement.toDate | reportDate }}@if (statement.compareFromDate) {, compared with {{ statement.compareFromDate | reportDate }} to {{ statement.compareToDate | reportDate }}}.
     Cash in is positive, cash out negative.
   </p>
 
@@ -61,15 +61,15 @@
             {{ row.label }}
           }
         </ng-template>
-        <ng-template bbCellTemplate="amount" let-row><bb-money-cell [value]="row.amount" /></ng-template>
-        <ng-template bbCellTemplate="compareAmount" let-row><bb-money-cell [value]="row.compareAmount" /></ng-template>
+        <ng-template bbCellTemplate="amount" let-row><bb-report-amount [value]="row.amount" /></ng-template>
+        <ng-template bbCellTemplate="compareAmount" let-row><bb-report-amount [value]="row.compareAmount" /></ng-template>
 
         <ng-template bbGridFooter>
           <tr>
             <th scope="row">Net cash from {{ section.title.toLowerCase() }}</th>
-            <td class="numeric"><bb-money-cell [value]="section.total" /></td>
+            <td class="numeric"><bb-report-amount [value]="section.total" /></td>
             @if (statement.compareFromDate) {
-              <td class="numeric"><bb-money-cell [value]="section.compareTotal" /></td>
+              <td class="numeric"><bb-report-amount [value]="section.compareTotal" /></td>
             }
           </tr>
         </ng-template>
@@ -87,30 +87,30 @@
     </div>
     <div class="summary__line summary__line--strong">
       <dt>Net change in cash</dt>
-      <dd><bb-money-cell [value]="statement.totals.netChange" /></dd>
+      <dd><bb-report-amount [value]="statement.totals.netChange" /></dd>
       @if (statement.compareFromDate) {
-        <dd><bb-money-cell [value]="statement.totals.compareNetChange" /></dd>
+        <dd><bb-report-amount [value]="statement.totals.compareNetChange" /></dd>
       }
     </div>
     <div class="summary__line">
       <dt>{{ statement.exchangeRateEffect.title }}</dt>
-      <dd><bb-money-cell [value]="statement.exchangeRateEffect.amount" /></dd>
+      <dd><bb-report-amount [value]="statement.exchangeRateEffect.amount" /></dd>
       @if (statement.compareFromDate) {
-        <dd><bb-money-cell [value]="statement.exchangeRateEffect.compareAmount" /></dd>
+        <dd><bb-report-amount [value]="statement.exchangeRateEffect.compareAmount" /></dd>
       }
     </div>
     <div class="summary__line">
       <dt>Cash at the beginning of the period</dt>
-      <dd><bb-money-cell [value]="statement.totals.openingCash" /></dd>
+      <dd><bb-report-amount [value]="statement.totals.openingCash" /></dd>
       @if (statement.compareFromDate) {
-        <dd><bb-money-cell [value]="statement.totals.compareOpeningCash" /></dd>
+        <dd><bb-report-amount [value]="statement.totals.compareOpeningCash" /></dd>
       }
     </div>
     <div class="summary__line summary__line--total">
       <dt>Cash at the end of the period</dt>
-      <dd><bb-money-cell [value]="statement.totals.closingCash" /></dd>
+      <dd><bb-report-amount [value]="statement.totals.closingCash" /></dd>
       @if (statement.compareFromDate) {
-        <dd><bb-money-cell [value]="statement.totals.compareClosingCash" /></dd>
+        <dd><bb-report-amount [value]="statement.totals.compareClosingCash" /></dd>
       }
     </div>
     <div class="summary__check" [class.summary__check--off]="!statement.isReconciled">

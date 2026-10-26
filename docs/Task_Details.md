@@ -7586,18 +7586,18 @@ The queue below is one list in card-number order. Each card names its group.
 - **Notes:** 91 lines removed; the solution builds with 0 warnings and 0 errors. Found on the way: the TimeLeave card (about line 2038) says leave accrual and rollover run as a hosted job, but no job exists and nothing calls `AccrueLeaveAsync`, so leave balances never accrue. That is a missing feature rather than dead code and needs its own card, which the owner has not asked for.
 
 ### TK-262 · Reports show dates and money in the branch's format
-- [~] working (Claude Sonnet 5.5) — since 2026-10-26
+- [x] completed (Claude Sonnet 5.5) · tests written, not run — 2026-10-26
 - **Issue:** [#251](https://github.com/jothi-prabaharan/Bill-Book/issues/251)
 - **Group:** Z · Owner request of 26 October 2026: "Use the date and money format from branch settings for all reports".
 - **Lanes:** shared UI (`ui-components` report pieces, `currency-format`), `reporting-core` and `reporting-ui` pages, `accounting-ui` Trial Balance and General ledger · **Depends on:** — · **Decision:** the owner's request of 26 October 2026; the document registers keep TK-187's look
 - **Where:** `frontend/libs/shared/ui-components/src/lib/report-grid` (the generic grid) and a new `report-format.ts`, `ReportDatePipe` and `ReportAmountComponent` beside it; `FormatSettingsService.formatAmount`; the report pages under `libs/reporting/reporting-ui/src/lib/*`, `libs/accounting/accounting-ui/src/lib/trial-balance` and `account-ledger`; `reporting-core` notes that build a foreign amount.
 - **State:** checked 26 October 2026. A report shows a date and an amount one of four ways: the generic grid writes `2026-10-01` and Western grouping; the dedicated pages write `01 Oct 2026` and drop `.00` when whole; two notes use `toFixed(2)`; the sentences above the grids already use the branch's format.
 - **Sub-tasks:**
-  - [ ] Shared pieces: `reportDate`, `reportDateTime`, `reportAmount` and `reportNumber` as pure functions over the branch's `FormatSettings`, `ReportDatePipe` and `bb-report-amount` over them, and `FormatSettingsService.formatAmount`; each with a spec.
-  - [ ] The generic report grid: Date, DateTime and Money cells, group footers and totals in the branch's format.
-  - [ ] Every report page: the register date and money cell replaced by the report ones; TS uses of the register date replaced by the branch's date; `sourceNote` and `foreignAmount` take the amount formatter.
-  - [ ] Verify: typecheck, lint, the `web` build; the generic report and two dedicated pages in a browser on a branch whose date pattern and money mask differ from the shipped ones, at 1280px and 360px.
-  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (what formats reports use, and what is not covered), `docs/User_Guide/releases.md`, this card ticked, `python3 scripts/update-task-list.py`, `Closes` #251.
+  - [x] Shared pieces: `reportDate`, `reportDateTime`, `reportAmount` and `reportNumber` as pure functions over the branch's `FormatSettings`, `ReportDatePipe` and `bb-report-amount` over them, and `FormatSettingsService.formatAmount`; each with a spec.
+  - [x] The generic report grid: Date, DateTime and Money cells, group footers and totals in the branch's format.
+  - [x] Every report page: the register date and money cell replaced by the report ones; TS uses of the register date replaced by the branch's date; `sourceNote` and `foreignAmount` take the amount formatter.
+  - [x] Verify: typecheck, lint, the `web` build; the generic report and two dedicated pages in a browser on a branch whose date pattern and money mask differ from the shipped ones, at 1280px and 360px.
+  - [x] Docs in the same commit: `docs/User_Guide/reports.md` (what formats reports use, and what is not covered), `docs/User_Guide/releases.md`, this card ticked, `python3 scripts/update-task-list.py`, `Closes` #251.
 - **Done when:** every report page and the generic grid show dates and money in the branch's format, and the docs say what is and is not covered.
 - **Notes:** Not changed, on purpose: the document registers (TK-187), quantity, rate and percent columns, and the Excel and CSV exports.
 

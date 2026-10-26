@@ -1,13 +1,14 @@
-import { ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, LOCALE_ID } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
-import { Component, computed, input, output } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
+import { FormatSettingsService } from '@bill-book/currency-format';
 import {
   ReportColumn,
-  ReportCurrency,
   ReportGroupFooter,
   ReportQuery,
   ReportResult,
 } from '@bill-book/reporting-core';
+import { reportDate, reportDateTime, reportNumber } from './report-format';
 
 /**
  * The grid every report renders in.
@@ -32,6 +33,9 @@ import {
   styleUrl: './report-grid.component.scss',
 })
 export class ReportGridComponent {
+  private readonly formats = inject(FormatSettingsService);
+  private readonly decimalPipe = new DecimalPipe(inject(LOCALE_ID));
+
   readonly result = input.required<ReportResult | null>();
   readonly state = input.required<ReportQuery>();
   readonly busy = input(false);
@@ -45,10 +49,6 @@ export class ReportGridComponent {
   protected readonly columns = computed(() => this.result()?.columns ?? []);
 
   protected readonly rows = computed(() => this.result()?.rows ?? []);
-
-  protected readonly currency = computed<ReportCurrency>(
-    () => this.result()?.currency ?? { code: '', decimals: 2 },
-  );
 
   /**
    * How far from the left each frozen column sits.
@@ -164,10 +164,8 @@ export class ReportGridComponent {
   // ---- rendering ----
 
   /**
-   * A value formatted for its column's type.
-   *
-   * Money and quantity are handed to the template's `number` pipe instead, so the
-   * digits stay tabular and the decimals follow the branch's currency.
+   * A value formatted for its column's type. Dates are in the branch's date pattern (TK-262);
+   * numbers go through {@link number} instead, so the digits stay tabular.
    */
   protected display(row: Record<string, unknown>, column: ReportColumn): string {
     const value = row[column.key];
@@ -178,9 +176,9 @@ export class ReportGridComponent {
 
     switch (column.dataType) {
       case 'Date':
-        return String(value).slice(0, 10);
+        return reportDate(String(value), this.formats.settings());
       case 'DateTime':
-        return String(value).replace('T', ' ').slice(0, 16);
+        return reportDateTime(String(value), this.formats.settings());
       case 'Boolean':
         return value ? 'Yes' : 'No';
       default:
@@ -208,18 +206,23 @@ export class ReportGridComponent {
     return footer.aggregates[key] ?? null;
   }
 
-  /** The digits format for a column — money follows the branch, quantity carries more. */
-  protected format(column: ReportColumn): string {
-    const decimals = this.currency().decimals;
+  /**
+   * A number of a cell, a group footer or the total. **Money is written as the branch writes an
+   * amount** (TK-262): its grouping mask and its decimals, with no symbol, because the column's
+   * header names the currency and some money columns are in a document's own. Quantity, number,
+   * percent and rate keep their own digits.
+   */
+  protected number(column: ReportColumn, value: number | null): string {
+    if (value === null || !Number.isFinite(value)) {
+      return '';
+    }
 
-    return column.dataType === 'Quantity'
-      ? '1.0-6'
-      : column.dataType === 'Money'
-        ? `1.${decimals}-${decimals}`
-        : '1.0-4';
+    if (column.dataType === 'Money') {
+      return reportNumber(value, this.formats.settings());
+    }
+
+    return this.decimalPipe.transform(value, column.dataType === 'Quantity' ? '1.0-6' : '1.0-4') ?? '';
   }
-
-
 
   protected activate(row: Record<string, unknown>): void {
     this.rowActivate.emit(row);

@@ -59,7 +59,7 @@
 
 @if (result(); as report) {
   <p class="period text-muted">
-    Realized {{ report.fromDate | registerDate }} to {{ report.toDate | registerDate }}; open documents and unrealized as at {{ report.toDate | registerDate }}, in {{ report.baseCurrencyCode }}.
+    Realized {{ report.fromDate | reportDate }} to {{ report.toDate | reportDate }}; open documents and unrealized as at {{ report.toDate | reportDate }}, in {{ report.baseCurrencyCode }}.
   </p>
 
   @if (rows().length === 0) {
@@ -83,7 +83,7 @@
                   <strong>{{ row.name }}</strong>
                   @if (isDocument(row)) {
                     <span class="tag tag-outline">{{ row.typeCode }}</span>
-                    @if (row.date) { <span class="line__date text-muted">{{ row.date | registerDate }}</span> }
+                    @if (row.date) { <span class="line__date text-muted">{{ row.date | reportDate }}</span> }
                   }
                 </div>
                 @if (row.detail && isDocument(row)) { <p class="line__detail text-muted">{{ row.detail }}</p> }
@@ -92,22 +92,22 @@
                     <div class="figures__row"><dt>Rate</dt><dd>{{ rateRange(row) }}</dd></div>
                   }
                   @if (row.amount !== null) {
-                    <div class="figures__row"><dt>Amount</dt><dd><bb-money-cell [value]="row.amount" [currency]="row.currencyCode" /></dd></div>
+                    <div class="figures__row"><dt>Amount</dt><dd><bb-report-amount [value]="row.amount" [currency]="row.currencyCode" /></dd></div>
                   }
                   @if (row.carryingBase !== null) {
-                    <div class="figures__row"><dt>At booked rate</dt><dd><bb-money-cell [value]="row.carryingBase" /></dd></div>
+                    <div class="figures__row"><dt>At booked rate</dt><dd><bb-report-amount [value]="row.carryingBase" /></dd></div>
                   }
                   @if (row.currentBase !== null) {
-                    <div class="figures__row"><dt>{{ row.kind === 'settlement' ? 'At rate it moved at' : 'At current rate' }}</dt><dd><bb-money-cell [value]="row.currentBase" /></dd></div>
+                    <div class="figures__row"><dt>{{ row.kind === 'settlement' ? 'At rate it moved at' : 'At current rate' }}</dt><dd><bb-report-amount [value]="row.currentBase" /></dd></div>
                   }
                   @if (row.unrealized !== null) {
-                    <div class="figures__row"><dt>Unrealized</dt><dd [class.loss]="row.unrealized < 0"><bb-money-cell [value]="row.unrealized" /></dd></div>
+                    <div class="figures__row"><dt>Unrealized</dt><dd [class.loss]="row.unrealized < 0"><bb-report-amount [value]="row.unrealized" /></dd></div>
                   }
                   @if (row.realized !== null) {
-                    <div class="figures__row"><dt>Realized</dt><dd [class.loss]="row.realized < 0"><bb-money-cell [value]="row.realized" /></dd></div>
+                    <div class="figures__row"><dt>Realized</dt><dd [class.loss]="row.realized < 0"><bb-report-amount [value]="row.realized" /></dd></div>
                   }
                   @if (row.net !== null) {
-                    <div class="figures__row figures__row--balance"><dt>Net</dt><dd [class.loss]="row.net < 0"><bb-money-cell [value]="row.net" /></dd></div>
+                    <div class="figures__row figures__row--balance"><dt>Net</dt><dd [class.loss]="row.net < 0"><bb-report-amount [value]="row.net" /></dd></div>
                   }
                 </dl>
               </div>
@@ -121,7 +121,7 @@
       <bb-data-grid flush [columns]="columns" [data]="rows()" [rowClass]="rowClass" [sortable]="false"
                     [showColumnFilters]="false" [showCount]="false" [paged]="false" label="Foreign currency gain or loss details">
         <ng-template bbCellTemplate="date" let-row>
-          @if (row.date) { <span class="date">{{ row.date | registerDate }}</span> }
+          @if (row.date) { <span class="date">{{ row.date | reportDate }}</span> }
         </ng-template>
         <ng-template bbCellTemplate="document" let-row>
           @if (row.kind === 'heading') {
@@ -149,28 +149,28 @@
           @if (rateRange(row)) { <span class="rates-cell">{{ rateRange(row) }}</span> }
         </ng-template>
         <ng-template bbCellTemplate="amount" let-row>
-          @if (row.amount !== null) { <bb-money-cell [value]="row.amount" [currency]="row.currencyCode" /> }
+          @if (row.amount !== null) { <bb-report-amount [value]="row.amount" [currency]="row.currencyCode" /> }
         </ng-template>
         <ng-template bbCellTemplate="carryingBase" let-row>
           @if (row.carryingBase !== null) {
             <span class="amount">
-              <bb-money-cell [value]="row.carryingBase" />
-              @if (row.currentBase !== null) { <small class="own">→ <bb-money-cell [value]="row.currentBase" /></small> }
+              <bb-report-amount [value]="row.carryingBase" />
+              @if (row.currentBase !== null) { <small class="own">→ <bb-report-amount [value]="row.currentBase" /></small> }
             </span>
           } @else if (row.currentBase !== null) {
-            <span class="amount"><small class="own">→ <bb-money-cell [value]="row.currentBase" /></small></span>
+            <span class="amount"><small class="own">→ <bb-report-amount [value]="row.currentBase" /></small></span>
           } @else if (row.kind === 'open' && row.needsRate) {
             <span class="no-rate text-muted">no rate</span>
           }
         </ng-template>
         <ng-template bbCellTemplate="realized" let-row>
-          @if (row.realized !== null) { <span [class.loss]="row.realized < 0"><bb-money-cell [value]="row.realized" /></span> }
+          @if (row.realized !== null) { <span [class.loss]="row.realized < 0"><bb-report-amount [value]="row.realized" /></span> }
         </ng-template>
         <ng-template bbCellTemplate="unrealized" let-row>
-          @if (row.unrealized !== null) { <span [class.loss]="row.unrealized < 0"><bb-money-cell [value]="row.unrealized" /></span> }
+          @if (row.unrealized !== null) { <span [class.loss]="row.unrealized < 0"><bb-report-amount [value]="row.unrealized" /></span> }
         </ng-template>
         <ng-template bbCellTemplate="net" let-row>
-          @if (row.net !== null) { <span [class.loss]="row.net < 0"><bb-money-cell [value]="row.net" /></span> }
+          @if (row.net !== null) { <span [class.loss]="row.net < 0"><bb-report-amount [value]="row.net" /></span> }
         </ng-template>
       </bb-data-grid>
     </div>

@@ -43,7 +43,7 @@
 
 @if (result(); as report) {
   <p class="period text-muted">
-    {{ report.fromDate | registerDate }} to {{ report.toDate | registerDate }}.
+    {{ report.fromDate | reportDate }} to {{ report.toDate | reportDate }}.
     @if (report.totalJournals > journals().length) {
       Showing {{ journals().length }} of {{ report.totalJournals }} journals; the totals above are of all of them.
     }
@@ -63,7 +63,7 @@
           @if (!entry.isBalanced) {
             <span class="tag tag-danger">Out of balance</span>
           }
-          <span class="journal__date text-muted">{{ entry.date | registerDate }}</span>
+          <span class="journal__date text-muted">{{ entry.date | reportDate }}</span>
         </div>
         @if (entry.reference || entry.narration) {
           <p class="journal__text">
@@ -91,10 +91,10 @@
               </div>
               <div class="lines__amount">
                 @if (line.debit !== 0) {
-                  <span><small class="side">Dr</small> <bb-money-cell [value]="line.debit" /></span>
+                  <span><small class="side">Dr</small> <bb-report-amount [value]="line.debit" /></span>
                 }
                 @if (line.credit !== 0) {
-                  <span><small class="side">Cr</small> <bb-money-cell [value]="line.credit" /></span>
+                  <span><small class="side">Cr</small> <bb-report-amount [value]="line.credit" /></span>
                 }
               </div>
             </li>
@@ -102,8 +102,8 @@
         </ul>
         <p class="journal__total">
           <span>Total</span>
-          <span><small class="side">Dr</small> <bb-money-cell [value]="entry.totalDebit" /></span>
-          <span><small class="side">Cr</small> <bb-money-cell [value]="entry.totalCredit" /></span>
+          <span><small class="side">Dr</small> <bb-report-amount [value]="entry.totalDebit" /></span>
+          <span><small class="side">Cr</small> <bb-report-amount [value]="entry.totalCredit" /></span>
         </p>
       } @else {
         <bb-data-grid flush [columns]="columns" [data]="entry.lines" [sortable]="false" [showColumnFilters]="false"
@@ -119,14 +119,14 @@
             {{ line.description }}
             @if (sourceNote(line)) { <small class="foreign text-muted">{{ sourceNote(line) }}</small> }
           </ng-template>
-          <ng-template bbCellTemplate="debit" let-line><bb-money-cell [value]="blankZero(line.debit)" /></ng-template>
-          <ng-template bbCellTemplate="credit" let-line><bb-money-cell [value]="blankZero(line.credit)" /></ng-template>
+          <ng-template bbCellTemplate="debit" let-line><bb-report-amount [value]="blankZero(line.debit)" /></ng-template>
+          <ng-template bbCellTemplate="credit" let-line><bb-report-amount [value]="blankZero(line.credit)" /></ng-template>
 
           <ng-template bbGridFooter>
             <tr>
               <th scope="row" colspan="3">Total</th>
-              <td class="numeric"><bb-money-cell [value]="entry.totalDebit" /></td>
-              <td class="numeric"><bb-money-cell [value]="entry.totalCredit" /></td>
+              <td class="numeric"><bb-report-amount [value]="entry.totalDebit" /></td>
+              <td class="numeric"><bb-report-amount [value]="entry.totalCredit" /></td>
             </tr>
           </ng-template>
         </bb-data-grid>

@@ -26,12 +26,11 @@ import {
   DataGridComponent,
   DataGridFooterDirective,
   MessageBoxComponent,
-  MoneyCellComponent,
-  RegisterDatePipe,
+  ReportAmountComponent,
+  ReportDatePipe,
   SelectComponent,
   UiMessage,
   rangeForPreset,
-  registerDate,
   toIsoDate,
 } from '@bill-book/ui-components';
 
@@ -61,8 +60,8 @@ type FilterName = 'fromDate' | 'toDate' | 'source' | 'status' | 'accountId';
     DataGridComponent,
     DataGridCellTemplateDirective,
     DataGridFooterDirective,
-    MoneyCellComponent,
-    RegisterDatePipe,
+    ReportAmountComponent,
+    ReportDatePipe,
   ],
   templateUrl: './journal-report.page.html',
   styleUrl: './journal-report.page.scss',
@@ -132,7 +131,7 @@ export class JournalReportPage implements OnInit {
 
   protected readonly blankZero = blankZero;
   protected readonly reversalNote = reversalNote;
-  protected readonly sourceNote = sourceNote;
+  protected readonly sourceNote = (line: JournalReportLine): string => sourceNote(line, (value) => this.formats.formatAmount(value));
 
   ngOnInit(): void {
     if (typeof window !== 'undefined' && window.matchMedia) {
@@ -174,7 +173,7 @@ export class JournalReportPage implements OnInit {
 
   protected audit(entry: JournalReportEntry): string {
     // The same date format as the journal's own date above it, so one card does not carry two.
-    return auditNote(entry, registerDate);
+    return auditNote(entry, (value) => this.formats.formatDate(value));
   }
 
   /** The line's account, as the grid and the phone list both name it. */

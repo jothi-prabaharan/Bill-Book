@@ -121,13 +121,16 @@ function blankZero(value: number): number | null {
  * the amount and the rate it was booked at. The rate is the document's own and is
  * never looked up again.
  */
-export function foreignNote(row: Pick<GeneralLedgerReportRow, 'currencyCode' | 'exchangeRate' | 'debitAmount' | 'creditAmount'>): string | null {
+export function foreignNote(
+  row: Pick<GeneralLedgerReportRow, 'currencyCode' | 'exchangeRate' | 'debitAmount' | 'creditAmount'>,
+  amount: (value: number) => string = (value) => value.toFixed(2),
+): string | null {
   if (!row.currencyCode || row.exchangeRate === 1) {
     return null;
   }
 
-  const amount = row.debitAmount !== 0 ? row.debitAmount : row.creditAmount;
-  return `${row.currencyCode} ${amount.toFixed(2)} at ${row.exchangeRate}`;
+  const figure = row.debitAmount !== 0 ? row.debitAmount : row.creditAmount;
+  return `${row.currencyCode} ${amount(figure)} at ${row.exchangeRate}`;
 }
 
 /**
@@ -135,7 +138,10 @@ export function foreignNote(row: Pick<GeneralLedgerReportRow, 'currencyCode' | '
  * gives, and the closing balance carrying the period's debit and credit totals.
  * Nothing is worked out here beyond the layout; the figures are the server's.
  */
-export function ledgerRows(result: GeneralLedgerReportResult): LedgerGridRow[] {
+export function ledgerRows(
+  result: GeneralLedgerReportResult,
+  amount: (value: number) => string = (value) => value.toFixed(2),
+): LedgerGridRow[] {
   const opening: LedgerGridRow = {
     kind: 'opening',
     ledgerId: 0,
@@ -165,7 +171,7 @@ export function ledgerRows(result: GeneralLedgerReportResult): LedgerGridRow[] {
       projectName: row.projectName,
       subAccountName: row.subAccountName,
       description: row.description ?? '',
-      foreignNote: foreignNote(row),
+      foreignNote: foreignNote(row, amount),
       debit: blankZero(row.debitAmountBase),
       credit: blankZero(row.creditAmountBase),
       balance: row.runningBalance,

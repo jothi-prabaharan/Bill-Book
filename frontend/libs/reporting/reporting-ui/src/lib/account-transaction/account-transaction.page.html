@@ -67,8 +67,8 @@
 
 @if (result(); as report) {
   <p class="period text-muted">
-    {{ report.fromDate | registerDate }} to {{ report.toDate | registerDate }}. Each balance is on its account's normal side, marked Dr or Cr;
-    an income or expense account opens at what was posted since {{ report.financialYearStart | registerDate }}, the start of the financial year.
+    {{ report.fromDate | reportDate }} to {{ report.toDate | reportDate }}. Each balance is on its account's normal side, marked Dr or Cr;
+    an income or expense account opens at what was posted since {{ report.financialYearStart | reportDate }}, the start of the financial year.
     @if (moreToLoad()) {
       Showing the first postings of {{ report.totalPostings }}; the totals above are of all of them.
     }
@@ -101,7 +101,7 @@
                      [class.entry--opening]="row.kind === 'opening'" [class.entry--closing]="row.kind === 'closing'">
               <header class="entry__head">
                 @if (row.kind === 'posting') {
-                  <span class="entry__date">{{ row.date | registerDate }}</span>
+                  <span class="entry__date">{{ row.date | reportDate }}</span>
                   <span class="tag tag-outline">{{ sourceLabel(row.sourceCode) }}</span>
                   <span>{{ row.documentNo }}</span>
                 } @else {
@@ -125,13 +125,13 @@
               }
               <dl class="figures">
                 @if (row.debit !== null) {
-                  <div class="figures__row"><dt>{{ row.kind === 'closing' ? 'Debits' : 'Debit' }}</dt><dd><bb-money-cell [value]="row.debit" /></dd></div>
+                  <div class="figures__row"><dt>{{ row.kind === 'closing' ? 'Debits' : 'Debit' }}</dt><dd><bb-report-amount [value]="row.debit" /></dd></div>
                 }
                 @if (row.credit !== null) {
-                  <div class="figures__row"><dt>{{ row.kind === 'closing' ? 'Credits' : 'Credit' }}</dt><dd><bb-money-cell [value]="row.credit" /></dd></div>
+                  <div class="figures__row"><dt>{{ row.kind === 'closing' ? 'Credits' : 'Credit' }}</dt><dd><bb-report-amount [value]="row.credit" /></dd></div>
                 }
                 <div class="figures__row figures__row--balance">
-                  <dt>Balance ({{ sideOf(block.account.normalSide) }})</dt><dd><bb-money-cell [value]="row.balance" /></dd>
+                  <dt>Balance ({{ sideOf(block.account.normalSide) }})</dt><dd><bb-report-amount [value]="row.balance" /></dd>
                 </div>
               </dl>
             </article>
@@ -143,7 +143,7 @@
                         [showColumnFilters]="false" [showCount]="false" [paged]="false"
                         [label]="'Postings to ' + block.account.accountName">
             <ng-template bbCellTemplate="date" let-row>
-              @if (row.kind === 'posting') { {{ row.date | registerDate }} }
+              @if (row.kind === 'posting') { {{ row.date | reportDate }} }
             </ng-template>
             <ng-template bbCellTemplate="documentNo" let-row>
               @if (row.kind === 'posting') {
@@ -165,9 +165,9 @@
             <ng-template bbCellTemplate="tax" let-row>{{ row.tax }}</ng-template>
             <ng-template bbCellTemplate="permitNo" let-row>{{ row.permitNo }}</ng-template>
             <ng-template bbCellTemplate="foreign" let-row>{{ row.foreign }}</ng-template>
-            <ng-template bbCellTemplate="debit" let-row><bb-money-cell [value]="row.debit" /></ng-template>
-            <ng-template bbCellTemplate="credit" let-row><bb-money-cell [value]="row.credit" /></ng-template>
-            <ng-template bbCellTemplate="balance" let-row><bb-money-cell [value]="row.balance" /></ng-template>
+            <ng-template bbCellTemplate="debit" let-row><bb-report-amount [value]="row.debit" /></ng-template>
+            <ng-template bbCellTemplate="credit" let-row><bb-report-amount [value]="row.credit" /></ng-template>
+            <ng-template bbCellTemplate="balance" let-row><bb-report-amount [value]="row.balance" /></ng-template>
           </bb-data-grid>
         </div>
       }
@@ -188,8 +188,8 @@
       <dl class="grand__figures">
         <div><dt>Postings</dt><dd>{{ report.totalPostings }}</dd></div>
         <div><dt>Accounts</dt><dd>{{ report.totalAccounts }}</dd></div>
-        <div><dt>Debits</dt><dd><bb-money-cell [value]="report.totalDebit" /></dd></div>
-        <div><dt>Credits</dt><dd><bb-money-cell [value]="report.totalCredit" /></dd></div>
+        <div><dt>Debits</dt><dd><bb-report-amount [value]="report.totalDebit" /></dd></div>
+        <div><dt>Credits</dt><dd><bb-report-amount [value]="report.totalCredit" /></dd></div>
       </dl>
     </section>
   }

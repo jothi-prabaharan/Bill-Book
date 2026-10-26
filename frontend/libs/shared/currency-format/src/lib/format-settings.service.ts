@@ -60,6 +60,15 @@ export class FormatSettingsService {
     return formatMoney(value, this.settingsSignal());
   }
 
+  /**
+   * An amount with no symbol, in the branch's grouping and decimals: the figure of an amount in
+   * another currency, which the branch's own symbol would mislabel, with its code written beside it.
+   */
+  formatAmount(value: number | null | undefined): string {
+    const settings = this.settingsSignal();
+    return formatNumber(value, settings.currencyDecimals, settings.currencyMask);
+  }
+
   formatQuantity(value: number | null | undefined): string {
     const settings = this.settingsSignal();
     return formatNumber(value, settings.quantityDecimals, settings.currencyMask);

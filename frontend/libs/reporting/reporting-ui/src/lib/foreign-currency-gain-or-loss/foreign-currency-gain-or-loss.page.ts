@@ -20,8 +20,8 @@ import {
   DataGridComponent,
   ExchangeRateInputComponent,
   MessageBoxComponent,
-  MoneyCellComponent,
-  RegisterDatePipe,
+  ReportAmountComponent,
+  ReportDatePipe,
   SelectComponent,
   UiMessage,
   rangeForPreset,
@@ -58,8 +58,8 @@ const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
     MessageBoxComponent,
     DataGridComponent,
     DataGridCellTemplateDirective,
-    MoneyCellComponent,
-    RegisterDatePipe,
+    ReportAmountComponent,
+    ReportDatePipe,
   ],
   templateUrl: './foreign-currency-gain-or-loss.page.html',
   styleUrl: './foreign-currency-gain-or-loss.page.scss',
@@ -79,7 +79,10 @@ export class ForeignCurrencyGainLossPage implements OnInit {
   });
 
   /** One revaluation rate for each currency with a balance at the as-at date, by currency code. */
-  protected readonly rates = new FxRateFields((currency, base, on) => this.report.masterRate(currency, base, on));
+  protected readonly rates = new FxRateFields(
+    (currency, base, on) => this.report.masterRate(currency, base, on),
+    (iso) => this.formats.formatDate(iso),
+  );
 
   protected readonly choices = signal<ForeignCurrencyChoices>({ baseCurrencyCode: '', currencies: [] });
   protected readonly choicesLoaded = signal(false);

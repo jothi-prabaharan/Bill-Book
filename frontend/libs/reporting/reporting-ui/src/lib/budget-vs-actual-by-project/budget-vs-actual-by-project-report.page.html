@@ -42,7 +42,7 @@
 
 @if (result(); as report) {
   <p class="period text-muted">
-    {{ report.budget.name }}: {{ report.fromDate | registerDate }} to {{ report.toDate | registerDate }}.
+    {{ report.budget.name }}: {{ report.fromDate | reportDate }} to {{ report.toDate | reportDate }}.
     Only postings with a project count. A positive variance is favourable.
   </p>
 
@@ -59,19 +59,19 @@
     </ng-template>
     <ng-template bbCellTemplate="budget" let-row>
       @if (row.kind !== 'heading') {
-        <bb-money-cell [value]="row.budget" />
+        <bb-report-amount [value]="row.budget" />
       }
     </ng-template>
     <ng-template bbCellTemplate="actual" let-row>
       @if (row.kind !== 'heading') {
-        <bb-money-cell [value]="row.actual" />
+        <bb-report-amount [value]="row.actual" />
       }
     </ng-template>
     <ng-template bbCellTemplate="variance" let-row>
       @if (row.kind !== 'heading') {
         <span [class.variance--favourable]="tone(row.variance) === 'favourable'"
               [class.variance--adverse]="tone(row.variance) === 'adverse'">
-          <bb-money-cell [value]="row.variance" />
+          <bb-report-amount [value]="row.variance" />
         </span>
       }
     </ng-template>

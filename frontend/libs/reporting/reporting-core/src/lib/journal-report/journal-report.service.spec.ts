@@ -179,6 +179,12 @@ describe('journal helpers', () => {
     expect(sourceNote({ currencyCode: 'INR', exchangeRate: 1, debitSource: 100, creditSource: 0 })).toBe('');
   });
 
+  it('JR-11b: the amount is written as the caller says, so a page can pass the branch’s format (TK-262)', () => {
+    const branch = (value: number): string => (value === 1234567.5 ? '12,34,567.50' : String(value));
+
+    expect(sourceNote({ currencyCode: 'USD', exchangeRate: 83.5, debitSource: 1234567.5, creditSource: 0 }, branch)).toBe('USD 12,34,567.50 @ 83.5');
+  });
+
   it('JR-12: an empty side reads blank, and a figure is kept', () => {
     expect(blankZero(0)).toBeNull();
     expect(blankZero(250)).toBe(250);

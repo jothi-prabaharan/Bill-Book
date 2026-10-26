@@ -31,40 +31,40 @@
 
 @if (result(); as report) {
   <p class="period text-muted">
-    {{ report.accountName }}@if (report.accountNumber && report.accountNumber !== '-') { · {{ report.accountNumber }}}, in {{ report.currencyCode }}, at the end of {{ report.asOfDate | registerDate }}.
+    {{ report.accountName }}@if (report.accountNumber && report.accountNumber !== '-') { · {{ report.accountNumber }}}, in {{ report.currencyCode }}, at the end of {{ report.asOfDate | reportDate }}.
   </p>
 
   <dl class="summary card" aria-label="From the books to the statement">
     <div class="summary__line">
       <dt>Balance in the books</dt>
-      <dd><bb-money-cell [value]="report.bookBalance" /></dd>
+      <dd><bb-report-amount [value]="report.bookBalance" /></dd>
     </div>
     @if (report.bookBalanceBase !== report.bookBalance) {
       <div class="summary__line summary__line--note">
         <dt>The same in base currency</dt>
-        <dd><bb-money-cell [value]="report.bookBalanceBase" /></dd>
+        <dd><bb-report-amount [value]="report.bookBalanceBase" /></dd>
       </div>
     }
     @for (group of report.groups; track group.group) {
       <div class="summary__line">
         <dt>{{ group.title }} <span class="text-muted">({{ group.items.length }})</span></dt>
-        <dd><bb-money-cell [value]="group.adjustment" /></dd>
+        <dd><bb-report-amount [value]="group.adjustment" /></dd>
       </div>
     }
     <div class="summary__line summary__line--total">
       <dt>Statement balance the books expect</dt>
-      <dd><bb-money-cell [value]="report.expectedStatementBalance" /></dd>
+      <dd><bb-report-amount [value]="report.expectedStatementBalance" /></dd>
     </div>
     <div class="summary__line">
       <dt>
         Balance on the imported statement
         @if (report.statementBalanceDate) {
-          <span class="text-muted">(as the bank gave it on {{ report.statementBalanceDate | registerDate }}, with any lines after)</span>
+          <span class="text-muted">(as the bank gave it on {{ report.statementBalanceDate | reportDate }}, with any lines after)</span>
         }
       </dt>
       <dd>
         @if (report.statementBalance !== null) {
-          <bb-money-cell [value]="report.statementBalance" />
+          <bb-report-amount [value]="report.statementBalance" />
         } @else {
           <span class="text-muted">Not known</span>
         }
@@ -73,7 +73,7 @@
     @if (report.difference !== null) {
       <div class="summary__line summary__line--strong">
         <dt>Difference</dt>
-        <dd><bb-money-cell [value]="report.difference" /></dd>
+        <dd><bb-report-amount [value]="report.difference" /></dd>
       </div>
     }
     <div class="summary__check" [class.summary__check--off]="report.statementBalance !== null && !report.isReconciled">
@@ -93,23 +93,23 @@
       <bb-data-grid flush [columns]="columns" [data]="group.items" [loading]="busy()" [stackOnPhone]="true"
                     [sortable]="false" [showColumnFilters]="false" [showCount]="false" [paged]="false"
                     [label]="group.title" emptyText="None on this day.">
-        <ng-template bbCellTemplate="transactionDate" let-row>{{ row.transactionDate | registerDate }}</ng-template>
+        <ng-template bbCellTemplate="transactionDate" let-row>{{ row.transactionDate | reportDate }}</ng-template>
         <ng-template bbCellTemplate="transactionNo" let-row>{{ row.transactionNo ?? '—' }}</ng-template>
         <ng-template bbCellTemplate="reference" let-row>{{ row.reference ?? '—' }}</ng-template>
         <ng-template bbCellTemplate="description" let-row>{{ row.description ?? '—' }}</ng-template>
         <ng-template bbCellTemplate="amountIn" let-row>
-          @if (row.amountIn) { <bb-money-cell [value]="row.amountIn" /> }
+          @if (row.amountIn) { <bb-report-amount [value]="row.amountIn" /> }
         </ng-template>
         <ng-template bbCellTemplate="amountOut" let-row>
-          @if (row.amountOut) { <bb-money-cell [value]="row.amountOut" /> }
+          @if (row.amountOut) { <bb-report-amount [value]="row.amountOut" /> }
         </ng-template>
 
         @if (group.items.length > 0) {
           <ng-template bbGridFooter>
             <tr>
               <th scope="row" colspan="4">Total</th>
-              <td class="numeric"><bb-money-cell [value]="totalIn(group.items)" /></td>
-              <td class="numeric"><bb-money-cell [value]="totalOut(group.items)" /></td>
+              <td class="numeric"><bb-report-amount [value]="totalIn(group.items)" /></td>
+              <td class="numeric"><bb-report-amount [value]="totalOut(group.items)" /></td>
             </tr>
           </ng-template>
         }

@@ -1,7 +1,6 @@
 import { signal } from '@angular/core';
 import { FormControl, FormRecord } from '@angular/forms';
 import { ratesOf } from '@bill-book/reporting-core';
-import { registerDate } from '@bill-book/ui-components';
 
 /** What the rate master says for a currency pair on a date: the rate, or null when none is on file. */
 export type MasterRateLookup = (currency: string, baseCurrency: string, on: string) => Promise<number | null>;
@@ -20,7 +19,11 @@ export class FxRateFields {
   /** Where each currency's starting rate came from, for the hint under its field. */
   readonly sources = signal<Record<string, string>>({});
 
-  constructor(private readonly lookup: MasterRateLookup) {}
+  /** `formatDate` writes the as-at date in the branch's pattern, for the hint under a field. */
+  constructor(
+    private readonly lookup: MasterRateLookup,
+    private readonly formatDate: (iso: string) => string,
+  ) {}
 
   /** The rates as a request sends them: only a figure above nought, by upper-case code. */
   values(): Record<string, number> {
@@ -67,10 +70,10 @@ export class FxRateFields {
         sources[code] = 'The rate you entered.';
       } else if (rate !== null) {
         control.setValue(rate, { emitEvent: false });
-        sources[code] = `The rate master's rate for ${registerDate(on)}.`;
+        sources[code] = `The rate master's rate for ${this.formatDate(on)}.`;
       } else {
         control.setValue(null, { emitEvent: false });
-        sources[code] = `No rate on file for ${registerDate(on)}: enter one.`;
+        sources[code] = `No rate on file for ${this.formatDate(on)}: enter one.`;
       }
     }
 

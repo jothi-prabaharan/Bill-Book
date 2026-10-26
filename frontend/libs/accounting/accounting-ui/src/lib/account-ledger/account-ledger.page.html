@@ -56,7 +56,7 @@
       }
     </h2>
     <p class="period text-muted">
-      {{ report.from | registerDate }} to {{ report.to | registerDate }}. Balances are on the account's normal side, {{ report.normalSide === 'Debit' ? 'debit' : 'credit' }}.
+      {{ report.from | reportDate }} to {{ report.to | reportDate }}. Balances are on the account's normal side, {{ report.normalSide === 'Debit' ? 'debit' : 'credit' }}.
       @if (report.contactId !== null || report.projectId !== null) {
         Only the postings that name the contact or project chosen are shown, and the opening balance is theirs too.
       }
@@ -74,7 +74,7 @@
                  [class.entry--opening]="row.kind === 'opening'" [class.entry--closing]="row.kind === 'closing'">
           <header class="entry__head">
             @if (row.kind === 'posting') {
-              <span class="entry__date">{{ row.ledgerDate | registerDate }}</span>
+              <span class="entry__date">{{ row.ledgerDate | reportDate }}</span>
               <span class="chip">{{ row.sourceCode }}</span>
               @if (row.journalId) {
                 <a class="link" [routerLink]="['/accounting/journals', row.journalId]">{{ row.documentNo }}</a>
@@ -100,13 +100,13 @@
           }
           <dl class="figures">
             @if (row.debit !== null) {
-              <div class="figures__row"><dt>{{ row.kind === 'closing' ? 'Debits' : 'Debit' }}</dt><dd><bb-money-cell [value]="row.debit" /></dd></div>
+              <div class="figures__row"><dt>{{ row.kind === 'closing' ? 'Debits' : 'Debit' }}</dt><dd><bb-report-amount [value]="row.debit" /></dd></div>
             }
             @if (row.credit !== null) {
-              <div class="figures__row"><dt>{{ row.kind === 'closing' ? 'Credits' : 'Credit' }}</dt><dd><bb-money-cell [value]="row.credit" /></dd></div>
+              <div class="figures__row"><dt>{{ row.kind === 'closing' ? 'Credits' : 'Credit' }}</dt><dd><bb-report-amount [value]="row.credit" /></dd></div>
             }
             <div class="figures__row figures__row--balance">
-              <dt>Balance ({{ sideLetter(report.normalSide) }})</dt><dd><bb-money-cell [value]="row.balance" /></dd>
+              <dt>Balance ({{ sideLetter(report.normalSide) }})</dt><dd><bb-report-amount [value]="row.balance" /></dd>
             </div>
           </dl>
         </article>
@@ -119,7 +119,7 @@
                   [paged]="false" label="General ledger">
       <ng-template bbCellTemplate="ledgerDate" let-row>
         @if (row.kind === 'posting') {
-          {{ row.ledgerDate | registerDate }}
+          {{ row.ledgerDate | reportDate }}
         }
       </ng-template>
       <ng-template bbCellTemplate="document" let-row>
@@ -151,9 +151,9 @@
           <strong>{{ row.description }}</strong>
         }
       </ng-template>
-      <ng-template bbCellTemplate="debit" let-row><bb-money-cell [value]="row.debit" /></ng-template>
-      <ng-template bbCellTemplate="credit" let-row><bb-money-cell [value]="row.credit" /></ng-template>
-      <ng-template bbCellTemplate="balance" let-row><bb-money-cell [value]="row.balance" /></ng-template>
+      <ng-template bbCellTemplate="debit" let-row><bb-report-amount [value]="row.debit" /></ng-template>
+      <ng-template bbCellTemplate="credit" let-row><bb-report-amount [value]="row.credit" /></ng-template>
+      <ng-template bbCellTemplate="balance" let-row><bb-report-amount [value]="row.balance" /></ng-template>
     </bb-data-grid>
     </div>
   }
@@ -161,8 +161,8 @@
 
 @if (summary(); as report) {
   <p class="period text-muted">
-    {{ report.from | registerDate }} to {{ report.to | registerDate }}. Each balance is on its account's normal side, marked Dr or Cr;
-    an income or expense account opens at what was posted since {{ report.financialYearStart | registerDate }}, the start of the financial year.
+    {{ report.from | reportDate }} to {{ report.to | reportDate }}. Each balance is on its account's normal side, marked Dr or Cr;
+    an income or expense account opens at what was posted since {{ report.financialYearStart | reportDate }}, the start of the financial year.
     Choose an account above, or its name, to see its postings.
   </p>
 
@@ -185,16 +185,16 @@
           </header>
           <dl class="figures">
             @if (row.kind === 'line') {
-              <div class="figures__row"><dt>Opening</dt><dd><bb-money-cell [value]="row.openingBalance" /> <small class="side">{{ sideLetter(row.side!) }}</small></dd></div>
+              <div class="figures__row"><dt>Opening</dt><dd><bb-report-amount [value]="row.openingBalance" /> <small class="side">{{ sideLetter(row.side!) }}</small></dd></div>
             }
             @if (row.debit !== null) {
-              <div class="figures__row"><dt>Debits</dt><dd><bb-money-cell [value]="row.debit" /></dd></div>
+              <div class="figures__row"><dt>Debits</dt><dd><bb-report-amount [value]="row.debit" /></dd></div>
             }
             @if (row.credit !== null) {
-              <div class="figures__row"><dt>Credits</dt><dd><bb-money-cell [value]="row.credit" /></dd></div>
+              <div class="figures__row"><dt>Credits</dt><dd><bb-report-amount [value]="row.credit" /></dd></div>
             }
             @if (row.kind === 'line') {
-              <div class="figures__row figures__row--balance"><dt>Closing</dt><dd><bb-money-cell [value]="row.closingBalance" /> <small class="side">{{ sideLetter(row.side!) }}</small></dd></div>
+              <div class="figures__row figures__row--balance"><dt>Closing</dt><dd><bb-report-amount [value]="row.closingBalance" /> <small class="side">{{ sideLetter(row.side!) }}</small></dd></div>
             }
           </dl>
         </article>
@@ -219,14 +219,14 @@
       </ng-template>
       <ng-template bbCellTemplate="openingBalance" let-row>
         @if (row.kind === 'line') {
-          <bb-money-cell [value]="row.openingBalance" /> <small class="side">{{ sideLetter(row.side) }}</small>
+          <bb-report-amount [value]="row.openingBalance" /> <small class="side">{{ sideLetter(row.side) }}</small>
         }
       </ng-template>
-      <ng-template bbCellTemplate="debit" let-row><bb-money-cell [value]="row.debit" /></ng-template>
-      <ng-template bbCellTemplate="credit" let-row><bb-money-cell [value]="row.credit" /></ng-template>
+      <ng-template bbCellTemplate="debit" let-row><bb-report-amount [value]="row.debit" /></ng-template>
+      <ng-template bbCellTemplate="credit" let-row><bb-report-amount [value]="row.credit" /></ng-template>
       <ng-template bbCellTemplate="closingBalance" let-row>
         @if (row.kind === 'line') {
-          <bb-money-cell [value]="row.closingBalance" /> <small class="side">{{ sideLetter(row.side) }}</small>
+          <bb-report-amount [value]="row.closingBalance" /> <small class="side">{{ sideLetter(row.side) }}</small>
         }
       </ng-template>
     </bb-data-grid>
