@@ -12,6 +12,9 @@ public class InvoiceRead : OrgScopedEntity
     /// <summary>The sales order it was raised from, when it was (TK-230).</summary>
     public long? SalesOrderId { get; set; }
 
+    /// <summary>The quote it was raised from, when it was (TK-231).</summary>
+    public long? QuoteId { get; set; }
+
     public string DocumentNo { get; set; } = null!;
     public DateOnly DocumentDate { get; set; }
     public long ContactId { get; set; }

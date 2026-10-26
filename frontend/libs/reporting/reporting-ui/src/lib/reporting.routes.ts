@@ -88,6 +88,12 @@ export const reportingRoutes: Routes = [
     data: { access: { permission: 'reports.view' } },
   },
   {
+    // Its own page on its own endpoint (TK-231), at the path the menu links to.
+    path: 'quotation-track-report',
+    loadComponent: () => import('./quotation-track/quotation-track.page').then((m) => m.QuotationTrackPage),
+    data: { access: { permission: 'reports.view' } },
+  },
+  {
     // Its own page on its own endpoint (TK-230), at the path the menu links to.
     path: 'sales-order-track-report',
     loadComponent: () => import('./sales-order-track/sales-order-track.page').then((m) => m.SalesOrderTrackPage),

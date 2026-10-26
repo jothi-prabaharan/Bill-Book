@@ -936,14 +936,16 @@ public sealed class ReportCatalogSeeder
             Title = "Quotation Track",
             Module = ReportModule.Sales,
             RequiredPermission = "sales.view",
-            Description = "Every quote with its status and value.",
+            Description = "Every quote dated in a period with its outcome (open, expired, accepted, converted or declined) and value.",
             SortOrder = 110,
             Columns =
             [
                 new("documentNo", "Quote No", ColumnDataType.Text, IsDefault: true, IsPrimary: true),
                 new("documentDate", "Date", ColumnDataType.Date, IsDefault: true),
+                new("validUntil", "Valid until", ColumnDataType.Date, IsDefault: true),
                 new("contactName", "Customer", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
-                new("status", "Status", ColumnDataType.Text, IsDefault: true),
+                new("status", "Status", ColumnDataType.Text),
+                new("outcome", "Outcome", ColumnDataType.Enum, IsDefault: true, IsGroupable: true),
                 new("totalAmount", "Total", ColumnDataType.Money, IsDefault: true,
                     Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
             ],

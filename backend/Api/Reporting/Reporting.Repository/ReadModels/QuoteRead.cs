@@ -9,6 +9,9 @@ public class QuoteRead : OrgScopedEntity
     public long QuoteId { get; set; }
     public DateOnly ValidUntil { get; set; }
 
+    /// <summary>What the customer said on the portal: nothing, accepted or rejected (TK-231).</summary>
+    public Reporting.Entity.Enums.QuoteResponse CustomerResponse { get; set; }
+
     public string TransactionTypeCode { get; set; } = null!;
     public string DocumentNo { get; set; } = null!;
     public DateOnly DocumentDate { get; set; }

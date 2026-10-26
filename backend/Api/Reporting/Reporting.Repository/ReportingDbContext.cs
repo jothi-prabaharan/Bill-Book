@@ -403,6 +403,7 @@ public class ReportingDbContext : TenantDbContext
         modelBuilder.Entity<CreditNoteRead>().Property(e => e.Status).HasConversion<string>().HasMaxLength(12);
         modelBuilder.Entity<CreditNoteRead>().Property(e => e.ReasonCode).HasConversion<string>().HasMaxLength(20);
         modelBuilder.Entity<QuoteRead>().Property(e => e.Status).HasConversion<string>().HasMaxLength(12);
+        modelBuilder.Entity<QuoteRead>().Property(e => e.CustomerResponse).HasConversion<string>().HasMaxLength(10);
         modelBuilder.Entity<SalesOrderRead>().Property(e => e.Status).HasConversion<string>().HasMaxLength(12);
         modelBuilder.Entity<DeliveryChallanRead>().Property(e => e.Status).HasConversion<string>().HasMaxLength(12);
         modelBuilder.Entity<BillRead>().Property(e => e.Status).HasConversion<string>().HasMaxLength(12);

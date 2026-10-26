@@ -23,5 +23,6 @@ export * from './lib/invoice-dn-payment-collection/invoice-dn-payment-collection
 export * from './lib/sales-analysis/sales-analysis.page';
 export * from './lib/sales-analysis-detail/sales-analysis-detail.page';
 export * from './lib/sales-order-track/sales-order-track.page';
+export * from './lib/quotation-track/quotation-track.page';
 export * from './lib/foreign-currency-gain-or-loss/foreign-currency-gain-or-loss.page';
 export * from './lib/foreign-currency-gain-or-loss-details/foreign-currency-gain-or-loss-details.page';

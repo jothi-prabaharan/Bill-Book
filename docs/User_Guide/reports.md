@@ -411,6 +411,20 @@ The Sales Order Track Report has its own page at `/reports/sales-order-track-rep
 
 The catalog's **Sales Order Track**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It lists the orders of the period but cancelled ones, with each one's progress and its value in the branch's currency.
 
+## Quotation Track Report
+
+The Quotation Track Report has its own page at `/reports/quotation-track-report` (TK-231), under **Reports › Sales Reports**. Besides access to reports it needs **sales.view**. It shows what became of each quote you sent.
+
+- **From** and **To** are both required, and are the **quote date**. The page opens on the financial year to date and runs straight away. A **To** before **From** is refused under **To**. **Customer** narrows it.
+- **The strip** at the top counts the quotes **raised** and how many were **converted**, with their value in the branch's currency, and gives the **conversion rate by number** (converted over raised) and **by value**. It covers every quote the filters match, whichever tab is open, and a voided quote is counted in neither raised nor converted.
+- **Status tabs** count the quotes at each outcome: **Open** (still valid, no answer), **Expired** (past its valid-until date, with no answer and no conversion), **Accepted** (the customer accepted it on the portal, and it has not been converted yet), **Converted to order**, **Converted to invoice**, **Declined** (the customer rejected it on the portal) and **Void**. **All** is every outcome except Void, which is listed only under its own tab.
+- **Converted** means a posted sales order or invoice was raised from the quote, and it wins over what the customer answered. When both exist the invoice is named; with two of a kind, the earliest. **Converted to** shows that document's number (a link) and **Days to convert** counts from the quote date to its date. A draft or voided order or invoice does not convert a quote.
+- **Status is as it stands today**, whatever the period: a conversion that happened after the period counts, and a quote is expired from the day after its valid-until date.
+- Each row has the quote number (a link) and date, the customer, **Valid until**, the status, **Converted to**, **Days to convert** and the **Value** in the branch's currency (a quote in another currency also shows its own total under it). **Total** at the foot is of every quote in the tab chosen, not only those loaded.
+- The list loads 25 quotes at a time with **Show more quotes**. On a phone each quote is a card.
+
+The catalog's **Quotation Track**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It lists the quotes of the period but void ones, with the **Valid until** date, the **Outcome** and the value in the branch's currency. Two columns are new, so a branch set up earlier gets them when its report catalog is seeded again.
+
 ## Project reports
 
 Four reports read project accounting, under **Projects** in the list. Running them needs **projects.view** as well as access to reports.

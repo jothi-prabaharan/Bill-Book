@@ -1,0 +1,157 @@
+<header class="page-head">
+  <div>
+    <h1>Quotation Track Report</h1>
+    <p class="subtitle text-muted">
+      What became of each quote raised in a period: still open, expired, accepted, converted to an order or an invoice, or declined, with the
+      order or invoice it became and how long that took, and the conversion rate by number of quotes and by value.
+    </p>
+  </div>
+</header>
+
+<form class="filters card" [formGroup]="filters" (ngSubmit)="run()" novalidate>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'qtr-from'" label="From" formControlName="fromDate" [required]="true"
+                          [error]="err('fromDate', 'From date')" />
+  </div>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'qtr-to'" label="To" formControlName="toDate" [required]="true"
+                          [error]="err('toDate', 'To date')" />
+  </div>
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'qtr-customer'" label="Customer" placeholder="All customers" [options]="customerOptions()"
+               [loading]="!choicesLoaded()" emptyText="No customers" formControlName="contactId"
+               [error]="err('contactId', 'Customer')" />
+  </div>
+  <div class="filters__actions">
+    <button class="btn btn-primary" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Running…' : 'Run report' }}
+    </button>
+  </div>
+</form>
+
+@if (result(); as report) {
+  <section class="strip" aria-label="Conversion summary">
+    <div class="strip__tile">
+      <span class="strip__label text-muted">Quotes raised</span>
+      <strong class="strip__figure">{{ report.summary.raised }}</strong>
+      <span class="strip__sub text-muted"><bb-report-amount [value]="report.summary.raisedValue" /></span>
+    </div>
+    <div class="strip__tile">
+      <span class="strip__label text-muted">Converted</span>
+      <strong class="strip__figure">{{ report.summary.converted }}</strong>
+      <span class="strip__sub text-muted"><bb-report-amount [value]="report.summary.convertedValue" /></span>
+    </div>
+    <div class="strip__tile strip__tile--rate">
+      <span class="strip__label text-muted">Conversion rate by number</span>
+      <strong class="strip__figure">{{ rate(report.summary.conversionRateByCount) }}</strong>
+      <span class="strip__sub text-muted">{{ report.summary.converted }} of {{ report.summary.raised }} quotes</span>
+    </div>
+    <div class="strip__tile strip__tile--rate">
+      <span class="strip__label text-muted">Conversion rate by value</span>
+      <strong class="strip__figure">{{ rate(report.summary.conversionRateByValue) }}</strong>
+      <span class="strip__sub text-muted">in {{ report.baseCurrencyCode }}</span>
+    </div>
+  </section>
+
+  <bb-status-tabs [tabs]="tabs()" [value]="outcome()" label="Quote status" (valueChange)="chooseOutcome($event)" />
+}
+
+@if (messages().length > 0) {
+  <bb-message-box [messages]="messages()" />
+}
+
+@if (result(); as report) {
+  <p class="period text-muted">
+    Quotes dated {{ report.fromDate | reportDate }} to {{ report.toDate | reportDate }}, in {{ report.baseCurrencyCode }}. Status is as it stands today.
+  </p>
+
+  @if (report.totalQuotes === 0) {
+    <p class="empty text-muted">No quotes match these filters.</p>
+  } @else if (narrow()) {
+    <div class="cards" role="list" aria-label="Quotation track">
+      @for (row of rows(); track row.key) {
+        <article class="card entry" role="listitem" [class.entry--total]="row.kind === 'total'">
+          <header class="entry__head">
+            @if (row.link) { <a class="link" [routerLink]="row.link"><strong>{{ row.name }}</strong></a> } @else { <strong>{{ row.name }}</strong> }
+            @if (row.outcome) { <span [class]="'tag ' + outcomeTag(row.outcome)">{{ outcomeLabel(row.outcome) }}</span> }
+          </header>
+          @if (row.kind === 'quote') {
+            <p class="entry__who">{{ row.contactName }} <span class="text-muted">{{ row.contactCode }}</span></p>
+            <dl class="steps">
+              <div><dt>Quote date</dt><dd>{{ row.documentDate | reportDate }}</dd></div>
+              <div><dt>Valid until</dt><dd>{{ row.validUntil | reportDate }}</dd></div>
+              @if (row.convertedNo) {
+                <div>
+                  <dt>Became {{ row.convertedKind === 'order' ? 'order' : 'invoice' }}</dt>
+                  <dd>
+                    @if (row.convertedLink) { <a class="link" [routerLink]="row.convertedLink">{{ row.convertedNo }}</a> } @else { {{ row.convertedNo }} }
+                    <small class="text-muted">{{ daysLabel(row.daysToConvert) }}</small>
+                  </dd>
+                </div>
+              }
+            </dl>
+          }
+          <dl class="figures">
+            <div class="figures__row figures__row--balance">
+              <dt>Value</dt>
+              <dd><bb-report-amount [value]="row.total" />
+                @if (row.ownTotal !== null) { <small class="own"><bb-report-amount [value]="row.ownTotal" [currency]="row.currencyCode" /></small> }</dd>
+            </div>
+          </dl>
+        </article>
+      }
+    </div>
+  } @else {
+    <div class="matrix">
+      <bb-data-grid flush [columns]="columns" [data]="rows()" [rowClass]="rowClass" [sortable]="false"
+                    [showColumnFilters]="false" [showCount]="false" [paged]="false" label="Quotation track">
+        <ng-template bbCellTemplate="quote" let-row>
+          <span class="document">
+            @if (row.link) { <a class="link" [routerLink]="row.link">{{ row.name }}</a> } @else { <strong>{{ row.name }}</strong> }
+            @if (row.documentDate) { <span class="document__date text-muted">{{ row.documentDate | reportDate }}</span> }
+          </span>
+        </ng-template>
+        <ng-template bbCellTemplate="customer" let-row>
+          <span class="customer">
+            <span>{{ row.contactName }}</span>
+            @if (row.contactCode) { <span class="customer__code text-muted">{{ row.contactCode }}</span> }
+          </span>
+        </ng-template>
+        <ng-template bbCellTemplate="validUntil" let-row>@if (row.validUntil) { {{ row.validUntil | reportDate }} }</ng-template>
+        <ng-template bbCellTemplate="outcome" let-row>
+          @if (row.outcome) { <span [class]="'tag ' + outcomeTag(row.outcome)">{{ outcomeLabel(row.outcome) }}</span> }
+        </ng-template>
+        <ng-template bbCellTemplate="convertedTo" let-row>
+          @if (row.convertedNo) {
+            <span class="document">
+              @if (row.convertedLink) { <a class="link" [routerLink]="row.convertedLink">{{ row.convertedNo }}</a> } @else { {{ row.convertedNo }} }
+              <span class="document__date text-muted">{{ row.convertedKind === 'order' ? 'Sales order' : 'Invoice' }}</span>
+            </span>
+          }
+        </ng-template>
+        <ng-template bbCellTemplate="days" let-row>{{ daysLabel(row.daysToConvert) }}</ng-template>
+        <ng-template bbCellTemplate="total" let-row>
+          <span class="amount">
+            @if (row.kind === 'total') { <strong><bb-report-amount [value]="row.total" /></strong> } @else { <bb-report-amount [value]="row.total" /> }
+            @if (row.ownTotal !== null) { <small class="own"><bb-report-amount [value]="row.ownTotal" [currency]="row.currencyCode" /></small> }
+          </span>
+        </ng-template>
+      </bb-data-grid>
+    </div>
+
+    @if (more()) {
+      <div class="more">
+        <button class="btn" type="button" (click)="loadMore()" [disabled]="busy()">Show more quotes</button>
+        <span class="more__count text-muted">{{ report.quotes.length }} of {{ report.totalQuotes }} shown</span>
+      </div>
+    }
+  }
+
+  @if (report.totalQuotes > 0) {
+    <p class="notes text-muted">
+      A quote is listed by its quote date; a draft is not an offer yet and is left out. Converted means a posted invoice or sales order was raised from the quote, and wins over what the customer answered; the invoice is named when both exist, and Days to convert counts to that document.
+      Expired means past its valid-until date with no answer and no conversion. The strip and the tabs count every quote the filters match, not only those shown, and a void quote is counted in neither raised nor converted.
+      The value at the foot is of the quotes in the tab chosen.
+    </p>
+  }
+}

@@ -15581,6 +15581,9 @@ namespace Reporting.Repository.Migrations.Tenant
                     b.Property<DateTimeOffset?>("PostedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<long?>("QuoteId")
+                        .HasColumnType("bigint");
+
                     b.Property<long?>("SalesOrderId")
                         .HasColumnType("bigint");
 
@@ -17776,6 +17779,11 @@ namespace Reporting.Repository.Migrations.Tenant
 
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("CustomerResponse")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
 
                     b.Property<decimal>("DiscountAmount")
                         .HasColumnType("numeric");
