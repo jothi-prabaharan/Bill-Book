@@ -6,7 +6,7 @@ rewrites and stages it whenever the details file changes. **Never edit it by han
 status, edit the card's first line in the details file; the card there holds the rules, lanes,
 where to start, sub-tasks and notes.
 
-**Summary:** 210 completed, 1 working, 46 open, and 2 blocked (259 cards).
+**Summary:** 211 completed, 0 working, 46 open, and 2 blocked (259 cards).
 
 | Card | Title | Group | Status | Completed by | Completed at | Tests | Issue | Note |
 | :--- | :--- | :--- | :---: | :--- | :--- | :--- | :---: | :--- |
@@ -230,7 +230,7 @@ where to start, sub-tasks and notes.
 | [TK-221](./Task_Details.md#tk-221--foreign-currency-gain-or-loss-details-its-own-endpoint-and-page) | Foreign Currency Gain or Loss Details: its own endpoint and page | Z | ✅ completed | Claude Sonnet 5.5 | 2026-10-25 | written, not run | [#208](https://github.com/jothi-prabaharan/Bill-Book/issues/208) | — |
 | [TK-222](./Task_Details.md#tk-222--aged-receivables-summary-its-own-endpoint-and-page) | Aged Receivables Summary: its own endpoint and page | Z | ✅ completed | Claude Sonnet 5.5 | 2026-10-26 | written, not run | [#209](https://github.com/jothi-prabaharan/Bill-Book/issues/209) | — |
 | [TK-223](./Task_Details.md#tk-223--aged-receivables-detail-its-own-endpoint-and-page) | Aged Receivables Detail: its own endpoint and page | Z | ✅ completed | Claude Sonnet 5.5 | 2026-10-26 | written, not run | [#210](https://github.com/jothi-prabaharan/Bill-Book/issues/210) | — |
-| [TK-224](./Task_Details.md#tk-224--receivable-invoice-summary-its-own-endpoint-and-page) | Receivable Invoice Summary: its own endpoint and page | Z | 🔶 working | Claude Sonnet 5.5 (working) | since 2026-10-26 | — | [#211](https://github.com/jothi-prabaharan/Bill-Book/issues/211) | — |
+| [TK-224](./Task_Details.md#tk-224--receivable-invoice-summary-its-own-endpoint-and-page) | Receivable Invoice Summary: its own endpoint and page | Z | ✅ completed | Claude Sonnet 5.5 | 2026-10-26 | written, not run | [#211](https://github.com/jothi-prabaharan/Bill-Book/issues/211) | — |
 | [TK-225](./Task_Details.md#tk-225--receivable-invoice-detail-its-own-endpoint-and-page) | Receivable Invoice Detail: its own endpoint and page | Z | 🟪 open | — | — | — | [#212](https://github.com/jothi-prabaharan/Bill-Book/issues/212) | — |
 | [TK-226](./Task_Details.md#tk-226--invoice-track-report-its-own-endpoint-and-page) | Invoice Track Report: its own endpoint and page | Z | 🟪 open | — | — | — | [#213](https://github.com/jothi-prabaharan/Bill-Book/issues/213) | — |
 | [TK-227](./Task_Details.md#tk-227--invoicedn-payment-collection-report-its-own-endpoint-and-page) | Invoice/DN Payment Collection Report: its own endpoint and page | Z | 🟪 open | — | — | — | [#214](https://github.com/jothi-prabaharan/Bill-Book/issues/214) | — |

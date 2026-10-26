@@ -319,6 +319,21 @@ The Aged Receivables Detail has its own page at `/reports/aged-receivables-detai
 
 The catalog's **Aged Receivables Detail**, used for export and scheduled emails, now needs **As at** and refuses a run without it. It lists the same open documents, with the document's total and what is left of it (negative for a credit), aged by due date. The menu item had no report behind it before TK-223.
 
+## Receivable Invoice Summary
+
+The Receivable Invoice Summary has its own page at `/reports/receivable-invoice-summary` (TK-224), under **Reports › Sales Reports**. Besides access to reports it needs **sales.view**. It lists the sales invoices raised in a period, newest first, with what each came to, what has been received and what is still due.
+
+- **From** and **To** are both required, and are the **invoice date**. The page opens on the financial year to date and runs straight away. A **To** before **From** is refused under **To**. **Customer** and **Currency** narrow it, and **Include credit notes** adds them as negative amounts.
+- **Received and due are as at the To date**, not as at today, so a report for a past period reads the same when you run it again. The page says so under the title.
+- Each invoice is a row with its number (a link), **Date**, **Due** date (with how many days late when it is overdue), customer, currency, **Taxable**, **Tax** (CGST, SGST, IGST and cess added up), **Total**, **Received**, **Due** and **Status**. An invoice in another currency also shows its own total in smaller type under the base total. All the other figures are in the branch's base currency.
+- **Received** is what receipts, and credit notes or advances applied to the invoice, settled on or before the To date. A receipt in a foreign currency is taken to base at the invoice's own rate. A settlement that was released, or is dated after the To date, is not counted.
+- **Status tabs** above the list show how many documents have each status, whichever tab is open: **Awaiting payment** (nothing received, not yet due), **Partly paid** (something received, something owed, not yet due), **Overdue** (past its due date on the To date with something still owed, whether or not part of it has been received), **Paid** and **Void**. **All** is every status except Void. A voided invoice is listed only under **Void**, with nothing received or due, and a draft is never listed.
+- A **credit note**, when included, shows negative amounts. Its **Received** is what has been applied to invoices and its **Due** what has not, so it is **Paid** once it is fully applied. It has no due date, so it is never overdue.
+- The list loads 50 invoices at a time with **Show more invoices**. The **Total** row, the tab counts and the sentence above the list are of every invoice the filters match, not only those loaded.
+- On a phone each invoice is a card.
+
+The catalog's **Receivable Invoice Summary**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It lists the posted invoices in the period with the total and what is due as at the To date; voided invoices and credit notes are not in it.
+
 ## Project reports
 
 Four reports read project accounting, under **Projects** in the list. Running them needs **projects.view** as well as access to reports.

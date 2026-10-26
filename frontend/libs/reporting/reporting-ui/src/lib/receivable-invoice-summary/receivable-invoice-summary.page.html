@@ -1,0 +1,141 @@
+<header class="page-head">
+  <div>
+    <h1>Receivable Invoice Summary</h1>
+    <p class="subtitle text-muted">
+      Every sales invoice raised in a period with its tax and total, what has been received and what is still due, in the branch's base currency.
+      Received and due are as at the To date.
+    </p>
+  </div>
+</header>
+
+<form class="filters card" [formGroup]="filters" (ngSubmit)="run()" novalidate>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'ris-from'" label="From" formControlName="fromDate" [required]="true"
+                          [error]="err('fromDate', 'From date')" />
+  </div>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'ris-to'" label="To" formControlName="toDate" [required]="true"
+                          [error]="err('toDate', 'To date')" />
+  </div>
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'ris-customer'" label="Customer" placeholder="All customers" [options]="customerOptions()"
+               [loading]="!choicesLoaded()" emptyText="No customers" formControlName="contactId"
+               [error]="err('contactId', 'Customer')" />
+  </div>
+  <div class="filters__field">
+    <bb-select [id]="'ris-currency'" label="Currency" placeholder="All currencies" [options]="currencyOptions()"
+               [loading]="!choicesLoaded()" emptyText="No currencies" formControlName="currencyCode"
+               [error]="err('currencyCode', 'Currency')" />
+  </div>
+  <div class="filters__field filters__field--check">
+    <bb-checkbox text="Include credit notes" formControlName="includeCreditNotes" />
+  </div>
+  <div class="filters__actions">
+    <button class="btn btn-primary" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Running…' : 'Run report' }}
+    </button>
+  </div>
+</form>
+
+@if (result()) {
+  <bb-status-tabs [tabs]="tabs()" [value]="status()" label="Invoice status" (valueChange)="chooseStatus($event)" />
+}
+
+@if (messages().length > 0) {
+  <bb-message-box [messages]="messages()" />
+}
+
+@if (result(); as report) {
+  <p class="period text-muted">
+    {{ report.fromDate | reportDate }} to {{ report.toDate | reportDate }}, in {{ report.baseCurrencyCode }}. Received and due are as at {{ report.toDate | reportDate }}.
+  </p>
+
+  @if (report.totalInvoices === 0) {
+    <p class="empty text-muted">No invoices match these filters.</p>
+  } @else if (narrow()) {
+    <div class="cards" role="list" aria-label="Receivable invoices">
+      @for (row of rows(); track row.key) {
+        <article class="card entry" role="listitem" [class.entry--total]="row.kind === 'total'">
+          <header class="entry__head">
+            @if (row.link) { <a class="link" [routerLink]="row.link"><strong>{{ row.name }}</strong></a> } @else { <strong>{{ row.name }}</strong> }
+            @if (row.isCreditNote) { <span class="tag tag-outline">Credit note</span> }
+            @if (row.status) { <span [class]="'tag ' + statusTag(row.status)">{{ statusLabel(row.status) }}</span> }
+          </header>
+          @if (row.kind === 'invoice') {
+            <p class="entry__who">{{ row.contactName }} <span class="text-muted">{{ row.contactCode }}</span></p>
+            <p class="entry__dates text-muted">
+              {{ row.documentDate | reportDate }}
+              @if (row.dueDate) { · due {{ row.dueDate | reportDate }} }
+              @if (row.daysOverdue) { · {{ row.daysOverdue }} days overdue }
+            </p>
+          }
+          <dl class="figures">
+            <div class="figures__row"><dt>Taxable</dt><dd><bb-report-amount [value]="row.taxable" /></dd></div>
+            <div class="figures__row"><dt>Tax</dt><dd><bb-report-amount [value]="row.tax" /></dd></div>
+            <div class="figures__row">
+              <dt>Total</dt>
+              <dd><bb-report-amount [value]="row.total" />
+                @if (row.ownTotal !== null) { <small class="own"><bb-report-amount [value]="row.ownTotal" [currency]="row.currencyCode" /></small> }</dd>
+            </div>
+            <div class="figures__row"><dt>Received</dt><dd><bb-report-amount [value]="row.received" /></dd></div>
+            <div class="figures__row figures__row--balance"><dt>Due</dt><dd><bb-report-amount [value]="row.due" /></dd></div>
+          </dl>
+        </article>
+      }
+    </div>
+  } @else {
+    <div class="matrix">
+      <bb-data-grid flush [columns]="columns" [data]="rows()" [rowClass]="rowClass" [sortable]="false"
+                    [showColumnFilters]="false" [showCount]="false" [paged]="false" label="Receivable invoices">
+        <ng-template bbCellTemplate="document" let-row>
+          <span class="document">
+            @if (row.link) { <a class="link" [routerLink]="row.link">{{ row.name }}</a> } @else { <strong>{{ row.name }}</strong> }
+            @if (row.isCreditNote) { <span class="document__kind text-muted">Credit note</span> }
+          </span>
+        </ng-template>
+        <ng-template bbCellTemplate="documentDate" let-row>@if (row.documentDate) { {{ row.documentDate | reportDate }} }</ng-template>
+        <ng-template bbCellTemplate="dueDate" let-row>
+          @if (row.dueDate) {
+            <span class="due">{{ row.dueDate | reportDate }}
+              @if (row.daysOverdue) { <small class="due__late">{{ row.daysOverdue }} days late</small> }</span>
+          }
+        </ng-template>
+        <ng-template bbCellTemplate="customer" let-row>
+          <span class="customer">
+            <span>{{ row.contactName }}</span>
+            @if (row.contactCode) { <span class="customer__code text-muted">{{ row.contactCode }}</span> }
+          </span>
+        </ng-template>
+        <ng-template bbCellTemplate="taxable" let-row><bb-report-amount [value]="row.taxable" /></ng-template>
+        <ng-template bbCellTemplate="tax" let-row><bb-report-amount [value]="row.tax" /></ng-template>
+        <ng-template bbCellTemplate="total" let-row>
+          <span class="amount">
+            <bb-report-amount [value]="row.total" />
+            @if (row.ownTotal !== null) { <small class="own"><bb-report-amount [value]="row.ownTotal" [currency]="row.currencyCode" /></small> }
+          </span>
+        </ng-template>
+        <ng-template bbCellTemplate="received" let-row><bb-report-amount [value]="row.received" /></ng-template>
+        <ng-template bbCellTemplate="due" let-row><strong><bb-report-amount [value]="row.due" /></strong></ng-template>
+        <ng-template bbCellTemplate="status" let-row>
+          @if (row.status) { <span [class]="'tag ' + statusTag(row.status)">{{ statusLabel(row.status) }}</span> }
+        </ng-template>
+      </bb-data-grid>
+    </div>
+
+    @if (more()) {
+      <div class="more">
+        <button class="btn" type="button" (click)="loadMore()" [disabled]="busy()">Show more invoices</button>
+        <span class="more__count text-muted">{{ report.invoices.length }} of {{ report.totalInvoices }} shown</span>
+      </div>
+    }
+  }
+
+  @if (report.totalInvoices > 0) {
+    <p class="notes text-muted">
+      An invoice is listed by its invoice date. Received is what receipts, and credit notes or advances applied to it, settled on or before {{ report.toDate | reportDate }};
+      due is what is left. Overdue means past its due date on that day with something still owed, and wins over partly paid.
+      A voided invoice is listed only under Void, and a draft never is. A credit note, when included, is a negative amount: its received is what has been applied to invoices.
+      The totals are of every invoice the filters match, not only those shown.
+    </p>
+  }
+}

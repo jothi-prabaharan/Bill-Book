@@ -32,6 +32,8 @@ export * from './lib/aged-receivables-summary/aged-receivables-summary.models';
 export * from './lib/aged-receivables-summary/aged-receivables-summary.service';
 export * from './lib/aged-receivables-detail/aged-receivables-detail.models';
 export * from './lib/aged-receivables-detail/aged-receivables-detail.service';
+export * from './lib/receivable-invoice-summary/receivable-invoice-summary.models';
+export * from './lib/receivable-invoice-summary/receivable-invoice-summary.service';
 export * from './lib/foreign-currency-gain-or-loss/foreign-currency-gain-or-loss.models';
 export * from './lib/foreign-currency-gain-or-loss/foreign-currency-gain-or-loss.service';
 export * from './lib/foreign-currency-gain-or-loss-details/foreign-currency-gain-or-loss-details.models';
