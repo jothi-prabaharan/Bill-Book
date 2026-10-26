@@ -6,7 +6,7 @@ rewrites and stages it whenever the details file changes. **Never edit it by han
 status, edit the card's first line in the details file; the card there holds the rules, lanes,
 where to start, sub-tasks and notes.
 
-**Summary:** 218 completed, 0 working, 39 open, and 2 blocked (259 cards).
+**Summary:** 218 completed, 1 working, 38 open, and 2 blocked (259 cards).
 
 | Card | Title | Group | Status | Completed by | Completed at | Tests | Issue | Note |
 | :--- | :--- | :--- | :---: | :--- | :--- | :--- | :---: | :--- |
@@ -238,7 +238,7 @@ where to start, sub-tasks and notes.
 | [TK-229](./Task_Details.md#tk-229--sales-analysis-detail-report-its-own-endpoint-and-page) | Sales Analysis Detail Report: its own endpoint and page | Z | ✅ completed | Claude Sonnet 5.5 | 2026-10-26 | written, not run | [#216](https://github.com/jothi-prabaharan/Bill-Book/issues/216) | — |
 | [TK-230](./Task_Details.md#tk-230--sales-order-track-report-its-own-endpoint-and-page) | Sales Order Track Report: its own endpoint and page | Z | ✅ completed | Claude Sonnet 5.5 | 2026-10-26 | written, not run | [#217](https://github.com/jothi-prabaharan/Bill-Book/issues/217) | — |
 | [TK-231](./Task_Details.md#tk-231--quotation-track-report-its-own-endpoint-and-page) | Quotation Track Report: its own endpoint and page | Z | ✅ completed | Claude Sonnet 5.5 | 2026-10-26 | written, not run | [#218](https://github.com/jothi-prabaharan/Bill-Book/issues/218) | — |
-| [TK-232](./Task_Details.md#tk-232--delivery-order-track-report-its-own-endpoint-and-page) | Delivery Order Track Report: its own endpoint and page | Z | 🟪 open | — | — | — | [#219](https://github.com/jothi-prabaharan/Bill-Book/issues/219) | — |
+| [TK-232](./Task_Details.md#tk-232--delivery-order-track-report-its-own-endpoint-and-page) | Delivery Order Track Report: its own endpoint and page | Z | 🔶 working | Claude Sonnet 5.5 (working) | since 2026-10-26 | — | [#219](https://github.com/jothi-prabaharan/Bill-Book/issues/219) | — |
 | [TK-233](./Task_Details.md#tk-233--aged-payables-summary-its-own-endpoint-and-page) | Aged Payables Summary: its own endpoint and page | Z | 🟪 open | — | — | — | [#220](https://github.com/jothi-prabaharan/Bill-Book/issues/220) | — |
 | [TK-234](./Task_Details.md#tk-234--aged-payables-details-its-own-endpoint-and-page) | Aged Payables Details: its own endpoint and page | Z | 🟪 open | — | — | — | [#221](https://github.com/jothi-prabaharan/Bill-Book/issues/221) | — |
 | [TK-235](./Task_Details.md#tk-235--payable-invoice-summary-its-own-endpoint-and-page) | Payable Invoice Summary: its own endpoint and page | Z | 🟪 open | — | — | — | [#222](https://github.com/jothi-prabaharan/Bill-Book/issues/222) | — |
