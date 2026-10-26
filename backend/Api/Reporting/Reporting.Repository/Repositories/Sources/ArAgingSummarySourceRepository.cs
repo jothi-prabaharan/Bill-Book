@@ -54,11 +54,7 @@ public sealed class ArAgingSummarySourceRepository : ReportSource<ArAgingSummary
         // The open documents are the page's: the same documents, settlements and dates, so the
         // totals agree. Aged by due date in 30-day columns, which is what the seeded
         // columns are named for; the page offers the other widths and the invoice date.
-        IQueryable<ReceivableDocument> documents = AgedReceivablesSummaryReportRepository.Documents(db.Ledger, db.Accounts, asOf);
-        IQueryable<OpenReceivable> open = AgedReceivablesSummaryReportRepository.OpenDocuments(
-            documents,
-            AgedReceivablesSummaryReportRepository.Settlements(db.TransactionRatios, documents, asOf),
-            db.Invoices);
+        IQueryable<OpenReceivable> open = AgedReceivablesSummaryReportRepository.OpenOn(db, asOf, null);
 
         var perContact = from o in open
                          group o by o.ContactId into g

@@ -70,7 +70,16 @@
             @if (row.bucket4 !== null) {
               <div class="figures__row"><dt>{{ labels()[4] }}</dt><dd><bb-report-amount [value]="row.bucket4" /></dd></div>
             }
-            <div class="figures__row figures__row--balance"><dt>Total</dt><dd><bb-report-amount [value]="row.total" /></dd></div>
+            <div class="figures__row figures__row--balance">
+              <dt>Total</dt>
+              <dd>
+                @if (opensDetail(row)) {
+                  <a class="link" routerLink="/reports/aged-receivables-detail" [queryParams]="detailQuery(row)"><bb-report-amount [value]="row.total" /></a>
+                } @else {
+                  <bb-report-amount [value]="row.total" />
+                }
+              </dd>
+            </div>
           </dl>
         </article>
       }
@@ -90,7 +99,14 @@
         <ng-template bbCellTemplate="bucket2" let-row><bb-report-amount [value]="row.bucket2" /></ng-template>
         <ng-template bbCellTemplate="bucket3" let-row><bb-report-amount [value]="row.bucket3" /></ng-template>
         <ng-template bbCellTemplate="bucket4" let-row><bb-report-amount [value]="row.bucket4" /></ng-template>
-        <ng-template bbCellTemplate="total" let-row><strong><bb-report-amount [value]="row.total" /></strong></ng-template>
+        <ng-template bbCellTemplate="total" let-row>
+          @if (opensDetail(row)) {
+            <a class="link" routerLink="/reports/aged-receivables-detail" [queryParams]="detailQuery(row)"
+               [attr.aria-label]="'Open the documents behind ' + row.name"><strong><bb-report-amount [value]="row.total" /></strong></a>
+          } @else {
+            <strong><bb-report-amount [value]="row.total" /></strong>
+          }
+        </ng-template>
       </bb-data-grid>
     </div>
   }
@@ -101,7 +117,7 @@
       What a receipt or credit note was applied to has come off both the invoice and the receipt, so an invoice shows what is still open on it.
       A credit note or receipt not yet applied to an invoice is a negative amount in Current.
       Each customer's total is their balance on Accounts Receivable, and the totals add up to the account's balance on the date; a posting to
-      Accounts Receivable with no contact is listed as "Not tied to a customer".
+      Accounts Receivable with no contact is listed as "Not tied to a customer". A total opens the Aged Receivables Detail for that customer, or for everyone from the last row.
     </p>
   }
 }

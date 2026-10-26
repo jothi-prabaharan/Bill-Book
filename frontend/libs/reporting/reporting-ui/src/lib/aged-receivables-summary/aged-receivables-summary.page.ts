@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { FormatSettingsService } from '@bill-book/currency-format';
 import {
   AGE_BASIS_OPTIONS,
@@ -13,6 +14,7 @@ import {
   agedReceivablesSentence,
   bucketOptionLabel,
   customerChoiceLabel,
+  detailQueryParams,
 } from '@bill-book/reporting-core';
 import {
   BbSelectOption,
@@ -52,6 +54,7 @@ const DEFAULT_LABELS = ['Current', '1-30 days', '31-60 days', '61-90 days', 'Ove
   standalone: true,
   imports: [
     ReactiveFormsModule,
+    RouterLink,
     BranchDateInputComponent,
     SelectComponent,
     CheckboxComponent,
@@ -139,6 +142,17 @@ export class AgedReceivablesSummaryPage implements OnInit {
   });
 
   protected readonly rowClass = (row: AgedReceivablesGridRow): string => (row.kind === 'total' ? 'row--total' : '');
+
+  /** Whether a row's total opens the detail: a customer's does, and so do the totals; what no customer claims has no filter to open it on. */
+  protected opensDetail(row: AgedReceivablesGridRow): boolean {
+    return row.kind !== 'unassigned';
+  }
+
+  /** The detail report for this row on the date, ageing and width the report was run with. */
+  protected detailQuery(row: AgedReceivablesGridRow): Record<string, string | number> {
+    const result = this.result();
+    return result ? detailQueryParams(result, row.contactId) : {};
+  }
 
   ngOnInit(): void {
     if (typeof window !== 'undefined' && window.matchMedia) {

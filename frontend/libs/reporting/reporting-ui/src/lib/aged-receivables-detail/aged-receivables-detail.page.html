@@ -1,0 +1,148 @@
+<header class="page-head">
+  <div>
+    <h1>Aged Receivables Detail</h1>
+    <p class="subtitle text-muted">
+      Every open invoice, credit note and receipt behind each customer's balance on a date, and how overdue each is, in the branch's base currency.
+    </p>
+  </div>
+</header>
+
+<form class="filters card" [formGroup]="filters" (ngSubmit)="run()" novalidate>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'ard-as-at'" label="As at" formControlName="asAtDate" [required]="true"
+                          [error]="err('asAtDate', 'As at date')" />
+  </div>
+  <div class="filters__field">
+    <bb-select [id]="'ard-age-by'" label="Age by" [options]="ageOptions" [clearable]="false"
+               formControlName="ageBy" [error]="err('ageBy', 'Age by')" />
+  </div>
+  <div class="filters__field">
+    <bb-select [id]="'ard-bucket'" label="Column width" [options]="bucketOptions" [clearable]="false"
+               formControlName="bucketDays" [error]="err('bucketDays', 'Column width')" />
+  </div>
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'ard-customer'" label="Customer" placeholder="All customers" [options]="customerOptions()"
+               [loading]="!choicesLoaded()" emptyText="No customers" formControlName="contactId"
+               [error]="err('contactId', 'Customer')" />
+  </div>
+  <div class="filters__actions">
+    <button class="btn btn-primary" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Running…' : 'Run report' }}
+    </button>
+  </div>
+</form>
+
+@if (messages().length > 0) {
+  <bb-message-box [messages]="messages()" />
+}
+
+@if (result(); as report) {
+  <p class="period text-muted">
+    As at {{ report.asAtDate | reportDate }}, aged by {{ basisText() }} in {{ report.bucketDays }}-day columns, in {{ report.baseCurrencyCode }}.
+  </p>
+
+  @if (rows().length === 0) {
+    <p class="empty text-muted">No customer owes anything on this date.</p>
+  } @else if (narrow()) {
+    <div class="cards" role="list" aria-label="Aged receivables detail">
+      @for (group of groups(); track group[0].key) {
+        <article class="card entry" role="listitem">
+          @for (row of group; track row.key) {
+            @switch (row.kind) {
+              @case ('heading') {
+                <header class="entry__head">
+                  <strong>{{ row.name }}</strong>
+                  @if (row.detail) { <span class="entry__detail text-muted">{{ row.detail }}</span> }
+                </header>
+              }
+              @case ('document') {
+                <section class="doc">
+                  <div class="doc__head">
+                    @if (row.link) { <a class="link" [routerLink]="row.link">{{ row.name }}</a> } @else { <strong>{{ row.name }}</strong> }
+                    <span class="tag tag-outline">{{ row.detail }}</span>
+                  </div>
+                  <p class="doc__dates text-muted">
+                    {{ row.documentDate | reportDate }}
+                    @if (row.dueDate) { · due {{ row.dueDate | reportDate }} }
+                    @if (row.daysOverdue) { · {{ row.daysOverdue }} days overdue }
+                  </p>
+                  <dl class="figures">
+                    <div class="figures__row"><dt>Original</dt><dd><bb-report-amount [value]="row.original" /></dd></div>
+                    @if (row.settled !== null) {
+                      <div class="figures__row"><dt>Settled</dt><dd><bb-report-amount [value]="row.settled" /></dd></div>
+                    }
+                    <div class="figures__row figures__row--balance">
+                      <dt>Outstanding · {{ labels()[row.column ?? 0] }}</dt>
+                      <dd><bb-report-amount [value]="row.outstanding" /></dd>
+                    </div>
+                  </dl>
+                </section>
+              }
+              @case ('subtotal') {
+                <dl class="figures figures--subtotal">
+                  <div class="figures__row figures__row--balance"><dt>{{ row.name }}</dt><dd><bb-report-amount [value]="row.outstanding" /></dd></div>
+                </dl>
+              }
+              @case ('total') {
+                <header class="entry__head"><strong>{{ row.name }}</strong></header>
+                <dl class="figures">
+                  <div class="figures__row"><dt>Original</dt><dd><bb-report-amount [value]="row.original" /></dd></div>
+                  <div class="figures__row"><dt>Settled</dt><dd><bb-report-amount [value]="row.settled" /></dd></div>
+                  <div class="figures__row"><dt>{{ labels()[0] }}</dt><dd><bb-report-amount [value]="row.current" /></dd></div>
+                  <div class="figures__row"><dt>{{ labels()[1] }}</dt><dd><bb-report-amount [value]="row.bucket1" /></dd></div>
+                  <div class="figures__row"><dt>{{ labels()[2] }}</dt><dd><bb-report-amount [value]="row.bucket2" /></dd></div>
+                  <div class="figures__row"><dt>{{ labels()[3] }}</dt><dd><bb-report-amount [value]="row.bucket3" /></dd></div>
+                  <div class="figures__row"><dt>{{ labels()[4] }}</dt><dd><bb-report-amount [value]="row.bucket4" /></dd></div>
+                  <div class="figures__row figures__row--balance"><dt>Outstanding</dt><dd><bb-report-amount [value]="row.outstanding" /></dd></div>
+                </dl>
+              }
+            }
+          }
+        </article>
+      }
+    </div>
+  } @else {
+    <div class="matrix">
+      <bb-data-grid flush [columns]="columns()" [data]="rows()" [rowClass]="rowClass" [sortable]="false"
+                    [showColumnFilters]="false" [showCount]="false" [paged]="false" label="Aged receivables detail">
+        <ng-template bbCellTemplate="document" let-row>
+          @switch (row.kind) {
+            @case ('heading') {
+              <span class="customer">
+                <strong class="customer__name">{{ row.name }}</strong>
+                @if (row.detail) { <span class="customer__code text-muted">{{ row.detail }}</span> }
+              </span>
+            }
+            @case ('document') {
+              <span class="document">
+                @if (row.link) { <a class="link" [routerLink]="row.link">{{ row.name }}</a> } @else { <span>{{ row.name }}</span> }
+                <span class="document__kind text-muted">{{ row.detail }}</span>
+              </span>
+            }
+            @default { <strong>{{ row.name }}</strong> }
+          }
+        </ng-template>
+        <ng-template bbCellTemplate="documentDate" let-row>@if (row.documentDate) { {{ row.documentDate | reportDate }} }</ng-template>
+        <ng-template bbCellTemplate="dueDate" let-row>@if (row.dueDate) { {{ row.dueDate | reportDate }} }</ng-template>
+        <ng-template bbCellTemplate="daysOverdue" let-row>{{ row.daysOverdue }}</ng-template>
+        <ng-template bbCellTemplate="original" let-row><bb-report-amount [value]="row.original" /></ng-template>
+        <ng-template bbCellTemplate="settled" let-row><bb-report-amount [value]="row.settled" /></ng-template>
+        <ng-template bbCellTemplate="outstanding" let-row><strong><bb-report-amount [value]="row.outstanding" /></strong></ng-template>
+        <ng-template bbCellTemplate="current" let-row><bb-report-amount [value]="row.current" /></ng-template>
+        <ng-template bbCellTemplate="bucket1" let-row><bb-report-amount [value]="row.bucket1" /></ng-template>
+        <ng-template bbCellTemplate="bucket2" let-row><bb-report-amount [value]="row.bucket2" /></ng-template>
+        <ng-template bbCellTemplate="bucket3" let-row><bb-report-amount [value]="row.bucket3" /></ng-template>
+        <ng-template bbCellTemplate="bucket4" let-row><bb-report-amount [value]="row.bucket4" /></ng-template>
+      </bb-data-grid>
+    </div>
+  }
+
+  @if (rows().length > 0) {
+    <p class="notes text-muted">
+      Each document is listed with what it came to, what has been applied to it on or before the date and what is left, which is the amount in its column.
+      An invoice is aged from its {{ basisText() }}; a document with no due date, such as an opening balance or a journal, from the day it was posted.
+      A credit note or receipt not yet applied to an invoice is a negative amount in Current. A document applied in full before the date is not listed.
+      A customer's subtotal is that customer's row on the Aged Receivables Summary, and the totals add up to the Accounts Receivable balance on the date.
+    </p>
+  }
+}

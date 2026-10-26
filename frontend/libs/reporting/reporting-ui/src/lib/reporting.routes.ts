@@ -88,6 +88,13 @@ export const reportingRoutes: Routes = [
     data: { access: { permission: 'reports.view' } },
   },
   {
+    // Its own page on its own endpoint (TK-223), at the path the menu links to.
+    path: 'aged-receivables-detail',
+    loadComponent: () =>
+      import('./aged-receivables-detail/aged-receivables-detail.page').then((m) => m.AgedReceivablesDetailPage),
+    data: { access: { permission: 'reports.view' } },
+  },
+  {
     // Its own page on its own endpoint (TK-222), at the path the menu links to.
     path: 'aged-receivables-summary',
     loadComponent: () =>

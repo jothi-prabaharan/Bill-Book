@@ -295,13 +295,29 @@ The Aged Receivables Summary has its own page at `/reports/aged-receivables-summ
 - **Age by** counts an invoice's age from its **due date** (the default) or its **invoice date**. An invoice with no due date counts from its invoice date, and a document that is not an invoice, such as an opening balance or a manual journal, from the day it was posted.
 - **Column width** is 30 days (the default), 15 or 7. There are always five columns: **Current** (not yet due, or due on the date), then four overdue columns, the last being everything beyond three widths: with 30 days, 1-30, 31-60, 61-90 and over 90 days.
 - **Customer** narrows the report to one customer. **Show customers with nothing owed** also lists the customers with nothing open.
-- Each customer is a row with its code, the five columns and a **Total**, and a **Total** row closes the table. A sentence above says how much is owed and how much of it is overdue. On a phone each customer is a card.
+- Each customer is a row with its code, the five columns and a **Total**, and a **Total** row closes the table. A sentence above says how much is owed and how much of it is overdue. A customer's total opens the **Aged Receivables Detail** for that customer on the same date and settings, and the last row's total opens it for everyone. On a phone each customer is a card.
 - **A credit note, and a receipt or advance not yet applied to an invoice, are negative amounts in Current**, so a customer's total is their balance on Accounts Receivable. A receipt or credit note applied to an invoice has come off both: the invoice shows only what is still open on it, and the receipt no longer shows at all.
 - What was applied counts only if it was effective on or before the date and has not been released, so the report for an earlier date shows the invoices as they stood then.
 - The totals add up to the Accounts Receivable balance on the date, the same figure as the **Trial Balance**. A posting to Accounts Receivable with no contact, such as a manual journal, is its own row, **Not tied to a customer**, so nothing is left out.
 - An invoice in another currency is shown in the branch's currency at the rate it was booked at.
 
 The catalog's **Aged Receivables Summary**, used for export and scheduled emails, now needs **As at** and refuses a run without it. It gives the same figures, aged by due date in 30-day columns. The menu item had no report behind it before TK-222.
+
+## Aged Receivables Detail
+
+The Aged Receivables Detail has its own page at `/reports/aged-receivables-detail` (TK-223), under **Reports › Sales Reports**. Besides access to reports it needs **sales.view**. It is the Aged Receivables Summary one document at a time: what makes up each customer's balance.
+
+- **As at**, **Age by**, **Column width** and **Customer** are the summary's, and **As at** is required. The page opens as at today, or on the date, ageing and customer the summary's link opened it with.
+- Each customer is a heading with its open documents under it, oldest first, and a **Total** for the customer. A document shows its number (a link, for an invoice, a credit note or a journal), its kind, its **Date**, its **Due** date (invoices only), **Days** overdue, and:
+  - **Original**: what it came to before anything was applied to it;
+  - **Settled**: what has been applied to it on or before the date, by a receipt, a credit note or an advance;
+  - **Outstanding**: what is left, which is the amount placed in the one column its age gives, **Current** to the last overdue column.
+- A credit note, or a receipt or advance not yet applied to an invoice, is negative, in **Current**, and has no days overdue. A document applied in full before the date is not listed; one applied after it is listed with what was open on the date.
+- **Days** counts from the due date, or the invoice date when you age by that; an invoice not yet due has none. A document that is not an invoice, such as an opening balance or a journal, counts from the day it was posted.
+- A customer's **Total** is that customer's row on the summary, and every column of the last **Total** row is the summary's total for that column; with one customer there is no last row, since it would repeat the customer's. Posting to Accounts Receivable with no contact, such as a manual journal, is listed under **Not tied to a customer**.
+- The twelve columns scroll sideways on a laptop. On a phone each customer is a card with its documents inside, each showing the column its amount is in.
+
+The catalog's **Aged Receivables Detail**, used for export and scheduled emails, now needs **As at** and refuses a run without it. It lists the same open documents, with the document's total and what is left of it (negative for a credit), aged by due date. The menu item had no report behind it before TK-223.
 
 ## Project reports
 

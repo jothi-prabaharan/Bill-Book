@@ -60,19 +60,30 @@ public sealed class AgedReceivablesSummaryReportRepository
 
     /// <summary>What a request's bucket width and age basis come to when left blank. Pure.</summary>
     public static (AgeBasis AgeBy, int BucketDays) Defaults(AgedReceivablesSummaryReportRequest request) =>
-        (request.AgeBy ?? AgeBasis.DueDate, request.BucketDays ?? BucketSizes[0]);
+        Defaults(request.AgeBy, request.BucketDays);
+
+    /// <summary>What a bucket width and age basis come to when left blank, for any report that ages receivables. Pure.</summary>
+    public static (AgeBasis AgeBy, int BucketDays) Defaults(AgeBasis? ageBy, int? bucketDays) =>
+        (ageBy ?? AgeBasis.DueDate, bucketDays ?? BucketSizes[0]);
 
     /// <summary>The refusals a request needs beyond the date being given, with the field each belongs to. Pure.</summary>
-    public static IReadOnlyList<(string Field, string Message)> Refusals(AgedReceivablesSummaryReportRequest request)
+    public static IReadOnlyList<(string Field, string Message)> Refusals(AgedReceivablesSummaryReportRequest request) =>
+        Refusals(request.AgeBy, request.BucketDays);
+
+    /// <summary>
+    /// The refusals for an age basis and a bucket width, with the field each belongs to, shared by
+    /// the reports that age receivables so they refuse the same things in the same words. Pure.
+    /// </summary>
+    public static IReadOnlyList<(string Field, string Message)> Refusals(AgeBasis? ageBy, int? bucketDays)
     {
         List<(string, string)> refusals = [];
 
-        if (request.BucketDays is int days && !BucketSizes.Contains(days))
+        if (bucketDays is int days && !BucketSizes.Contains(days))
         {
             refusals.Add((nameof(AgedReceivablesSummaryReportRequest.BucketDays), "Bucket size must be 7, 15 or 30 days."));
         }
 
-        if (request.AgeBy is AgeBasis basis && !Enum.IsDefined(basis))
+        if (ageBy is AgeBasis basis && !Enum.IsDefined(basis))
         {
             refusals.Add((nameof(AgedReceivablesSummaryReportRequest.AgeBy), "Age by must be the due date or the invoice date."));
         }
@@ -102,13 +113,28 @@ public sealed class AgedReceivablesSummaryReportRepository
         : daysOverdue <= 3 * bucketDays ? 3
         : 4;
 
+    /// <summary>
+    /// The column an open document falls in: a negative one (a credit note, an unapplied receipt) in
+    /// Current whatever its age, any other by how many days past its due date, or its invoice date,
+    /// the as-at date is. The one rule the summary and the detail share. Pure.
+    /// </summary>
+    public static int ColumnOf(OpenReceivable document, DateOnly asAt, AgeBasis ageBy, int bucketDays)
+    {
+        DateOnly counted = ageBy == AgeBasis.InvoiceDate ? document.DocumentDate : document.DueDate;
+        return document.Amount < 0m ? 0 : ColumnFor(asAt.DayNumber - counted.DayNumber, bucketDays);
+    }
+
     /// <summary>Whether a customer is on this branch; the query filter decides, so another branch's reads as none.</summary>
     public Task<bool> ContactExistsAsync(long contactId, CancellationToken ct) =>
         _db.Contacts.AnyAsync(c => c.ContactId == contactId, ct);
 
-    /// <summary>The customers the filter offers, by name. LINQ only.</summary>
+    /// <summary>The customers the filter offers, by name.</summary>
     public Task<List<AgedReceivablesCustomerChoiceDto>> CustomersAsync(CancellationToken ct) =>
-        _db.Contacts
+        CustomerChoices(_db.Contacts).ToListAsync(ct);
+
+    /// <summary>The customers a filter offers, by name; the summary's and the detail's. LINQ only.</summary>
+    public static IQueryable<AgedReceivablesCustomerChoiceDto> CustomerChoices(IQueryable<ContactRead> contacts) =>
+        contacts
             .Where(c => c.IsCustomer)
             .OrderBy(c => c.DisplayName)
             .ThenBy(c => c.ContactId)
@@ -117,8 +143,7 @@ public sealed class AgedReceivablesSummaryReportRepository
                 ContactId = c.ContactId,
                 ContactCode = c.ContactCode,
                 ContactName = c.DisplayName,
-            })
-            .ToListAsync(ct);
+            });
 
     /// <summary>The report for a request the controller has already validated.</summary>
     public async Task<AgedReceivablesSummaryReportResultDto> RunAsync(AgedReceivablesSummaryReportRequest request, CancellationToken ct)
@@ -126,16 +151,7 @@ public sealed class AgedReceivablesSummaryReportRepository
         DateOnly asAt = request.AsAtDate!.Value;
         string baseCurrency = await _currency.GetBaseCurrencyAsync(ct) ?? string.Empty;
 
-        IQueryable<JournalLedgerRead> ledger = _db.Ledger;
-        if (request.ContactId is long chosen)
-        {
-            ledger = ledger.Where(l => l.ContactId == chosen);
-        }
-
-        IQueryable<ReceivableDocument> documents = Documents(ledger, _db.Accounts, asAt);
-        IQueryable<OpenReceivable> open = OpenDocuments(documents, Settlements(_db.TransactionRatios, documents, asAt), _db.Invoices);
-
-        List<OpenReceivable> rows = await open.ToListAsync(ct);
+        List<OpenReceivable> rows = await OpenOn(_db, asAt, request.ContactId).ToListAsync(ct);
 
         // The customers named by an open document, and every customer when the zero ones are wanted.
         List<long> named = [.. rows.Where(r => r.ContactId != null).Select(r => r.ContactId!.Value).Distinct()];
@@ -157,6 +173,23 @@ public sealed class AgedReceivablesSummaryReportRepository
     }
 
     // --- builders: LINQ over the read models, so a test runs them over lists -------------
+
+    /// <summary>
+    /// The branch's open receivable documents on a date, optionally for one customer: the documents,
+    /// their settlements and the invoices' dates put together. The summary, the detail and the catalog
+    /// source all start here, so a customer's balance is the same figure in each. LINQ only.
+    /// </summary>
+    public static IQueryable<OpenReceivable> OpenOn(ReportingDbContext db, DateOnly asAt, long? contactId)
+    {
+        IQueryable<JournalLedgerRead> ledger = db.Ledger;
+        if (contactId is long chosen)
+        {
+            ledger = ledger.Where(l => l.ContactId == chosen);
+        }
+
+        IQueryable<ReceivableDocument> documents = Documents(ledger, db.Accounts, asAt);
+        return OpenDocuments(documents, Settlements(db.TransactionRatios, documents, asAt), db.Invoices);
+    }
 
     /// <summary>
     /// The receivable legs up to a date, one row for each document that posted them: what
@@ -250,6 +283,7 @@ public sealed class AgedReceivablesSummaryReportRepository
                    DocumentNo = d.DocumentNo,
                    DocumentDate = i == null ? d.LedgerDate : i.DocumentDate,
                    DueDate = i == null ? d.LedgerDate : (i.DueDate ?? i.DocumentDate),
+                   Original = d.NetBase,
                    Amount = t.Amount,
                };
     }
@@ -287,9 +321,7 @@ public sealed class AgedReceivablesSummaryReportRepository
                 columns[key] = amounts;
             }
 
-            DateOnly counted = ageBy == AgeBasis.InvoiceDate ? document.DocumentDate : document.DueDate;
-            int column = document.Amount < 0m ? 0 : ColumnFor(asAt.DayNumber - counted.DayNumber, bucketDays);
-            amounts[column] += document.Amount;
+            amounts[ColumnOf(document, asAt, ageBy, bucketDays)] += document.Amount;
         }
 
         if (request.ShowZeroBalances)
@@ -424,6 +456,9 @@ public sealed class OpenReceivable
     public DateOnly DocumentDate { get; set; }
 
     public DateOnly DueDate { get; set; }
+
+    /// <summary>What the document came to in base currency on the date, signed as <see cref="Amount"/> is, before anything settled it.</summary>
+    public decimal Original { get; set; }
 
     public decimal Amount { get; set; }
 }

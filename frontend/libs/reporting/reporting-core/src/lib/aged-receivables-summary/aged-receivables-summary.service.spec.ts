@@ -12,6 +12,7 @@ import {
   bucketOptionLabel,
   columnAmounts,
   customerChoiceLabel,
+  detailQueryParams,
   overdueOf,
 } from './aged-receivables-summary.models';
 import { AgedReceivablesSummaryService } from './aged-receivables-summary.service';
@@ -192,3 +193,27 @@ describe('aged receivables summary helpers', () => {
     expect(customerChoiceLabel({ contactId: 101, contactCode: 'ACME', contactName: 'Acme Exports' })).toBe('ACME — Acme Exports');
   });
 });
+
+describe('the link to the detail report', () => {
+  it('AR-16: carries the date, age basis and width the report was run with, and the customer', () => {
+    expect(detailQueryParams(result([]), 101)).toEqual({ asAtDate: '2026-10-31', ageBy: 'DueDate', bucketDays: 30, contactId: 101 });
+  });
+
+  it('AR-17: the totals row passes no customer, so the detail is for everyone', () => {
+    expect(detailQueryParams({ asAtDate: '2026-10-31', ageBy: 'InvoiceDate', bucketDays: 7 }, null)).toEqual({
+      asAtDate: '2026-10-31',
+      ageBy: 'InvoiceDate',
+      bucketDays: 7,
+    });
+  });
+
+  it('AR-18: each grid row knows its customer, and the totals and what no customer claims have none', () => {
+    const rows = agedReceivablesRows(
+      result([row({ contactId: 101, total: 10, current: 10 }), row({ contactId: null, contactName: 'Not tied to a customer', total: 5, bucket4: 5 })]),
+    );
+
+    expect(rows.map((r) => r.contactId)).toEqual([101, null, null]);
+    expect(rows.map((r) => r.kind)).toEqual(['customer', 'unassigned', 'total']);
+  });
+});
+

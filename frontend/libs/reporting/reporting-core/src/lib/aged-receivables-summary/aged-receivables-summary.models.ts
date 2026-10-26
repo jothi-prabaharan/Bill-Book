@@ -78,6 +78,8 @@ export interface AgedReceivablesGridRow {
   kind: AgedReceivablesRowKind;
   /** Unique across the grid, for tracking. */
   key: string;
+  /** The customer, so a row can open the detail for it; null on the totals and on what no customer claims. */
+  contactId: number | null;
   name: string;
   code: string;
   current: number | null;
@@ -107,6 +109,7 @@ export function agedReceivablesRows(result: AgedReceivablesSummaryResult): AgedR
   const rows: AgedReceivablesGridRow[] = result.customers.map((c) => ({
     kind: c.contactId === null ? 'unassigned' : 'customer',
     key: c.contactId === null ? 'u' : `c:${c.contactId}`,
+    contactId: c.contactId,
     name: c.contactName,
     code: c.contactCode,
     current: blankZero(c.current),
@@ -122,6 +125,7 @@ export function agedReceivablesRows(result: AgedReceivablesSummaryResult): AgedR
     rows.push({
       kind: 'total',
       key: 't',
+      contactId: null,
       name: 'Total',
       code: '',
       current: t.current,
@@ -157,4 +161,21 @@ export function agedReceivablesSentence(
 /** A customer's label on the filter: the code, then the name. */
 export function customerChoiceLabel(choice: AgedReceivablesCustomerChoice): string {
   return `${choice.contactCode} — ${choice.contactName}`;
+}
+
+/**
+ * The query string that opens the Aged Receivables Detail on what this report shows: the same date,
+ * age basis and column width, and one customer when given. The totals row passes none and opens the
+ * detail for every customer.
+ */
+export function detailQueryParams(
+  result: Pick<AgedReceivablesSummaryResult, 'asAtDate' | 'ageBy' | 'bucketDays'>,
+  contactId: number | null,
+): Record<string, string | number> {
+  const params: Record<string, string | number> = { asAtDate: result.asAtDate, ageBy: result.ageBy, bucketDays: result.bucketDays };
+  if (contactId !== null) {
+    params['contactId'] = contactId;
+  }
+
+  return params;
 }
