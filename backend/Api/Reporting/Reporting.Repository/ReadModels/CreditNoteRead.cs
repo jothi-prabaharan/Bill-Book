@@ -33,4 +33,7 @@ public class CreditNoteRead : OrgScopedEntity
 
     public decimal CessAmount { get; set; }
     public Shared.Kernel.Documents.DocumentStatus Status { get; set; }
+
+    /// <summary>Why it was raised; only a sales return brings goods back (TK-228).</summary>
+    public Reporting.Entity.Enums.CreditNoteReason ReasonCode { get; set; }
 }

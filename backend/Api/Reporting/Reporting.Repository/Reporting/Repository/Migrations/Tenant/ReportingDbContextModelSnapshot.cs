@@ -13726,6 +13726,78 @@ namespace Reporting.Repository.Migrations.Tenant
                         });
                 });
 
+            modelBuilder.Entity("Reporting.Repository.ReadModels.CreditNoteDetailRead", b =>
+                {
+                    b.Property<long>("CreditNoteDetailId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("CreditNoteDetailId"));
+
+                    b.Property<decimal>("BaseQuantity")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("CreditNoteId")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("DiscountAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("GrossAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<long>("InvoiceDetailId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("ItemId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("LineNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Quantity")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("TaxableAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.Property<long?>("WarehouseId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("CreditNoteDetailId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.ToTable("CreditNoteDetails", "sal", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
+                });
+
             modelBuilder.Entity("Reporting.Repository.ReadModels.CreditNoteRead", b =>
                 {
                     b.Property<long>("CreditNoteId")
@@ -13777,6 +13849,11 @@ namespace Reporting.Repository.Migrations.Tenant
 
                     b.Property<Guid>("OrgId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("ReasonCode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<decimal>("SgstAmount")
                         .HasColumnType("numeric");

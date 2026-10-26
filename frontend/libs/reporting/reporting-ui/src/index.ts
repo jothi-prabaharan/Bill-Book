@@ -20,5 +20,6 @@ export * from './lib/receivable-invoice-summary/receivable-invoice-summary.page'
 export * from './lib/receivable-invoice-detail/receivable-invoice-detail.page';
 export * from './lib/invoice-track/invoice-track.page';
 export * from './lib/invoice-dn-payment-collection/invoice-dn-payment-collection.page';
+export * from './lib/sales-analysis/sales-analysis.page';
 export * from './lib/foreign-currency-gain-or-loss/foreign-currency-gain-or-loss.page';
 export * from './lib/foreign-currency-gain-or-loss-details/foreign-currency-gain-or-loss-details.page';

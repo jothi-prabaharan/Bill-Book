@@ -40,6 +40,8 @@ export * from './lib/invoice-track/invoice-track.models';
 export * from './lib/invoice-track/invoice-track.service';
 export * from './lib/invoice-dn-payment-collection/invoice-dn-payment-collection.models';
 export * from './lib/invoice-dn-payment-collection/invoice-dn-payment-collection.service';
+export * from './lib/sales-analysis/sales-analysis.models';
+export * from './lib/sales-analysis/sales-analysis.service';
 export * from './lib/foreign-currency-gain-or-loss/foreign-currency-gain-or-loss.models';
 export * from './lib/foreign-currency-gain-or-loss/foreign-currency-gain-or-loss.service';
 export * from './lib/foreign-currency-gain-or-loss-details/foreign-currency-gain-or-loss-details.models';

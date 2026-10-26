@@ -1,0 +1,166 @@
+<header class="page-head">
+  <div>
+    <h1>Sales Analysis</h1>
+    <p class="subtitle text-muted">
+      What sold in a period, added up by item, item category or customer: units, gross value, discount, net sales before tax, cost of sales and margin, in the
+      branch's base currency. Credit notes are taken off unless you turn them off.
+    </p>
+  </div>
+</header>
+
+<form class="filters card" [formGroup]="filters" (ngSubmit)="run()" novalidate>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'sa-from'" label="From" formControlName="fromDate" [required]="true"
+                          [error]="err('fromDate', 'From date')" />
+  </div>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'sa-to'" label="To" formControlName="toDate" [required]="true"
+                          [error]="err('toDate', 'To date')" />
+  </div>
+  <div class="filters__field">
+    <bb-select [id]="'sa-group'" label="Group by" [options]="groupingOptions" formControlName="groupBy"
+               [error]="err('groupBy', 'Group by')" />
+  </div>
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'sa-customer'" label="Customer" placeholder="All customers" [options]="customerOptions()"
+               [loading]="!choicesLoaded()" emptyText="No customers" formControlName="contactId"
+               [error]="err('contactId', 'Customer')" />
+  </div>
+  <div class="filters__field">
+    <bb-select [id]="'sa-category'" label="Item category" placeholder="All categories" [options]="categoryOptions()"
+               [loading]="!choicesLoaded()" emptyText="No item categories" formControlName="itemCategoryId"
+               [error]="err('itemCategoryId', 'Item category')" />
+  </div>
+  <div class="filters__field">
+    <bb-select [id]="'sa-warehouse'" label="Warehouse" placeholder="All warehouses" [options]="warehouseOptions()"
+               [loading]="!choicesLoaded()" emptyText="No warehouses" formControlName="warehouseId"
+               [error]="err('warehouseId', 'Warehouse')" />
+  </div>
+  <div class="filters__field filters__field--check">
+    <bb-checkbox text="Include credit notes" formControlName="includeCreditNotes" />
+  </div>
+  <div class="filters__field filters__field--check">
+    <bb-checkbox text="Compare with another period" formControlName="compare" />
+  </div>
+  @if (comparing()) {
+    <div class="filters__field">
+      <bb-branch-date-input [id]="'sa-cfrom'" label="Compare from" formControlName="compareFromDate" [required]="true"
+                            [error]="err('compareFromDate', 'Compare from date')" />
+    </div>
+    <div class="filters__field">
+      <bb-branch-date-input [id]="'sa-cto'" label="Compare to" formControlName="compareToDate" [required]="true"
+                            [error]="err('compareToDate', 'Compare to date')" />
+    </div>
+  }
+  <div class="filters__actions">
+    <button class="btn btn-primary" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Running…' : 'Run report' }}
+    </button>
+  </div>
+</form>
+
+@if (messages().length > 0) {
+  <bb-message-box [messages]="messages()" />
+}
+
+@if (result(); as report) {
+  <p class="period text-muted">
+    {{ report.fromDate | reportDate }} to {{ report.toDate | reportDate }}, in {{ report.baseCurrencyCode }}.
+    @if (report.compareFromDate && report.compareToDate) {
+      Compared with {{ report.compareFromDate | reportDate }} to {{ report.compareToDate | reportDate }}.
+    }
+    @if (!report.includesCreditNotes) { Credit notes are not taken off. }
+  </p>
+
+  @if (report.totalGroups === 0) {
+    <p class="empty text-muted">Nothing was sold with these filters.</p>
+  } @else if (narrow()) {
+    <div class="cards" role="list" aria-label="Sales analysis">
+      @for (row of rows(); track row.key) {
+        <article class="card entry" role="listitem" [class.entry--total]="row.kind === 'total'">
+          <header class="entry__head">
+            <strong>{{ row.name }}</strong>
+            @if (row.code) { <span class="text-muted">{{ row.code }}</span> }
+          </header>
+          <dl class="figures">
+            <div class="figures__row"><dt>Quantity</dt><dd>{{ row.quantity }}</dd></div>
+            <div class="figures__row"><dt>Gross</dt><dd><bb-report-amount [value]="row.gross" /></dd></div>
+            <div class="figures__row"><dt>Discount</dt><dd><bb-report-amount [value]="row.discount" /></dd></div>
+            <div class="figures__row figures__row--balance"><dt>Net sales</dt><dd><bb-report-amount [value]="row.net" /></dd></div>
+            <div class="figures__row">
+              <dt>Cost</dt>
+              <dd>
+                <bb-report-amount [value]="row.cost" />
+                @if (row.costPendingLines > 0) { <small class="pending">{{ pendingText(row.costPendingLines) }}</small> }
+              </dd>
+            </div>
+            <div class="figures__row">
+              <dt>Margin</dt>
+              <dd>
+                @if (row.margin !== null) {
+                  <bb-report-amount [value]="row.margin" />
+                  @if (row.marginPercent !== null) { <small class="own">{{ row.marginPercent }}%</small> }
+                } @else { <span class="text-muted">pending</span> }
+              </dd>
+            </div>
+            @if (row.compareNet !== null) {
+              <div class="figures__row">
+                <dt>Net then</dt>
+                <dd>
+                  <bb-report-amount [value]="row.compareNet" />
+                  @if (row.changePercent !== null) { <small class="own">{{ row.changePercent > 0 ? '+' : '' }}{{ row.changePercent }}%</small> }
+                </dd>
+              </div>
+            }
+          </dl>
+        </article>
+      }
+    </div>
+  } @else {
+    <div class="matrix" [class.matrix--wide]="compared()">
+      <bb-data-grid flush [columns]="columns()" [data]="rows()" [rowClass]="rowClass" [sortable]="false"
+                    [showColumnFilters]="false" [showCount]="false" [paged]="false" label="Sales analysis">
+        <ng-template bbCellTemplate="name" let-row>
+          <span class="group">
+            <span [class.group__total]="row.kind === 'total'">{{ row.name }}</span>
+            @if (row.code) { <span class="group__code text-muted">{{ row.code }}</span> }
+          </span>
+        </ng-template>
+        <ng-template bbCellTemplate="quantity" let-row>{{ row.quantity }}</ng-template>
+        <ng-template bbCellTemplate="gross" let-row><bb-report-amount [value]="row.gross" /></ng-template>
+        <ng-template bbCellTemplate="discount" let-row><bb-report-amount [value]="row.discount" /></ng-template>
+        <ng-template bbCellTemplate="net" let-row><strong><bb-report-amount [value]="row.net" /></strong></ng-template>
+        <ng-template bbCellTemplate="cost" let-row>
+          <span class="amount">
+            <bb-report-amount [value]="row.cost" />
+            @if (row.costPendingLines > 0) { <small class="pending">{{ row.costPendingLines }} pending</small> }
+          </span>
+        </ng-template>
+        <ng-template bbCellTemplate="margin" let-row>
+          @if (row.margin !== null) { <bb-report-amount [value]="row.margin" /> } @else { <span class="text-muted" [title]="pendingText(row.costPendingLines)">pending</span> }
+        </ng-template>
+        <ng-template bbCellTemplate="marginPercent" let-row>@if (row.marginPercent !== null) { {{ row.marginPercent }}% }</ng-template>
+        <ng-template bbCellTemplate="compareNet" let-row>@if (row.compareNet !== null) { <bb-report-amount [value]="row.compareNet" /> }</ng-template>
+        <ng-template bbCellTemplate="changePercent" let-row>
+          @if (row.changePercent !== null) { <span [class.change--down]="row.changePercent < 0">{{ row.changePercent > 0 ? '+' : '' }}{{ row.changePercent }}%</span> }
+        </ng-template>
+      </bb-data-grid>
+    </div>
+
+    @if (more()) {
+      <div class="more">
+        <button class="btn" type="button" (click)="loadMore()" [disabled]="busy()">Show more</button>
+        <span class="more__count text-muted">{{ report.groups.length }} of {{ report.totalGroups }} shown</span>
+      </div>
+    }
+  }
+
+  @if (report.totalGroups > 0) {
+    <p class="notes text-muted">
+      Sales are posted invoices and POS sales, by invoice date, less posted credit notes. Net sales are before tax and after discount; gross and discount are as keyed, so a price that includes tax shows it in gross.
+      Quantity is in each item's base unit, and a credit note takes units off only when it is a sales return. Cost is what the stock movements the sales caused cost once costing has settled them.
+      A line whose cost is not settled yet is counted in the net sales, its cost is left out and marked pending, and the group has no margin until it is, so the margin is never overstated.
+      A line with no item is one group of its own. The total is of everything the filters match, not only the groups shown.
+    </p>
+  }
+}

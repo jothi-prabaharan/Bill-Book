@@ -373,6 +373,19 @@ The Invoice/DN Payment Collection Report has its own page at `/reports/invoice-d
 
 The catalog's **Invoice/DN Payment Collection**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It lists a row for each invoice a posted receipt of the period settled, with the amount settled in the branch's currency.
 
+## Sales Analysis
+
+The Sales Analysis has its own page at `/reports/sales-analysis` (TK-228), under **Reports › Sales Reports**. Besides access to reports it needs **sales.view**. It adds up what sold in a period by item, item category or customer.
+
+- **From** and **To** are both required, and are the **invoice date**. The page opens on the financial year to date, by item, and runs straight away. A **To** before **From** is refused under **To**. **Group by** chooses item, item category or customer. **Customer**, **Item category** and **Warehouse** narrow it.
+- Sales are posted invoices and POS sales, **less posted credit notes**. **Include credit notes** is on, because a return is not a sale; turn it off to see sales as invoiced. A credit note that is a **sales return** takes its units off as well; a price correction or a discount agreed afterwards takes value off and no units.
+- Each row shows **Qty** (in each item's base unit), **Gross** (quantity times price, as keyed, so a price that includes tax shows it here), **Discount**, **Net sales** (before tax, after discount), **Cost**, **Margin** and **Margin %**, all in the branch's base currency. A document in another currency is taken to base at the rate it was booked at. Rows run largest net sales first, and the total of everything the filters match is under them. A line with no item, such as a service typed in, is one row of its own.
+- **Cost** is what the stock the sales moved cost, once costing has settled it. Costing runs just after a sale, so a line may not have its cost yet. Such a line is counted in the net sales, its cost is left out and marked **pending**, and **the row shows no margin until it is settled**: a margin worked out without that cost would be too high. A line with no stock movement, a service for instance, costs nothing and is not pending.
+- **Compare with another period** starts with the period of the same length just before, and can be changed. It adds each row's **Net then** and the **Change** as a percentage of it, and the total's. A row with nothing sold in the other period shows no change.
+- The page loads 50 rows at a time with **Show more**. On a phone each row is a card.
+
+The catalog's **Sales Analysis**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It lists each item sold with its units and gross value in the branch's currency, less credit notes.
+
 ## Project reports
 
 Four reports read project accounting, under **Projects** in the list. Running them needs **projects.view** as well as access to reports.

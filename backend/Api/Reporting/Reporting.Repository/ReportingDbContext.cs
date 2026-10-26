@@ -93,6 +93,7 @@ public class ReportingDbContext : TenantDbContext
 
     public DbSet<InvoiceRead> Invoices => Set<InvoiceRead>();
     public DbSet<CreditNoteRead> CreditNotes => Set<CreditNoteRead>();
+    public DbSet<CreditNoteDetailRead> CreditNoteDetails => Set<CreditNoteDetailRead>();
     public DbSet<BillRead> Bills => Set<BillRead>();
     public DbSet<InvoiceDetailTaxRead> InvoiceDetailTaxes => Set<InvoiceDetailTaxRead>();
 
@@ -352,6 +353,7 @@ public class ReportingDbContext : TenantDbContext
 
         MapRead<InvoiceRead>(modelBuilder, "Invoices", "sal", e => e.InvoiceId);
         MapRead<CreditNoteRead>(modelBuilder, "CreditNotes", "sal", e => e.CreditNoteId);
+        MapRead<CreditNoteDetailRead>(modelBuilder, "CreditNoteDetails", "sal", e => e.CreditNoteDetailId);
         MapRead<BillRead>(modelBuilder, "Bills", "pur", e => e.BillId);
         MapRead<InvoiceDetailTaxRead>(modelBuilder, "InvoiceDetailTaxes", "sal", e => e.InvoiceDetailTaxId);
         MapRead<SalesOrderRead>(modelBuilder, "SalesOrders", "sal", e => e.SalesOrderId);
@@ -399,6 +401,7 @@ public class ReportingDbContext : TenantDbContext
         modelBuilder.Entity<BankStatementLineRead>().Property(e => e.Status).HasConversion<string>().HasMaxLength(12);
         modelBuilder.Entity<BankAccountRead>().Property(e => e.AccountType).HasConversion<string>().HasMaxLength(15);
         modelBuilder.Entity<CreditNoteRead>().Property(e => e.Status).HasConversion<string>().HasMaxLength(12);
+        modelBuilder.Entity<CreditNoteRead>().Property(e => e.ReasonCode).HasConversion<string>().HasMaxLength(20);
         modelBuilder.Entity<QuoteRead>().Property(e => e.Status).HasConversion<string>().HasMaxLength(12);
         modelBuilder.Entity<SalesOrderRead>().Property(e => e.Status).HasConversion<string>().HasMaxLength(12);
         modelBuilder.Entity<DeliveryChallanRead>().Property(e => e.Status).HasConversion<string>().HasMaxLength(12);
