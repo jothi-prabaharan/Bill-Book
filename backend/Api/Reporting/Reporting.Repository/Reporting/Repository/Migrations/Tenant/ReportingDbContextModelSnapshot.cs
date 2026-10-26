@@ -15498,6 +15498,9 @@ namespace Reporting.Repository.Migrations.Tenant
                     b.Property<Guid>("OrgId")
                         .HasColumnType("uuid");
 
+                    b.Property<DateTimeOffset?>("PostedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<decimal>("SgstAmount")
                         .HasColumnType("numeric");
 

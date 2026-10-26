@@ -1,0 +1,134 @@
+<header class="page-head">
+  <div>
+    <h1>Invoice Track Report</h1>
+    <p class="subtitle text-muted">
+      Where each sales invoice raised in a period is in its life: drafted, posted, paid in part or in full, overdue or void, with the day it was posted,
+      its due date, the last payment against it and what is still due. Payments and what is due are as at the To date.
+    </p>
+  </div>
+</header>
+
+<form class="filters card" [formGroup]="filters" (ngSubmit)="run()" novalidate>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'itr-from'" label="From" formControlName="fromDate" [required]="true"
+                          [error]="err('fromDate', 'From date')" />
+  </div>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'itr-to'" label="To" formControlName="toDate" [required]="true"
+                          [error]="err('toDate', 'To date')" />
+  </div>
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'itr-customer'" label="Customer" placeholder="All customers" [options]="customerOptions()"
+               [loading]="!choicesLoaded()" emptyText="No customers" formControlName="contactId"
+               [error]="err('contactId', 'Customer')" />
+  </div>
+  <div class="filters__actions">
+    <button class="btn btn-primary" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Running…' : 'Run report' }}
+    </button>
+  </div>
+</form>
+
+@if (result()) {
+  <bb-status-tabs [tabs]="tabs()" [value]="status()" label="Invoice status" (valueChange)="chooseStatus($event)" />
+}
+
+@if (messages().length > 0) {
+  <bb-message-box [messages]="messages()" />
+}
+
+@if (result(); as report) {
+  <p class="period text-muted">
+    {{ report.fromDate | reportDate }} to {{ report.toDate | reportDate }}, in {{ report.baseCurrencyCode }}. Payments and what is due are as at {{ report.toDate | reportDate }}.
+  </p>
+
+  @if (report.totalInvoices === 0) {
+    <p class="empty text-muted">No invoices match these filters.</p>
+  } @else if (narrow()) {
+    <div class="cards" role="list" aria-label="Invoice track">
+      @for (row of rows(); track row.key) {
+        <article class="card entry" role="listitem" [class.entry--total]="row.kind === 'total'">
+          <header class="entry__head">
+            @if (row.link) { <a class="link" [routerLink]="row.link"><strong>{{ row.name }}</strong></a> } @else { <strong>{{ row.name }}</strong> }
+            @if (row.status) { <span [class]="'tag ' + statusTag(row.status)">{{ statusLabel(row.status) }}</span> }
+          </header>
+          @if (row.kind === 'invoice') {
+            <p class="entry__who">{{ row.contactName }} <span class="text-muted">{{ row.contactCode }}</span></p>
+            <dl class="steps">
+              <div><dt>Invoice date</dt><dd>{{ row.documentDate | reportDate }}</dd></div>
+              <div><dt>Posted</dt><dd>@if (row.postedOn) { {{ row.postedOn | reportDate }} } @else { <span class="text-muted">not posted</span> }</dd></div>
+              @if (row.dueDate) {
+                <div><dt>Due date</dt><dd>{{ row.dueDate | reportDate }} @if (row.daysOverdue) { <small class="late">{{ row.daysOverdue }} days late</small> }</dd></div>
+              }
+              <div><dt>Last payment</dt><dd>@if (row.lastPaymentDate) { {{ row.lastPaymentDate | reportDate }} } @else { <span class="text-muted">none</span> }</dd></div>
+            </dl>
+          }
+          <dl class="figures">
+            <div class="figures__row">
+              <dt>Total</dt>
+              <dd><bb-report-amount [value]="row.total" />
+                @if (row.ownTotal !== null) { <small class="own"><bb-report-amount [value]="row.ownTotal" [currency]="row.currencyCode" /></small> }</dd>
+            </div>
+            @if (row.inBooks) {
+              <div class="figures__row"><dt>Received</dt><dd><bb-report-amount [value]="row.received" /></dd></div>
+              <div class="figures__row figures__row--balance"><dt>Due</dt><dd><bb-report-amount [value]="row.due" /></dd></div>
+            }
+          </dl>
+        </article>
+      }
+    </div>
+  } @else {
+    <div class="matrix">
+      <bb-data-grid flush [columns]="columns" [data]="rows()" [rowClass]="rowClass" [sortable]="false"
+                    [showColumnFilters]="false" [showCount]="false" [paged]="false" label="Invoice track">
+        <ng-template bbCellTemplate="document" let-row>
+          <span class="document">
+            @if (row.link) { <a class="link" [routerLink]="row.link">{{ row.name }}</a> } @else { <strong>{{ row.name }}</strong> }
+            @if (row.documentDate) { <span class="document__date text-muted">{{ row.documentDate | reportDate }}</span> }
+          </span>
+        </ng-template>
+        <ng-template bbCellTemplate="customer" let-row>
+          <span class="customer">
+            <span>{{ row.contactName }}</span>
+            @if (row.contactCode) { <span class="customer__code text-muted">{{ row.contactCode }}</span> }
+          </span>
+        </ng-template>
+        <ng-template bbCellTemplate="status" let-row>
+          @if (row.status) { <span [class]="'tag ' + statusTag(row.status)">{{ statusLabel(row.status) }}</span> }
+        </ng-template>
+        <ng-template bbCellTemplate="postedOn" let-row>@if (row.postedOn) { {{ row.postedOn | reportDate }} }</ng-template>
+        <ng-template bbCellTemplate="dueDate" let-row>
+          @if (row.dueDate) {
+            <span class="due">{{ row.dueDate | reportDate }}
+              @if (row.daysOverdue) { <small class="due__late">{{ row.daysOverdue }} days late</small> }</span>
+          }
+        </ng-template>
+        <ng-template bbCellTemplate="lastPaymentDate" let-row>@if (row.lastPaymentDate) { {{ row.lastPaymentDate | reportDate }} }</ng-template>
+        <ng-template bbCellTemplate="total" let-row>
+          <span class="amount">
+            @if (row.kind === 'total') { <strong><bb-report-amount [value]="row.total" /></strong> } @else { <bb-report-amount [value]="row.total" /> }
+            @if (row.ownTotal !== null) { <small class="own"><bb-report-amount [value]="row.ownTotal" [currency]="row.currencyCode" /></small> }
+          </span>
+        </ng-template>
+        <ng-template bbCellTemplate="due" let-row>
+          @if (row.inBooks) { <strong><bb-report-amount [value]="row.due" /></strong> }
+        </ng-template>
+      </bb-data-grid>
+    </div>
+
+    @if (more()) {
+      <div class="more">
+        <button class="btn" type="button" (click)="loadMore()" [disabled]="busy()">Show more invoices</button>
+        <span class="more__count text-muted">{{ report.invoices.length }} of {{ report.totalInvoices }} shown</span>
+      </div>
+    }
+  }
+
+  @if (report.totalInvoices > 0) {
+    <p class="notes text-muted">
+      An invoice is listed by its invoice date. Posted is the day it was posted, in your time. Last payment is the latest receipt, or credit note or advance applied to it, on or before {{ report.toDate | reportDate }};
+      due is what is left then. Overdue means past its due date on that day with something still owed, and wins over partly paid.
+      A draft or an invoice ready to post is not in the books yet, so it owes nothing, and a voided invoice is listed only under Void; neither is added into the total of posted invoices at the foot, which is of every posted invoice the filters match, not only those shown.
+    </p>
+  }
+}

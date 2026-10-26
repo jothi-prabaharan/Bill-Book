@@ -347,6 +347,19 @@ The Receivable Invoice Detail has its own page at `/reports/receivable-invoice-d
 
 The catalog's **Receivable Invoice Detail**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It lists a row for each line of the posted invoices in the period, with the line total in the branch's currency; voided invoices are not in it.
 
+## Invoice Track Report
+
+The Invoice Track Report has its own page at `/reports/invoice-track-report` (TK-226), under **Reports › Sales Reports**. Besides access to reports it needs **sales.view**. It follows each sales invoice through its life: where it stands, the day it was posted, when it falls due, the last payment against it and what is still owed.
+
+- **From** and **To** are both required, and are the **invoice date**. The page opens on the financial year to date and runs straight away. A **To** before **From** is refused under **To**. **Customer** narrows it.
+- **Status tabs** count the invoices in each state, whichever tab is open: **Draft** and **Ready to post** (not in the books yet), then **Awaiting payment** (nothing received, not yet due), **Partly paid**, **Overdue** (past its due date on the To date with something still owed, whether or not part of it has been received), **Paid** and **Void**. **All** is every state except Void, which is listed only under its own tab.
+- Each invoice is a row with its number (a link) and invoice date, customer, **Status**, **Posted** (the day it was posted, in your own time; blank until it is), **Due date** (with how many days late when it is overdue), **Last payment**, **Total** and **Due**. An invoice in another currency also shows its own total in smaller type under the total in the branch's currency.
+- **Last payment** is the latest receipt, credit note or advance applied to the invoice on or before the To date. **Due** is what is left on that date, so a past period reads the same when you run it again. A settlement that was released, or is dated after the To date, is not counted.
+- A **draft** or an invoice **ready to post** is not in the books, so it owes nothing and has no posting or payment dates. The **Total of posted** row at the foot adds up the posted invoices the filters match that still stand, so drafts and voided invoices are not in it, and it covers every match rather than only the rows loaded.
+- The list loads 25 invoices at a time with **Show more invoices**. On a phone each invoice is a card. The product does not record when an invoice was sent, so there is no *sent* step.
+
+The catalog's **Invoice Track**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It lists the invoices of the period with where each stands, its total in the branch's currency and what is still due on the To date; voided invoices are not in it.
+
 ## Project reports
 
 Four reports read project accounting, under **Projects** in the list. Running them needs **projects.view** as well as access to reports.

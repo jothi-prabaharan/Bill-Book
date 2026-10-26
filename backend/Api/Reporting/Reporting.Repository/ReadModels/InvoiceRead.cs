@@ -34,6 +34,9 @@ public class InvoiceRead : OrgScopedEntity
     public decimal CessAmount { get; set; }
     public Shared.Kernel.Documents.DocumentStatus Status { get; set; }
 
+    /// <summary>When it was posted; null while it is a draft or ready to post (TK-226).</summary>
+    public DateTimeOffset? PostedAt { get; set; }
+
     /// <summary>The record's custom field values (TK-111/TK-112), read by the custom report datasets (TK-113).</summary>
     public System.Text.Json.JsonDocument? CustomFields { get; set; }
 }
