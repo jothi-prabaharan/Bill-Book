@@ -28,6 +28,11 @@ public sealed class ArAgingSummarySourceRepository : ReportSource<ArAgingSummary
 
     public override string RequiredPermission => "sales.view";
 
+    public override IReadOnlyList<ReportParameterRepository> Parameters =>
+    [
+        new() { Name = "asOf", Label = "As At", DataType = ColumnDataType.Date, IsRequired = true },
+    ];
+
     public override IReadOnlyList<ReportColumn> Columns =>
     [
         ReportColumn.Of<ArAgingSummaryRow, string>("contactCode", ColumnDataType.Text, r => r.ContactCode),
@@ -43,29 +48,64 @@ public sealed class ArAgingSummarySourceRepository : ReportSource<ArAgingSummary
 
     protected override IQueryable<ArAgingSummaryRow> Build(ReportParameters parameters, ReportingDbContext db)
     {
-        var asOf = DateOnly.FromDateTime(DateTime.UtcNow);
-        
-        return from l in db.Ledger
-               where l.ContactId != null && l.LedgerDate <= asOf
-               // Assuming Accounts Receivable has a specific AccountType or LedgerSource. We will join Accounts.
-               join a in db.Accounts on l.AccountId equals a.AccountId
-               where a.AccountSystemName == "Accounts Receivable" // Assuming ARR is Accounts Receivable
-               join c in db.Contacts on l.ContactId equals c.ContactId
-               where c.IsCustomer
-               group l by new { c.ContactId, c.ContactCode, c.DisplayName } into g
-               select new ArAgingSummaryRow
-               {
-                   ContactId = g.Key.ContactId,
-                   ContactCode = g.Key.ContactCode,
-                   ContactName = g.Key.DisplayName,
-                   // Using LedgerDate as proxy for DueDate
-                   Current = g.Sum(x => asOf.DayNumber - x.LedgerDate.DayNumber <= 0 ? (x.DebitAmountBase - x.CreditAmountBase) : 0),
-                   Days1_30 = g.Sum(x => asOf.DayNumber - x.LedgerDate.DayNumber > 0 && asOf.DayNumber - x.LedgerDate.DayNumber <= 30 ? (x.DebitAmountBase - x.CreditAmountBase) : 0),
-                   Days31_60 = g.Sum(x => asOf.DayNumber - x.LedgerDate.DayNumber > 30 && asOf.DayNumber - x.LedgerDate.DayNumber <= 60 ? (x.DebitAmountBase - x.CreditAmountBase) : 0),
-                   Days61_90 = g.Sum(x => asOf.DayNumber - x.LedgerDate.DayNumber > 60 && asOf.DayNumber - x.LedgerDate.DayNumber <= 90 ? (x.DebitAmountBase - x.CreditAmountBase) : 0),
-                   Days90Plus = g.Sum(x => asOf.DayNumber - x.LedgerDate.DayNumber > 90 ? (x.DebitAmountBase - x.CreditAmountBase) : 0),
-                   Total = g.Sum(x => x.DebitAmountBase - x.CreditAmountBase)
-               };
+        DateOnly asOf = parameters.Date("asOf") ?? throw new ReportQueryException("As at date is required.");
+        int asOfDay = asOf.DayNumber;
+
+        // The open documents are the page's: the same documents, settlements and dates, so the
+        // totals agree. Aged by due date in 30-day columns, which is what the seeded
+        // columns are named for; the page offers the other widths and the invoice date.
+        IQueryable<ReceivableDocument> documents = AgedReceivablesSummaryReportRepository.Documents(db.Ledger, db.Accounts, asOf);
+        IQueryable<OpenReceivable> open = AgedReceivablesSummaryReportRepository.OpenDocuments(
+            documents,
+            AgedReceivablesSummaryReportRepository.Settlements(db.TransactionRatios, documents, asOf),
+            db.Invoices);
+
+        var perContact = from o in open
+                         group o by o.ContactId into g
+                         select new
+                         {
+                             ContactId = g.Key,
+                             Current = g.Sum(o => o.Amount < 0m || asOfDay - o.DueDate.DayNumber <= 0 ? o.Amount : 0m),
+                             Days1_30 = g.Sum(o => o.Amount > 0m && asOfDay - o.DueDate.DayNumber > 0 && asOfDay - o.DueDate.DayNumber <= 30 ? o.Amount : 0m),
+                             Days31_60 = g.Sum(o => o.Amount > 0m && asOfDay - o.DueDate.DayNumber > 30 && asOfDay - o.DueDate.DayNumber <= 60 ? o.Amount : 0m),
+                             Days61_90 = g.Sum(o => o.Amount > 0m && asOfDay - o.DueDate.DayNumber > 60 && asOfDay - o.DueDate.DayNumber <= 90 ? o.Amount : 0m),
+                             Days90Plus = g.Sum(o => o.Amount > 0m && asOfDay - o.DueDate.DayNumber > 90 ? o.Amount : 0m),
+                             Total = g.Sum(o => o.Amount),
+                         };
+
+        IQueryable<ArAgingSummaryRow> customers =
+            from p in perContact
+            join c in db.Contacts on p.ContactId equals (long?)c.ContactId
+            select new ArAgingSummaryRow
+            {
+                ContactId = c.ContactId,
+                ContactCode = c.ContactCode,
+                ContactName = c.DisplayName,
+                Current = p.Current,
+                Days1_30 = p.Days1_30,
+                Days31_60 = p.Days31_60,
+                Days61_90 = p.Days61_90,
+                Days90Plus = p.Days90Plus,
+                Total = p.Total,
+            };
+
+        // What no customer claims, as the page lists it, so the rows add up to the receivable account.
+        IQueryable<ArAgingSummaryRow> unassigned = perContact
+            .Where(p => p.ContactId == null)
+            .Select(p => new ArAgingSummaryRow
+            {
+                ContactId = 0,
+                ContactCode = "",
+                ContactName = AgedReceivablesSummaryReportRepository.UnassignedName,
+                Current = p.Current,
+                Days1_30 = p.Days1_30,
+                Days31_60 = p.Days31_60,
+                Days61_90 = p.Days61_90,
+                Days90Plus = p.Days90Plus,
+                Total = p.Total,
+            });
+
+        return customers.Concat(unassigned);
     }
 
     protected override LambdaExpression DefaultOrder =>

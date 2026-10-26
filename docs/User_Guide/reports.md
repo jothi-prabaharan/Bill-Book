@@ -287,6 +287,22 @@ The Foreign Currency Gain or Loss Details report has its own page at `/reports/f
 
 The catalog's **Foreign Currency Gain or Loss Details**, used for export, saved views and scheduled emails, now needs both **From** and **To** and refuses a run without them. It lists the ledger's postings rather than netting a settlement against the document it settles: one row for each foreign-currency balance posting up to **To**, with the amount in the currency and in base at the booked rate, and one for each realized difference in the period, so its rows add up to the same figures for each currency. The revaluation, unrealized, net, exposure and year-to-date columns are left empty there, because a rate is something you give for each run on the page. Until TK-221 it failed to run on any branch with a foreign-currency balance.
 
+## Aged Receivables Summary
+
+The Aged Receivables Summary has its own page at `/reports/aged-receivables-summary` (TK-222), under **Reports › Sales Reports**. Besides access to reports it needs **sales.view**. It shows what each customer owed on a date and how overdue it was, in the branch's base currency.
+
+- **As at** is required. The page opens as at today and runs straight away; a missing date is refused under the field.
+- **Age by** counts an invoice's age from its **due date** (the default) or its **invoice date**. An invoice with no due date counts from its invoice date, and a document that is not an invoice, such as an opening balance or a manual journal, from the day it was posted.
+- **Column width** is 30 days (the default), 15 or 7. There are always five columns: **Current** (not yet due, or due on the date), then four overdue columns, the last being everything beyond three widths: with 30 days, 1-30, 31-60, 61-90 and over 90 days.
+- **Customer** narrows the report to one customer. **Show customers with nothing owed** also lists the customers with nothing open.
+- Each customer is a row with its code, the five columns and a **Total**, and a **Total** row closes the table. A sentence above says how much is owed and how much of it is overdue. On a phone each customer is a card.
+- **A credit note, and a receipt or advance not yet applied to an invoice, are negative amounts in Current**, so a customer's total is their balance on Accounts Receivable. A receipt or credit note applied to an invoice has come off both: the invoice shows only what is still open on it, and the receipt no longer shows at all.
+- What was applied counts only if it was effective on or before the date and has not been released, so the report for an earlier date shows the invoices as they stood then.
+- The totals add up to the Accounts Receivable balance on the date, the same figure as the **Trial Balance**. A posting to Accounts Receivable with no contact, such as a manual journal, is its own row, **Not tied to a customer**, so nothing is left out.
+- An invoice in another currency is shown in the branch's currency at the rate it was booked at.
+
+The catalog's **Aged Receivables Summary**, used for export and scheduled emails, now needs **As at** and refuses a run without it. It gives the same figures, aged by due date in 30-day columns. The menu item had no report behind it before TK-222.
+
 ## Project reports
 
 Four reports read project accounting, under **Projects** in the list. Running them needs **projects.view** as well as access to reports.

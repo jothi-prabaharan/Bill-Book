@@ -14,5 +14,6 @@ export * from './lib/salary-increment/salary-increment-report.page';
 export * from './lib/journal-report/journal-report.page';
 export * from './lib/account-transaction/account-transaction.page';
 export * from './lib/bank-summary/bank-summary.page';
+export * from './lib/aged-receivables-summary/aged-receivables-summary.page';
 export * from './lib/foreign-currency-gain-or-loss/foreign-currency-gain-or-loss.page';
 export * from './lib/foreign-currency-gain-or-loss-details/foreign-currency-gain-or-loss-details.page';
