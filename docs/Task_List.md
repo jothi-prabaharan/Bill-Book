@@ -6,7 +6,7 @@ rewrites and stages it whenever the details file changes. **Never edit it by han
 status, edit the card's first line in the details file; the card there holds the rules, lanes,
 where to start, sub-tasks and notes.
 
-**Summary:** 213 completed, 0 working, 44 open, and 2 blocked (259 cards).
+**Summary:** 213 completed, 1 working, 43 open, and 2 blocked (259 cards).
 
 | Card | Title | Group | Status | Completed by | Completed at | Tests | Issue | Note |
 | :--- | :--- | :--- | :---: | :--- | :--- | :--- | :---: | :--- |
@@ -233,7 +233,7 @@ where to start, sub-tasks and notes.
 | [TK-224](./Task_Details.md#tk-224--receivable-invoice-summary-its-own-endpoint-and-page) | Receivable Invoice Summary: its own endpoint and page | Z | ✅ completed | Claude Sonnet 5.5 | 2026-10-26 | written, not run | [#211](https://github.com/jothi-prabaharan/Bill-Book/issues/211) | — |
 | [TK-225](./Task_Details.md#tk-225--receivable-invoice-detail-its-own-endpoint-and-page) | Receivable Invoice Detail: its own endpoint and page | Z | ✅ completed | Claude Sonnet 5.5 | 2026-10-26 | written, not run | [#212](https://github.com/jothi-prabaharan/Bill-Book/issues/212) | — |
 | [TK-226](./Task_Details.md#tk-226--invoice-track-report-its-own-endpoint-and-page) | Invoice Track Report: its own endpoint and page | Z | ✅ completed | Claude Sonnet 5.5 | 2026-10-26 | written, not run | [#213](https://github.com/jothi-prabaharan/Bill-Book/issues/213) | — |
-| [TK-227](./Task_Details.md#tk-227--invoicedn-payment-collection-report-its-own-endpoint-and-page) | Invoice/DN Payment Collection Report: its own endpoint and page | Z | 🟪 open | — | — | — | [#214](https://github.com/jothi-prabaharan/Bill-Book/issues/214) | — |
+| [TK-227](./Task_Details.md#tk-227--invoicedn-payment-collection-report-its-own-endpoint-and-page) | Invoice/DN Payment Collection Report: its own endpoint and page | Z | 🔶 working | Claude Sonnet 5.5 (working) | since 2026-10-26 | — | [#214](https://github.com/jothi-prabaharan/Bill-Book/issues/214) | — |
 | [TK-228](./Task_Details.md#tk-228--sales-analysis-its-own-endpoint-and-page) | Sales Analysis: its own endpoint and page | Z | 🟪 open | — | — | — | [#215](https://github.com/jothi-prabaharan/Bill-Book/issues/215) | — |
 | [TK-229](./Task_Details.md#tk-229--sales-analysis-detail-report-its-own-endpoint-and-page) | Sales Analysis Detail Report: its own endpoint and page | Z | 🟪 open | — | — | — | [#216](https://github.com/jothi-prabaharan/Bill-Book/issues/216) | — |
 | [TK-230](./Task_Details.md#tk-230--sales-order-track-report-its-own-endpoint-and-page) | Sales Order Track Report: its own endpoint and page | Z | 🟪 open | — | — | — | [#217](https://github.com/jothi-prabaharan/Bill-Book/issues/217) | — |
