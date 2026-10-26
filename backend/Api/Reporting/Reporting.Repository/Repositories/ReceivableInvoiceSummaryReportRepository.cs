@@ -180,6 +180,7 @@ public sealed class ReceivableInvoiceSummaryReportRepository
                 CurrencyCode = i.CurrencyCode,
                 Sign = 1,
                 IsVoid = i.Status == DocumentStatus.Void,
+                ExchangeRate = i.ExchangeRate,
                 Taxable = Math.Round(i.TaxableAmount * i.ExchangeRate, 2),
                 Cgst = Math.Round(i.CgstAmount * i.ExchangeRate, 2),
                 Sgst = Math.Round(i.SgstAmount * i.ExchangeRate, 2),
@@ -206,6 +207,7 @@ public sealed class ReceivableInvoiceSummaryReportRepository
                     CurrencyCode = c.CurrencyCode,
                     Sign = -1,
                     IsVoid = c.Status == DocumentStatus.Void,
+                    ExchangeRate = c.ExchangeRate,
                     Taxable = -Math.Round(c.TaxableAmount * c.ExchangeRate, 2),
                     Cgst = -Math.Round(c.CgstAmount * c.ExchangeRate, 2),
                     Sgst = -Math.Round(c.SgstAmount * c.ExchangeRate, 2),
@@ -321,6 +323,7 @@ public sealed class ReceivableInvoiceSummaryReportRepository
                    DueDate = f.DueDate,
                    ContactId = f.ContactId,
                    CurrencyCode = f.CurrencyCode,
+                   ExchangeRate = f.ExchangeRate,
                    TotalSource = f.TotalSource,
                    Taxable = f.Taxable,
                    Cgst = f.Cgst,
@@ -441,6 +444,9 @@ public sealed class ReceivableInvoiceFigure
 
     public bool IsVoid { get; set; }
 
+    /// <summary>Base currency per unit of the document's own, as booked.</summary>
+    public decimal ExchangeRate { get; set; }
+
     public decimal Taxable { get; set; }
 
     public decimal Cgst { get; set; }
@@ -496,6 +502,8 @@ public sealed class ReceivableInvoiceRow
     public long ContactId { get; set; }
 
     public string CurrencyCode { get; set; } = string.Empty;
+
+    public decimal ExchangeRate { get; set; }
 
     public decimal TotalSource { get; set; }
 

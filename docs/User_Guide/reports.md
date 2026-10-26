@@ -334,6 +334,19 @@ The Receivable Invoice Summary has its own page at `/reports/receivable-invoice-
 
 The catalog's **Receivable Invoice Summary**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It lists the posted invoices in the period with the total and what is due as at the To date; voided invoices and credit notes are not in it.
 
+## Receivable Invoice Detail
+
+The Receivable Invoice Detail has its own page at `/reports/receivable-invoice-detail` (TK-225), under **Reports › Sales Reports**. Besides access to reports it needs **sales.view**. It is the Receivable Invoice Summary line by line: the sales invoices raised in a period, newest first, each with the items, quantities, prices, discounts and taxes it is made of.
+
+- **From** and **To** are both required, and are the **invoice date**. The page opens on the financial year to date and runs straight away. A **To** before **From** is refused under **To**. **Customer**, **Item** and **Item category** narrow it. The **status tabs** above the list are the Receivable Invoice Summary's, with the same rules: **Awaiting payment**, **Partly paid**, **Overdue**, **Paid** and **Void**, and **All** is every status except Void. The statuses are as at the **To** date.
+- Each invoice starts with a heading line: its number (a link), status, date, due date and customer. Under it, one row for each **line**: the item's name and code (a line typed in without an item shows its own description), **Qty** with its unit, **Unit price**, **Discount** (with the percentage when it was entered as one), **Taxable**, **Tax** (the line's tax rate under the amount) and **Total**. An **Invoice total** row closes it.
+- A **Round off** row appears when the lines do not quite make the invoice total, the difference being the rupee rounding added to the invoice. The lines and the round off add up to the invoice total, and the invoice totals add up to the Receivable Invoice Summary's.
+- An invoice's amounts are in **its own currency**. An invoice in another currency shows its code after each amount and its total in the branch's currency beside the invoice total. The **Total** row at the foot, and the sentence above the list, are in the branch's currency and are of every invoice the filters match, not only those loaded.
+- **Item** and **Item category** narrow the lines as well as the invoices: only an invoice with a line for that item (or an item in that category) is listed, and only those lines are shown. The page says so above the list. The invoice total is then the total of the lines shown, no round off is shown, and the totals at the foot are of those lines.
+- The list loads 25 invoices at a time with **Show more invoices**. On a phone each invoice is a card with its lines inside.
+
+The catalog's **Receivable Invoice Detail**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It lists a row for each line of the posted invoices in the period, with the line total in the branch's currency; voided invoices are not in it.
+
 ## Project reports
 
 Four reports read project accounting, under **Projects** in the list. Running them needs **projects.view** as well as access to reports.
