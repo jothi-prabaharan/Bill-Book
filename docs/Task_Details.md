@@ -6548,7 +6548,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Built (26 October 2026):** `AgedReceivablesSummaryReportRepository` (documents, settlements, open documents as signed deltas, a pure `Compose`), `AgedReceivablesSummaryReportController` (`GET api/statements/aged-receivables-summary` and `/customers`, `sales.view`), the page at `/reports/aged-receivables-summary`, two gateway routes, and the catalog source `ar-aging-summary` rewritten over the same open documents with a required `asOf`. Checked on local PostgreSQL against hand-worked books (the totals equal the receivable account's balance on two dates; the catalog source gives the page's figures) and in Chromium at 1280px and 360px. Design: `docs/Modules.md` §8.6. **The settlement amount is taken to be in the currency of both documents it joins** (see §8.6); TK-223 reads `OpenDocuments`.
 
 ### TK-223 · Aged Receivables Detail: its own endpoint and page
-- [ ] open
+- [~] working (Claude Sonnet 5.5) — since 2026-10-26
 - **Issue:** [#210](https://github.com/jothi-prabaharan/Bill-Book/issues/210)
 - **Group:** Z · Owner request (the reports, one by one: menu group *Sales Reports*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
 - **Lanes:** L-RPT-SAL, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** TK-222 · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
