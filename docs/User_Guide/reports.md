@@ -398,6 +398,19 @@ The Sales Analysis Detail Report has its own page at `/reports/sales-analysis-de
 
 The catalog's **Sales Analysis Detail**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It lists a row for each line, credit note lines included as negatives, with the unit price and the line's net sales in the branch's currency.
 
+## Sales Order Track Report
+
+The Sales Order Track Report has its own page at `/reports/sales-order-track-report` (TK-230), under **Reports › Sales Reports**. Besides access to reports it needs **sales.view**. It follows each sales order from the order to the invoice.
+
+- **From** and **To** are both required, and are the **order date**. The page opens on the financial year to date and runs straight away. A **To** before **From** is refused under **To**. **Customer** narrows it, and **Outstanding only** keeps the orders with something still to deliver or to bill.
+- **Progress tabs** count the orders at each stage, whichever tab is open: **Open** (nothing delivered), **Partly delivered**, **Delivered** (every line delivered in full, not every line billed), **Invoiced** (every line billed in full), **Closed short** (closed with something left undelivered, and not every line billed) and **Cancelled** (voided or cancelled). **All** is every progress except Cancelled, which is listed only under its own tab. Progress counts every line: one line that cannot be delivered, or billed, keeps the order from being delivered, or invoiced.
+- Each order has a heading with its number (a link), progress, date, the date it was promised for, the customer and, when invoices have been raised from it, how many and what they came to. Under it, a row for each **line** with the item, **Ordered**, **Delivered**, **Invoiced**, **To deliver** (ordered less delivered) and **To bill** (ordered less invoiced), in the line's own unit, and the line's **Value**, the value **to deliver** and the value **to bill**. An **Order value** row closes it.
+- **Values are before tax in the branch's currency, at the order's own price per unit**, so the outstanding values are the ordered value less what was delivered or invoiced and add up exactly. If a price was changed when the invoice was raised, that shows in what the invoices raised came to, not in the invoiced value.
+- **Delivered** and **Invoiced** are the lines' running figures, which a delivery challan and an invoice raised from the order advance. The **Total** at the foot and the sentence above the list are of every order the filters match, not only those loaded.
+- The list loads 25 orders at a time with **Show more orders**. On a phone each order is a card with its lines inside.
+
+The catalog's **Sales Order Track**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It lists the orders of the period but cancelled ones, with each one's progress and its value in the branch's currency.
+
 ## Project reports
 
 Four reports read project accounting, under **Projects** in the list. Running them needs **projects.view** as well as access to reports.

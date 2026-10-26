@@ -10,6 +10,8 @@ public class SalesOrderDetailRead : OrgScopedEntity
     public long SalesOrderId { get; set; }
     public decimal ReservedQuantity { get; set; }
     public decimal DeliveredQuantity { get; set; }
+    /// <summary>How much of the line has been billed, in the line's own unit (TK-230); an invoice raised from the order advances it.</summary>
+    public decimal InvoicedQuantity { get; set; }
 
     public int LineNumber { get; set; }
     public long? ItemId { get; set; }

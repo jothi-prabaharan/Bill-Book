@@ -8,6 +8,10 @@ public class InvoiceRead : OrgScopedEntity
 {
     public long InvoiceId { get; set; }
     public string TransactionTypeCode { get; set; } = null!;
+
+    /// <summary>The sales order it was raised from, when it was (TK-230).</summary>
+    public long? SalesOrderId { get; set; }
+
     public string DocumentNo { get; set; } = null!;
     public DateOnly DocumentDate { get; set; }
     public long ContactId { get; set; }

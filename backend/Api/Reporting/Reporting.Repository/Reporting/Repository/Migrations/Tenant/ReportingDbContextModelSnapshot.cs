@@ -15581,6 +15581,9 @@ namespace Reporting.Repository.Migrations.Tenant
                     b.Property<DateTimeOffset?>("PostedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<long?>("SalesOrderId")
+                        .HasColumnType("bigint");
+
                     b.Property<decimal>("SgstAmount")
                         .HasColumnType("numeric");
 
@@ -18648,6 +18651,9 @@ namespace Reporting.Repository.Migrations.Tenant
 
                     b.Property<string>("HsnSacCode")
                         .HasColumnType("text");
+
+                    b.Property<decimal>("InvoicedQuantity")
+                        .HasColumnType("numeric");
 
                     b.Property<bool>("IsPriceInclusive")
                         .HasColumnType("boolean");

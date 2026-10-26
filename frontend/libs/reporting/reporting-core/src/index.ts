@@ -44,6 +44,8 @@ export * from './lib/sales-analysis/sales-analysis.models';
 export * from './lib/sales-analysis/sales-analysis.service';
 export * from './lib/sales-analysis-detail/sales-analysis-detail.models';
 export * from './lib/sales-analysis-detail/sales-analysis-detail.service';
+export * from './lib/sales-order-track/sales-order-track.models';
+export * from './lib/sales-order-track/sales-order-track.service';
 export * from './lib/foreign-currency-gain-or-loss/foreign-currency-gain-or-loss.models';
 export * from './lib/foreign-currency-gain-or-loss/foreign-currency-gain-or-loss.service';
 export * from './lib/foreign-currency-gain-or-loss-details/foreign-currency-gain-or-loss-details.models';
