@@ -360,6 +360,19 @@ The Invoice Track Report has its own page at `/reports/invoice-track-report` (TK
 
 The catalog's **Invoice Track**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It lists the invoices of the period with where each stands, its total in the branch's currency and what is still due on the To date; voided invoices are not in it.
 
+## Invoice/DN Payment Collection Report
+
+The Invoice/DN Payment Collection Report has its own page at `/reports/invoice-dn-payment-collection-report` (TK-227), under **Reports › Sales Reports**. Besides access to reports it needs **sales.view**. It shows what was collected in a period and which invoices each receipt settled.
+
+- **From** and **To** are both required, and are the **receipt date**. The page opens on the financial year to date and runs straight away. A **To** before **From** is refused under **To**. **Customer**, **Bank account** and **Payment method** narrow it.
+- Each posted receipt is a heading with its number (a link), date, bank account, payment method and reference, the customer, and the **Amount** that reached the bank. When the customer withheld **TDS**, it is shown under the amount. Under it are the invoices the receipt settled, each with its date, the day the settlement took effect and what was settled of it. A document with no number of its own, such as an opening balance, is shown by its code and number.
+- A receipt's lines settle what reached the bank **and** any TDS withheld. What it did not settle against a document, an advance for instance, is shown on a **Not settled against a document** line, so the documents and that line always add up to the amount received plus the TDS.
+- A receipt in **another currency** shows its amounts in that currency, with the amount in the branch's currency beneath it. **Total collected** at the foot, the sentence above the list and **Collected by customer** are in the branch's currency and are of every receipt the filters match, not only those loaded. The customers who paid most are listed (the ten largest; the others are added into one line).
+- A **voided** receipt was taken back and a **draft** was never collected, so neither is listed. A credit note applied to an invoice is not a receipt and is not listed.
+- The list loads 25 receipts at a time with **Show more receipts**. On a phone each receipt is a card with its documents inside. Sales has no debit note yet, so the documents shown are invoices, and anything else a receipt was allocated to.
+
+The catalog's **Invoice/DN Payment Collection**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It lists a row for each invoice a posted receipt of the period settled, with the amount settled in the branch's currency.
+
 ## Project reports
 
 Four reports read project accounting, under **Projects** in the list. Running them needs **projects.view** as well as access to reports.

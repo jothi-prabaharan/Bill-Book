@@ -17934,6 +17934,9 @@ namespace Reporting.Repository.Migrations.Tenant
                         .HasMaxLength(12)
                         .HasColumnType("character varying(12)");
 
+                    b.Property<decimal>("TdsAmount")
+                        .HasColumnType("numeric");
+
                     b.Property<DateOnly>("TransactionDate")
                         .HasColumnType("date");
 

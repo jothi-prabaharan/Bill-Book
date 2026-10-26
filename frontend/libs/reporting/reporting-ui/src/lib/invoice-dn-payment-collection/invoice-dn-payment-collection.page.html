@@ -1,0 +1,192 @@
+<header class="page-head">
+  <div>
+    <h1>Invoice/DN Payment Collection Report</h1>
+    <p class="subtitle text-muted">
+      What was collected in a period: the receipts posted in it, with the invoices each one settled and what it did not settle. A receipt is in its own
+      currency; the total collected and the customers' totals are in the branch's base currency.
+    </p>
+  </div>
+</header>
+
+<form class="filters card" [formGroup]="filters" (ngSubmit)="run()" novalidate>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'pcr-from'" label="From" formControlName="fromDate" [required]="true"
+                          [error]="err('fromDate', 'From date')" />
+  </div>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'pcr-to'" label="To" formControlName="toDate" [required]="true"
+                          [error]="err('toDate', 'To date')" />
+  </div>
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'pcr-customer'" label="Customer" placeholder="All customers" [options]="customerOptions()"
+               [loading]="!choicesLoaded()" emptyText="No customers" formControlName="contactId"
+               [error]="err('contactId', 'Customer')" />
+  </div>
+  <div class="filters__field">
+    <bb-select [id]="'pcr-bank'" label="Bank account" placeholder="All accounts" [options]="bankAccountOptions()"
+               [loading]="!choicesLoaded()" emptyText="No bank accounts" formControlName="bankAccountId"
+               [error]="err('bankAccountId', 'Bank account')" />
+  </div>
+  <div class="filters__field">
+    <bb-select [id]="'pcr-method'" label="Payment method" placeholder="All methods" [options]="methodOptions"
+               formControlName="paymentMethod" [error]="err('paymentMethod', 'Payment method')" />
+  </div>
+  <div class="filters__actions">
+    <button class="btn btn-primary" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Running…' : 'Run report' }}
+    </button>
+  </div>
+</form>
+
+@if (messages().length > 0) {
+  <bb-message-box [messages]="messages()" />
+}
+
+@if (result(); as report) {
+  <p class="period text-muted">
+    {{ report.fromDate | reportDate }} to {{ report.toDate | reportDate }}. Receipts are in their own currency; the totals are in {{ report.baseCurrencyCode }}.
+  </p>
+
+  @if (report.totalReceipts === 0) {
+    <p class="empty text-muted">No receipts match these filters.</p>
+  } @else {
+    @if (report.topCustomers.length > 1 || report.otherCustomers > 0) {
+      <section class="card by-customer" aria-label="Collected by customer">
+        <h2>Collected by customer</h2>
+        <dl class="by-customer__list">
+          @for (c of report.topCustomers; track c.contactId) {
+            <div class="by-customer__row">
+              <dt>{{ c.contactName }} <span class="text-muted">{{ c.receipts }} {{ c.receipts === 1 ? 'receipt' : 'receipts' }}</span></dt>
+              <dd><bb-report-amount [value]="c.collected" /></dd>
+            </div>
+          }
+          @if (report.otherCustomers > 0) {
+            <div class="by-customer__row">
+              <dt>{{ report.otherCustomers }} other {{ report.otherCustomers === 1 ? 'customer' : 'customers' }}</dt>
+              <dd><bb-report-amount [value]="report.otherCustomersCollected" /></dd>
+            </div>
+          }
+        </dl>
+      </section>
+    }
+
+    @if (narrow()) {
+      <div class="cards" role="list" aria-label="Receipts">
+        @for (group of groups(); track group[0].key) {
+          <article class="card entry" role="listitem">
+            @for (row of group; track row.key) {
+              @switch (row.kind) {
+                @case ('receipt') {
+                  <header class="entry__head">
+                    @if (row.link) { <a class="link" [routerLink]="row.link"><strong>{{ row.name }}</strong></a> }
+                    <span class="text-muted">{{ row.date | reportDate }}</span>
+                  </header>
+                  <p class="entry__who">{{ row.contactName }} <span class="text-muted">{{ row.contactCode }}</span></p>
+                  <p class="entry__how text-muted">{{ row.bankAccountName }} · {{ row.method }}</p>
+                  <dl class="figures">
+                    <div class="figures__row figures__row--balance">
+                      <dt>Collected @if (row.currency) { <span class="text-muted">({{ row.currency }})</span> }</dt>
+                      <dd>
+                        <bb-report-amount [value]="row.amount" [currency]="row.currency" />
+                        @if (row.amountBase !== null) { <small class="own"><bb-report-amount [value]="row.amountBase" /></small> }
+                      </dd>
+                    </div>
+                    @if (row.tds !== null) {
+                      <div class="figures__row"><dt>TDS withheld</dt><dd><bb-report-amount [value]="row.tds" [currency]="row.currency" /></dd></div>
+                    }
+                  </dl>
+                }
+                @case ('document') {
+                  <div class="doc">
+                    <div class="doc__head">
+                      @if (row.link) { <a class="link" [routerLink]="row.link">{{ row.name }}</a> } @else { <strong>{{ row.name }}</strong> }
+                      @if (row.date) { <span class="text-muted">{{ row.date | reportDate }}</span> }
+                    </div>
+                    <dl class="figures">
+                      <div class="figures__row">
+                        <dt>Settled @if (row.settledOn) { {{ row.settledOn | reportDate }} }</dt>
+                        <dd><bb-report-amount [value]="row.amount" [currency]="row.currency" /></dd>
+                      </div>
+                    </dl>
+                  </div>
+                }
+                @case ('unallocated') {
+                  <dl class="figures figures--muted">
+                    <div class="figures__row"><dt>{{ row.name }}</dt><dd><bb-report-amount [value]="row.amount" [currency]="row.currency" /></dd></div>
+                  </dl>
+                }
+                @case ('total') {
+                  <header class="entry__head"><strong>{{ row.name }}</strong></header>
+                  <dl class="figures">
+                    <div class="figures__row figures__row--balance"><dt>In {{ report.baseCurrencyCode }}</dt><dd><bb-report-amount [value]="row.amount" /></dd></div>
+                  </dl>
+                }
+              }
+            }
+          </article>
+        }
+      </div>
+    } @else {
+      <div class="matrix">
+        <bb-data-grid flush [columns]="columns" [data]="rows()" [rowClass]="rowClass" [sortable]="false"
+                      [showColumnFilters]="false" [showCount]="false" [paged]="false" label="Receipts">
+          <ng-template bbCellTemplate="item" let-row>
+            @switch (row.kind) {
+              @case ('receipt') {
+                <span class="receipt">
+                  @if (row.link) { <a class="link" [routerLink]="row.link"><strong>{{ row.name }}</strong></a> }
+                  <span class="receipt__meta text-muted">
+                    <span>{{ row.date | reportDate }}</span>
+                    <span>{{ row.bankAccountName }}</span>
+                    <span>{{ row.method }}</span>
+                  </span>
+                </span>
+              }
+              @case ('document') {
+                <span class="document">
+                  @if (row.link) { <a class="link" [routerLink]="row.link">{{ row.name }}</a> } @else { <span>{{ row.name }}</span> }
+                  @if (row.date) { <span class="document__date text-muted">{{ row.date | reportDate }}</span> }
+                </span>
+              }
+              @case ('unallocated') { <span class="unallocated text-muted">{{ row.name }}</span> }
+              @default { <strong class="label">{{ row.name }}</strong> }
+            }
+          </ng-template>
+          <ng-template bbCellTemplate="customer" let-row>
+            @if (row.kind === 'receipt') {
+              <span class="customer">
+                <span>{{ row.contactName }}</span>
+                @if (row.contactCode) { <span class="customer__code text-muted">{{ row.contactCode }}</span> }
+              </span>
+            }
+          </ng-template>
+          <ng-template bbCellTemplate="settledOn" let-row>@if (row.settledOn) { {{ row.settledOn | reportDate }} }</ng-template>
+          <ng-template bbCellTemplate="amount" let-row>
+            <span class="amount">
+              @if (row.kind === 'receipt' || row.kind === 'total') {
+                <strong><bb-report-amount [value]="row.amount" [currency]="row.currency" /></strong>
+              } @else {
+                <bb-report-amount [value]="row.amount" [currency]="row.currency" />
+              }
+              @if (row.amountBase !== null) { <small class="own"><bb-report-amount [value]="row.amountBase" /></small> }
+              @if (row.tds !== null) { <small class="own">TDS <bb-report-amount [value]="row.tds" [currency]="row.currency" /></small> }
+            </span>
+          </ng-template>
+        </bb-data-grid>
+      </div>
+
+      @if (more()) {
+        <div class="more">
+          <button class="btn" type="button" (click)="loadMore()" [disabled]="busy()">Show more receipts</button>
+          <span class="more__count text-muted">{{ report.receipts.length }} of {{ report.totalReceipts }} shown</span>
+        </div>
+      }
+    }
+
+    <p class="notes text-muted">
+      A receipt is listed by its receipt date; a draft is not a collection and a voided receipt was taken back, so neither is listed. The documents under a receipt are what its lines settled.
+      A receipt can settle more than reached the bank, because the lines also settle any TDS the customer withheld, and anything it did not settle, such as an advance, is shown on its own line.
+      A receipt in another currency shows its amounts in that currency, with the amount in {{ report.baseCurrencyCode }} beneath. The total collected is of every receipt the filters match, not only those shown.
+    </p>
+  }
+}

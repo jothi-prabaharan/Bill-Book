@@ -88,6 +88,13 @@ export const reportingRoutes: Routes = [
     data: { access: { permission: 'reports.view' } },
   },
   {
+    // Its own page on its own endpoint (TK-227), at the path the menu links to.
+    path: 'invoice-dn-payment-collection-report',
+    loadComponent: () =>
+      import('./invoice-dn-payment-collection/invoice-dn-payment-collection.page').then((m) => m.InvoiceDnPaymentCollectionPage),
+    data: { access: { permission: 'reports.view' } },
+  },
+  {
     // Its own page on its own endpoint (TK-226), at the path the menu links to.
     path: 'invoice-track-report',
     loadComponent: () => import('./invoice-track/invoice-track.page').then((m) => m.InvoiceTrackPage),

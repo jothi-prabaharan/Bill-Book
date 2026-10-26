@@ -21,6 +21,8 @@ public class ReceiveMoneyRead : OrgScopedEntity
     public string? Memo { get; set; }
     public string? MappingTransactionTypeCode { get; set; }
     public long? MappingTransactionId { get; set; }
+    /// <summary>What the customer withheld as TDS, in the receipt's currency; the lines settle this and the amount together (TK-227).</summary>
+    public decimal TdsAmount { get; set; }
     public MoneyDocumentStatus Status { get; set; }
     public DateTimeOffset? PostedAt { get; set; }
     public Guid? PostedBy { get; set; }
