@@ -1,0 +1,186 @@
+<header class="page-head">
+  <div>
+    <h1>Sales Analysis Detail Report</h1>
+    <p class="subtitle text-muted">
+      The Sales Analysis before it is added up: every invoice and credit note line sold in a period, grouped by item, item category or customer, each group with its
+      subtotal. Amounts are net sales before tax in the branch's base currency.
+    </p>
+  </div>
+</header>
+
+<form class="filters card" [formGroup]="filters" (ngSubmit)="run()" novalidate>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'sad-from'" label="From" formControlName="fromDate" [required]="true"
+                          [error]="err('fromDate', 'From date')" />
+  </div>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'sad-to'" label="To" formControlName="toDate" [required]="true"
+                          [error]="err('toDate', 'To date')" />
+  </div>
+  <div class="filters__field">
+    <bb-select [id]="'sad-group'" label="Group by" [options]="groupingOptions" formControlName="groupBy"
+               [error]="err('groupBy', 'Group by')" />
+  </div>
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'sad-item'" label="Item" placeholder="All items" [options]="itemOptions()"
+               [loading]="!choicesLoaded()" emptyText="No items" formControlName="itemId"
+               [error]="err('itemId', 'Item')" />
+  </div>
+  <div class="filters__field">
+    <bb-select [id]="'sad-category'" label="Item category" placeholder="All categories" [options]="categoryOptions()"
+               [loading]="!choicesLoaded()" emptyText="No item categories" formControlName="itemCategoryId"
+               [error]="err('itemCategoryId', 'Item category')" />
+  </div>
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'sad-customer'" label="Customer" placeholder="All customers" [options]="customerOptions()"
+               [loading]="!choicesLoaded()" emptyText="No customers" formControlName="contactId"
+               [error]="err('contactId', 'Customer')" />
+  </div>
+  <div class="filters__field">
+    <bb-select [id]="'sad-warehouse'" label="Warehouse" placeholder="All warehouses" [options]="warehouseOptions()"
+               [loading]="!choicesLoaded()" emptyText="No warehouses" formControlName="warehouseId"
+               [error]="err('warehouseId', 'Warehouse')" />
+  </div>
+  <div class="filters__field filters__field--check">
+    <bb-checkbox text="Include credit notes" formControlName="includeCreditNotes" />
+  </div>
+  <div class="filters__actions">
+    <button class="btn btn-primary" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Running…' : 'Run report' }}
+    </button>
+  </div>
+</form>
+
+@if (messages().length > 0) {
+  <bb-message-box [messages]="messages()" />
+}
+
+@if (result(); as report) {
+  <p class="period text-muted">
+    {{ report.fromDate | reportDate }} to {{ report.toDate | reportDate }}, in {{ report.baseCurrencyCode }}.
+    @if (!report.includesCreditNotes) { Credit notes are not taken off. }
+  </p>
+
+  @if (report.totalLines === 0) {
+    <p class="empty text-muted">Nothing was sold with these filters.</p>
+  } @else if (narrow()) {
+    <div class="cards" role="list" aria-label="Sales analysis detail">
+      @for (card of cards(); track card[0].key) {
+        <article class="card entry" role="listitem">
+          @for (row of card; track row.key) {
+            @switch (row.kind) {
+              @case ('group') {
+                <header class="entry__head">
+                  <strong>{{ row.name }}</strong>
+                  @if (row.code) { <span class="text-muted">{{ row.code }}</span> }
+                  <span class="text-muted">{{ row.lineCount }} {{ row.lineCount === 1 ? 'line' : 'lines' }}</span>
+                </header>
+              }
+              @case ('line') {
+                <section class="doc">
+                  <div class="doc__head">
+                    @if (row.link) { <a class="link" [routerLink]="row.link">{{ row.name }}</a> } @else { <strong>{{ row.name }}</strong> }
+                    <span class="text-muted">{{ row.date | reportDate }}</span>
+                  </div>
+                  <p class="doc__who text-muted">{{ row.who }}</p>
+                  <dl class="figures">
+                    <div class="figures__row"><dt>Qty × price</dt><dd>{{ row.quantity }} × <bb-report-amount [value]="row.unitPrice" /></dd></div>
+                    @if (row.discount) { <div class="figures__row"><dt>Discount</dt><dd><bb-report-amount [value]="row.discount" /></dd></div> }
+                    <div class="figures__row figures__row--balance"><dt>Net sales</dt><dd><bb-report-amount [value]="row.net" /></dd></div>
+                    <div class="figures__row">
+                      <dt>Cost</dt>
+                      <dd><bb-report-amount [value]="row.cost" />@if (row.costPending) { <small class="pending">not costed yet</small> }</dd>
+                    </div>
+                    <div class="figures__row">
+                      <dt>Margin</dt>
+                      <dd>@if (row.margin !== null) { <bb-report-amount [value]="row.margin" /> } @else { <span class="text-muted">pending</span> }</dd>
+                    </div>
+                  </dl>
+                </section>
+              }
+              @case ('subtotal') {
+                <dl class="figures figures--subtotal">
+                  <div class="figures__row"><dt>{{ row.name }}</dt><dd>{{ row.quantity }}</dd></div>
+                  <div class="figures__row figures__row--balance"><dt>Net sales</dt><dd><bb-report-amount [value]="row.net" /></dd></div>
+                  <div class="figures__row">
+                    <dt>Cost</dt>
+                    <dd><bb-report-amount [value]="row.cost" />@if (row.costPending) { <small class="pending">some not costed yet</small> }</dd>
+                  </div>
+                  <div class="figures__row">
+                    <dt>Margin</dt>
+                    <dd>@if (row.margin !== null) { <bb-report-amount [value]="row.margin" /> } @else { <span class="text-muted">pending</span> }</dd>
+                  </div>
+                </dl>
+              }
+              @case ('total') {
+                <header class="entry__head"><strong>{{ row.name }}</strong></header>
+                <dl class="figures">
+                  <div class="figures__row"><dt>Quantity</dt><dd>{{ row.quantity }}</dd></div>
+                  <div class="figures__row figures__row--balance"><dt>Net sales</dt><dd><bb-report-amount [value]="row.net" /></dd></div>
+                  <div class="figures__row"><dt>Cost</dt><dd><bb-report-amount [value]="row.cost" /></dd></div>
+                  <div class="figures__row">
+                    <dt>Margin</dt>
+                    <dd>@if (row.margin !== null) { <bb-report-amount [value]="row.margin" /> } @else { <span class="text-muted">pending</span> }</dd>
+                  </div>
+                </dl>
+              }
+            }
+          }
+        </article>
+      }
+    </div>
+  } @else {
+    <div class="matrix">
+      <bb-data-grid flush [columns]="columns()" [data]="rows()" [rowClass]="rowClass" [sortable]="false"
+                    [showColumnFilters]="false" [showCount]="false" [paged]="false" label="Sales analysis detail">
+        <ng-template bbCellTemplate="date" let-row>@if (row.date) { {{ row.date | reportDate }} }</ng-template>
+        <ng-template bbCellTemplate="document" let-row>
+          @switch (row.kind) {
+            @case ('group') {
+              <span class="group">
+                <strong>{{ row.name }}</strong>
+                @if (row.code) { <span class="group__code text-muted">{{ row.code }}</span> }
+                <span class="group__count text-muted">{{ row.lineCount }} {{ row.lineCount === 1 ? 'line' : 'lines' }}</span>
+              </span>
+            }
+            @case ('line') { @if (row.link) { <a class="link" [routerLink]="row.link">{{ row.name }}</a> } @else { <span>{{ row.name }}</span> } }
+            @default { <strong class="label">{{ row.name }}</strong> }
+          }
+        </ng-template>
+        <ng-template bbCellTemplate="who" let-row>@if (row.kind === 'line') { <span class="who">{{ row.who }}</span> }</ng-template>
+        <ng-template bbCellTemplate="quantity" let-row>@if (row.quantity !== null) { {{ row.quantity }} }</ng-template>
+        <ng-template bbCellTemplate="unitPrice" let-row>@if (row.unitPrice !== null) { <bb-report-amount [value]="row.unitPrice" /> }</ng-template>
+        <ng-template bbCellTemplate="discount" let-row>@if (row.discount !== null) { <bb-report-amount [value]="row.discount" /> }</ng-template>
+        <ng-template bbCellTemplate="net" let-row>@if (row.net !== null) { <strong><bb-report-amount [value]="row.net" /></strong> }</ng-template>
+        <ng-template bbCellTemplate="cost" let-row>
+          @if (row.cost !== null) {
+            <span class="amount">
+              <bb-report-amount [value]="row.cost" />
+              @if (row.costPending) { <small class="pending">pending</small> }
+            </span>
+          }
+        </ng-template>
+        <ng-template bbCellTemplate="margin" let-row>
+          @if (row.kind !== 'group') {
+            @if (row.margin !== null) { <bb-report-amount [value]="row.margin" /> } @else { <span class="text-muted">pending</span> }
+          }
+        </ng-template>
+      </bb-data-grid>
+    </div>
+
+    @if (more()) {
+      <div class="more">
+        <button class="btn" type="button" (click)="loadMore()" [disabled]="busy()">Show more lines</button>
+        <span class="more__count text-muted">{{ loaded() }} of {{ report.totalLines }} lines shown</span>
+      </div>
+    }
+  }
+
+  @if (report.totalLines > 0) {
+    <p class="notes text-muted">
+      Each row is one line of a posted invoice or POS sale, or of a posted credit note, which is negative; the lines and their subtotals are the Sales Analysis's own, so a group's subtotal is that report's row for it.
+      Net sales are before tax and after discount, and the unit price is in the branch's currency at the rate the document was booked at. A line whose cost is not settled yet is marked pending: its cost is left out of its group,
+      and neither has a margin until it is settled. A subtotal is of every line its group has, even those not yet loaded.
+    </p>
+  }
+}

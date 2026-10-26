@@ -131,29 +131,23 @@ public sealed class SalesAnalysisReportRepository
     private IQueryable<AnalysisLine> LinesFor(DateOnly start, DateOnly end, SalesAnalysisReportRequest request) =>
         Lines(_db.Invoices, _db.InvoiceDetails, _db.CreditNotes, _db.CreditNoteDetails, _db.Items, _db.StockMovements, request, start, end);
 
-    private async Task<List<LabelRef>> LabelsAsync(SalesAnalysisGroupBy by, IReadOnlyCollection<long> keys, CancellationToken ct)
-    {
-        if (keys.Count == 0)
-        {
-            return [];
-        }
+    private Task<List<LabelRef>> LabelsAsync(SalesAnalysisGroupBy by, IReadOnlyCollection<long> keys, CancellationToken ct) =>
+        keys.Count == 0 ? Task.FromResult(new List<LabelRef>()) : Labels(_db, by, keys).ToListAsync(ct);
 
-        return by switch
+    /// <summary>The codes and names of the given items, categories or customers. LINQ only.</summary>
+    public static IQueryable<LabelRef> Labels(ReportingDbContext db, SalesAnalysisGroupBy by, IReadOnlyCollection<long> keys) =>
+        by switch
         {
-            SalesAnalysisGroupBy.Item => await _db.Items
+            SalesAnalysisGroupBy.Item => db.Items
                 .Where(i => keys.Contains(i.ItemId))
-                .Select(i => new LabelRef { Key = i.ItemId, Code = i.ItemCode, Name = i.ItemName })
-                .ToListAsync(ct),
-            SalesAnalysisGroupBy.Category => await _db.ItemCategories
+                .Select(i => new LabelRef { Key = i.ItemId, Code = i.ItemCode, Name = i.ItemName }),
+            SalesAnalysisGroupBy.Category => db.ItemCategories
                 .Where(c => keys.Contains(c.ItemCategoryId))
-                .Select(c => new LabelRef { Key = c.ItemCategoryId, Code = c.CategoryCode, Name = c.CategoryName })
-                .ToListAsync(ct),
-            _ => await _db.Contacts
+                .Select(c => new LabelRef { Key = c.ItemCategoryId, Code = c.CategoryCode, Name = c.CategoryName }),
+            _ => db.Contacts
                 .Where(c => keys.Contains(c.ContactId))
-                .Select(c => new LabelRef { Key = c.ContactId, Code = c.ContactCode, Name = c.DisplayName })
-                .ToListAsync(ct),
+                .Select(c => new LabelRef { Key = c.ContactId, Code = c.ContactCode, Name = c.DisplayName }),
         };
-    }
 
     // --- builders: LINQ over the read models, so a test runs them over lists -------------
 
@@ -189,6 +183,13 @@ public sealed class SalesAnalysisReportRepository
                 && i.DocumentDate >= start && i.DocumentDate <= end
             select new AnalysisLine
             {
+                LineKey = d.InvoiceDetailId,
+                TypeCode = i.TransactionTypeCode,
+                DocumentId = i.InvoiceId,
+                DocumentNo = i.DocumentNo,
+                DocumentDate = i.DocumentDate,
+                LineNumber = d.LineNumber,
+                UnitPrice = Math.Round(d.UnitPrice * i.ExchangeRate, 6),
                 ContactId = i.ContactId,
                 ItemId = d.ItemId ?? 0L,
                 CategoryId = it == null ? 0L : (it.ItemCategoryId ?? 0L),
@@ -217,6 +218,13 @@ public sealed class SalesAnalysisReportRepository
                     && c.DocumentDate >= start && c.DocumentDate <= end
                 select new AnalysisLine
                 {
+                    LineKey = -d.CreditNoteDetailId,
+                    TypeCode = c.TransactionTypeCode,
+                    DocumentId = c.CreditNoteId,
+                    DocumentNo = c.DocumentNo,
+                    DocumentDate = c.DocumentDate,
+                    LineNumber = d.LineNumber,
+                    UnitPrice = Math.Round(d.UnitPrice * c.ExchangeRate, 6),
                     ContactId = c.ContactId,
                     ItemId = d.ItemId ?? 0L,
                     CategoryId = it == null ? 0L : (it.ItemCategoryId ?? 0L),
@@ -263,6 +271,7 @@ public sealed class SalesAnalysisReportRepository
         groups.Select(g => new AnalysisGroup
         {
             Key = g.Key,
+            Count = g.Count(),
             Quantity = g.Sum(l => l.Quantity),
             Gross = g.Sum(l => l.Gross),
             Discount = g.Sum(l => l.Discount),
@@ -278,6 +287,7 @@ public sealed class SalesAnalysisReportRepository
             .Select(g => new AnalysisGroup
             {
                 Key = 0,
+                Count = g.Count(),
                 Quantity = g.Sum(l => l.Quantity),
                 Gross = g.Sum(l => l.Gross),
                 Discount = g.Sum(l => l.Discount),
@@ -402,6 +412,23 @@ public sealed class SalesAnalysisReportRepository
 /// <summary>One line sold, in base currency, signed (a credit note's lines are negative).</summary>
 public sealed class AnalysisLine
 {
+    /// <summary>Unique across invoice and credit note lines: an invoice line's id, or a credit note line's id negated.</summary>
+    public long LineKey { get; set; }
+
+    /// <summary>INV or POS for an invoice, CRN for a credit note.</summary>
+    public string TypeCode { get; set; } = string.Empty;
+
+    public long DocumentId { get; set; }
+
+    public string DocumentNo { get; set; } = string.Empty;
+
+    public DateOnly DocumentDate { get; set; }
+
+    public int LineNumber { get; set; }
+
+    /// <summary>The price of one unit in base currency, as booked (a credit note's is positive).</summary>
+    public decimal UnitPrice { get; set; }
+
     public long ContactId { get; set; }
 
     /// <summary>The item, or nought for a line with none.</summary>
@@ -430,6 +457,9 @@ public sealed class AnalysisLine
 public sealed class AnalysisGroup
 {
     public long Key { get; set; }
+
+    /// <summary>How many lines were added up.</summary>
+    public int Count { get; set; }
 
     public decimal Quantity { get; set; }
 

@@ -28,6 +28,9 @@ public class CreditNoteDetailRead : OrgScopedEntity
     /// <summary>The quantity in the item's base unit.</summary>
     public decimal BaseQuantity { get; set; }
 
+    /// <summary>The price of one unit, in the credit note's own currency (TK-229).</summary>
+    public decimal UnitPrice { get; set; }
+
     public decimal DiscountAmount { get; set; }
 
     public decimal GrossAmount { get; set; }

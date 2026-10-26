@@ -36,16 +36,16 @@ namespace Reporting.Api.Tests;
 /// </summary>
 public sealed class SalesAnalysisReportTests
 {
-    private const long Acme = 9101, Zenith = 9103;
-    private const long WidgetA = 9601, GadgetB = 9602, Hardware = 9701, Electronics = 9702, Main = 9201;
+    internal const long Acme = 9101, Zenith = 9103;
+    internal const long WidgetA = 9601, GadgetB = 9602, Hardware = 9701, Electronics = 9702, Main = 9201;
 
-    private static readonly DateOnly October1 = new(2026, 10, 1);
-    private static readonly DateOnly October31 = new(2026, 10, 31);
+    internal static readonly DateOnly October1 = new(2026, 10, 1);
+    internal static readonly DateOnly October31 = new(2026, 10, 31);
 
     private static InvoiceRead Invoice(long id, DateOnly date, long contact, decimal rate = 1m, DocumentStatus status = DocumentStatus.Posted) =>
         new() { InvoiceId = id, TransactionTypeCode = "INV", DocumentNo = $"INV-{id}", DocumentDate = date, ContactId = contact, ExchangeRate = rate, Status = status };
 
-    private static readonly List<InvoiceRead> Invoices =
+    internal static readonly List<InvoiceRead> Invoices =
     [
         Invoice(9401, new(2026, 10, 2), Zenith),
         Invoice(9402, new(2026, 10, 5), Zenith),
@@ -62,12 +62,12 @@ public sealed class SalesAnalysisReportTests
         decimal gross = qty * price;
         return new()
         {
-            InvoiceDetailId = id, InvoiceId = invoice, ItemId = item, Quantity = qty, BaseQuantity = qty, UnitPrice = price, DiscountAmount = discount,
+            InvoiceDetailId = id, InvoiceId = invoice, LineNumber = id == 9804 ? 2 : id == 9802 ? 2 : 1, ItemId = item, Quantity = qty, BaseQuantity = qty, UnitPrice = price, DiscountAmount = discount,
             GrossAmount = gross, TaxableAmount = gross - discount, WarehouseId = warehouse,
         };
     }
 
-    private static readonly List<InvoiceDetailRead> Details =
+    internal static readonly List<InvoiceDetailRead> Details =
     [
         Line(9801, 9401, WidgetA, 10m, 600m, 0m, Main),
         Line(9802, 9401, GadgetB, 4m, 1_000m, 0m),
@@ -84,27 +84,27 @@ public sealed class SalesAnalysisReportTests
     private static CreditNoteRead Credit(long id, DateOnly date, CreditNoteReason reason) =>
         new() { CreditNoteId = id, TransactionTypeCode = "CRN", DocumentNo = $"CRN-{id}", DocumentDate = date, ContactId = Zenith, ExchangeRate = 1m, Status = DocumentStatus.Posted, ReasonCode = reason };
 
-    private static readonly List<CreditNoteRead> CreditNotes =
+    internal static readonly List<CreditNoteRead> CreditNotes =
     [
         Credit(9421, new(2026, 10, 25), CreditNoteReason.SalesReturn),
         Credit(9422, new(2026, 10, 28), CreditNoteReason.PriceCorrection),
     ];
 
-    private static readonly List<CreditNoteDetailRead> CreditDetails =
+    internal static readonly List<CreditNoteDetailRead> CreditDetails =
     [
-        new() { CreditNoteDetailId = 9901, CreditNoteId = 9421, ItemId = GadgetB, Quantity = 1m, BaseQuantity = 1m, GrossAmount = 1_000m, TaxableAmount = 1_000m },
-        new() { CreditNoteDetailId = 9902, CreditNoteId = 9422, ItemId = GadgetB, Quantity = 2m, BaseQuantity = 2m, GrossAmount = 2_000m, TaxableAmount = 2_000m },
+        new() { CreditNoteDetailId = 9901, CreditNoteId = 9421, LineNumber = 1, ItemId = GadgetB, Quantity = 1m, BaseQuantity = 1m, UnitPrice = 1_000m, GrossAmount = 1_000m, TaxableAmount = 1_000m },
+        new() { CreditNoteDetailId = 9902, CreditNoteId = 9422, LineNumber = 1, ItemId = GadgetB, Quantity = 2m, BaseQuantity = 2m, UnitPrice = 1_000m, GrossAmount = 2_000m, TaxableAmount = 2_000m },
     ];
 
     private static ItemRead Item(long id, string code, string name, long category) =>
         new() { ItemId = id, ItemCode = code, ItemName = name, ItemCategoryId = category };
 
-    private static readonly List<ItemRead> Items = [Item(WidgetA, "WIDGET-A", "Widget A", Hardware), Item(GadgetB, "GADGET-B", "Gadget B", Electronics)];
+    internal static readonly List<ItemRead> Items = [Item(WidgetA, "WIDGET-A", "Widget A", Hardware), Item(GadgetB, "GADGET-B", "Gadget B", Electronics)];
 
     private static StockMovementRead Movement(string type, long source, long line, decimal? cost, CostingStatus status = CostingStatus.Costed) =>
         new() { SourceType = type, SourceId = source, SourceLineId = line, TotalCost = cost, CostingStatus = status };
 
-    private static readonly List<StockMovementRead> Movements =
+    internal static readonly List<StockMovementRead> Movements =
     [
         Movement("INV", 9401, 9801, 3_000m),
         Movement("INV", 9401, 9802, 2_000m),

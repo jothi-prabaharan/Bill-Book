@@ -386,6 +386,18 @@ The Sales Analysis has its own page at `/reports/sales-analysis` (TK-228), under
 
 The catalog's **Sales Analysis**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It lists each item sold with its units and gross value in the branch's currency, less credit notes.
 
+## Sales Analysis Detail Report
+
+The Sales Analysis Detail Report has its own page at `/reports/sales-analysis-detail-report` (TK-229), under **Reports › Sales Reports**. Besides access to reports it needs **sales.view**. It is the Sales Analysis before it is added up: the lines behind each figure.
+
+- **From** and **To** are both required, and are the **invoice date**. The page opens on the financial year to date and runs straight away. A **To** before **From** is refused under **To**. **Group by** chooses item, item category or customer. **Item**, **Item category**, **Customer** and **Warehouse** narrow it. **Include credit notes** is on, and lists a credit note's lines as negative amounts.
+- Each group has a heading with its name and how many lines it has, then one row for each line: the **Date**, the **Document** (a link to the invoice or credit note), the customer (or the item, when grouped by customer), **Qty**, **Unit price**, **Discount**, **Net sales**, **Cost** and **Margin**. All amounts are in the branch's base currency; the unit price of a document in another currency is taken to base at the rate it was booked at.
+- Each group ends with a **Subtotal** that adds up *every* line the group has, even those not yet loaded, and is the same figure as the group's row in the Sales Analysis for the same dates and filters. **Total** at the foot and the sentence above the list are of everything the filters match.
+- A line whose **cost is pending** (costing has not settled the stock it moved yet) shows its cost as pending and **no margin**, and a group or total with such a line has no margin either, so a margin is never overstated. A line with no item is a group of its own.
+- Lines are ordered by group name, then by date. The list loads 50 lines at a time with **Show more lines**; a group that runs over carries on under the same heading with its full subtotal. On a phone each group is a card with its lines inside.
+
+The catalog's **Sales Analysis Detail**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It lists a row for each line, credit note lines included as negatives, with the unit price and the line's net sales in the branch's currency.
+
 ## Project reports
 
 Four reports read project accounting, under **Projects** in the list. Running them needs **projects.view** as well as access to reports.

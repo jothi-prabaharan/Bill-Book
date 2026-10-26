@@ -13779,6 +13779,9 @@ namespace Reporting.Repository.Migrations.Tenant
                     b.Property<decimal>("TaxableAmount")
                         .HasColumnType("numeric");
 
+                    b.Property<decimal>("UnitPrice")
+                        .HasColumnType("numeric");
+
                     b.Property<uint>("Version")
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()
