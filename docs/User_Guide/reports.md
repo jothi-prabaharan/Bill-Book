@@ -716,6 +716,18 @@ The Serial Tracking Status Report has its own page at `/reports/serial-tracking-
 - **Status Evaluation:** Effective status is evaluated as at the chosen As-At date: an item issued after the As-At date is accurately reported as In Stock as of that date.
 - **Catalog Source:** The catalog's **Serial Tracking Status** report (`serial-tracking-status`) marks the `asOf` date parameter as required (`IsRequired = true`), joining `ReceivedMovement` and `IssuedMovement` to provide document references.
 
+## Serial Tracking Detail Report
+
+The Serial Tracking Detail Report has its own page at `/reports/serial-tracking-detail-report` (TK-250), under **Reports > Inventory Report**. Besides access to reports it needs **inventory.view**. It shows every movement of each serial number over a chosen period, providing full audit trails for warranty, recall, and specific identification costing.
+
+- **From** and **To** dates are both required (D-67). The page opens on the current financial year to date. A To date earlier than From date is refused with an inline error under To.
+- **Filters:** Optional **Serial Number**, **Item**, **Warehouse**, **Party / Contact**, and **Search** (matching serial number or item code/name).
+- **Summary Metrics:** At the top of the report, metric cards display **Total Serials**, **Total Opening Qty**, **Total In Qty**, **Total Out Qty**, and **Total Closing Qty**.
+- **Grouped Layout:** Serial pieces are listed as individual cards with serial number, item code and name, category, HUID hallmark, costing method, warehouse, and status badge. Each serial header features a summary pill strip showing **Opening**, **Total In**, **Total Out**, and **Closing Balance**.
+- **Movements Grid:** Under each serial piece, movements are listed chronologically: Date, Document number, Movement Type, Party / Contact name, Warehouse, Qty In, Qty Out, Running Balance, and Notes.
+- **Arithmetic:** Each serial's closing balance equals opening quantity plus total in minus total out, and matches its status on the Serial Tracking Status Report (TK-249) at the To date (1 = InStock, 0 = Sold/Issued).
+- **Catalog Source:** The catalog's **Serial Tracking Detail Report** (`serial-tracking-detail`) marks both From and To parameters as required (`IsRequired = true`).
+
 ## Project reports
 
 Four reports read project accounting, under **Projects** in the list. Running them needs **projects.view** as well as access to reports.

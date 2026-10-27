@@ -1,0 +1,220 @@
+<header class="page-head">
+  <div>
+    <h1>Serial Tracking Detail Report</h1>
+    <p class="subtitle text-muted">
+      Every movement of each serial number over a period: where it was received, when and to whom it was issued, and running piece balances.
+    </p>
+  </div>
+</header>
+
+<form class="filters card" [formGroup]="filters" (ngSubmit)="run()" novalidate>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'std-from'" label="From" formControlName="fromDate" [required]="true"
+                          [error]="err('fromDate', 'From date')" />
+  </div>
+
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'std-to'" label="To" formControlName="toDate" [required]="true"
+                          [error]="err('toDate', 'To date')" />
+  </div>
+
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'std-serial'" label="Serial Number" placeholder="All serials" [options]="serialOptions()"
+               [loading]="!choicesLoaded()" emptyText="No serials" formControlName="itemSerialId" />
+  </div>
+
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'std-item'" label="Item" placeholder="All items" [options]="itemOptions()"
+               [loading]="!choicesLoaded()" emptyText="No items" formControlName="itemId" />
+  </div>
+
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'std-warehouse'" label="Warehouse" placeholder="All warehouses" [options]="warehouseOptions()"
+               [loading]="!choicesLoaded()" emptyText="No warehouses" formControlName="warehouseId" />
+  </div>
+
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'std-contact'" label="Party / Contact" placeholder="All contacts" [options]="contactOptions()"
+               [loading]="!choicesLoaded()" emptyText="No contacts" formControlName="contactId" />
+  </div>
+
+  <div class="filters__field filters__field--search">
+    <bb-text-input [id]="'std-search'" label="Search" placeholder="Search serial, code..." formControlName="search" />
+  </div>
+
+  <div class="filters__actions">
+    <button class="btn btn-primary" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Running…' : 'Run report' }}
+    </button>
+  </div>
+</form>
+
+@if (messages().length > 0) {
+  <bb-message-box [messages]="messages()" />
+}
+
+@if (result(); as report) {
+  <div class="summary-bar">
+    <p class="period text-muted">
+      Period: {{ report.fromDate | reportDate }} to {{ report.toDate | reportDate }}.
+      Showing {{ report.serials.length }} of {{ report.totalItems }} serial piece{{ report.totalItems === 1 ? '' : 's' }}.
+    </p>
+  </div>
+
+  <!-- Summary Metric Cards -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <span class="metric-label">Total Serials</span>
+      <span class="metric-value">{{ report.totals.totalSerials }}</span>
+    </div>
+    <div class="metric-card">
+      <span class="metric-label">Total Opening Qty</span>
+      <span class="metric-value">{{ report.totals.totalOpeningQuantity | number:'1.0-0' }}</span>
+    </div>
+    <div class="metric-card">
+      <span class="metric-label">Total In Qty</span>
+      <span class="metric-value font-bold text-success">{{ report.totals.totalInQuantity | number:'1.0-0' }}</span>
+    </div>
+    <div class="metric-card">
+      <span class="metric-label">Total Out Qty</span>
+      <span class="metric-value font-bold text-danger">{{ report.totals.totalOutQuantity | number:'1.0-0' }}</span>
+    </div>
+    <div class="metric-card">
+      <span class="metric-label">Total Closing Qty</span>
+      <span class="metric-value font-bold">{{ report.totals.totalClosingQuantity | number:'1.0-0' }}</span>
+    </div>
+  </div>
+
+  @if (report.serials.length === 0) {
+    <p class="empty text-muted">No serial piece movements match these filters.</p>
+  } @else {
+    <div class="serial-groups">
+      @for (s of serialGroups(); track s.itemSerialId) {
+        <section class="card serial-card">
+          <!-- Serial Header -->
+          <header class="serial-card__head">
+            <div class="serial-card__title">
+              <div class="serial-card__headline">
+                <strong class="font-mono text-lg">{{ s.serialNumber }}</strong>
+                <span class="serial-card__item">{{ s.itemName }} <span class="text-muted">({{ s.itemCode }})</span></span>
+                <span class="badge" [class.badge-success]="s.status === 'InStock'"
+                                    [class.badge-primary]="s.status === 'Sold'"
+                                    [class.badge-warning]="s.status === 'Returned'"
+                                    [class.badge-danger]="s.status === 'Damaged' || s.status === 'Scrapped' || s.status === 'Expired'">
+                  {{ s.status }}
+                </span>
+              </div>
+              <div class="serial-card__meta">
+                @if (s.categoryName) { <span class="badge">{{ s.categoryName }}</span> }
+                @if (s.hallmarkNumber) { <span class="badge badge-outline">HUID: {{ s.hallmarkNumber }}</span> }
+                @if (s.batchNumber) { <span class="badge">Lot: {{ s.batchNumber }}</span> }
+                <span class="badge">{{ s.costingMethod }}</span>
+                @if (s.warehouseName) { <span class="badge">{{ s.warehouseName }}</span> }
+                @if (s.expiryDate) {
+                  <span class="text-muted">Expires: {{ s.expiryDate | reportDate }}</span>
+                }
+              </div>
+            </div>
+
+            <!-- Balances Pill Summary -->
+            <div class="serial-card__balances">
+              <div class="balance-pill">
+                <span class="balance-label">Opening</span>
+                <span class="balance-val">{{ s.openingQuantity | number:'1.0-0' }}</span>
+              </div>
+              <div class="balance-pill">
+                <span class="balance-label">Total In</span>
+                <span class="balance-val text-success">+{{ s.totalIn | number:'1.0-0' }}</span>
+              </div>
+              <div class="balance-pill">
+                <span class="balance-label">Total Out</span>
+                <span class="balance-val text-danger">-{{ s.totalOut | number:'1.0-0' }}</span>
+              </div>
+              <div class="balance-pill balance-pill--closing">
+                <span class="balance-label">Closing</span>
+                <span class="balance-val font-bold">{{ s.closingQuantity | number:'1.0-0' }}</span>
+              </div>
+            </div>
+          </header>
+
+          <!-- Serial Movements Grid / Cards -->
+          @if (s.movements.length === 0) {
+            <p class="serial-card__empty text-muted">No movements in this period (balance remains unchanged).</p>
+          } @else if (narrow()) {
+            <div class="cards" role="list">
+              @for (m of s.movements; track m.stockMovementId) {
+                <article class="card movement-card" role="listitem">
+                  <header class="movement-card__head">
+                    <span class="movement-card__date">{{ m.movementDate | reportDate }}</span>
+                    <strong class="font-mono">{{ m.documentNumber || '—' }}</strong>
+                    <span class="badge">{{ m.movementType }}</span>
+                  </header>
+                  <div class="movement-card__body">
+                    @if (m.contactName) {
+                      <div><span class="text-muted">Party: </span>{{ m.contactName }}</div>
+                    }
+                    <div><span class="text-muted">Warehouse: </span>{{ m.warehouseName }}</div>
+                    @if (m.notes) {
+                      <div><span class="text-muted">Notes: </span>{{ m.notes }}</div>
+                    }
+                    <div class="movement-card__quantities">
+                      <span>In: <strong class="text-success">{{ m.quantityIn ? (m.quantityIn | number:'1.0-0') : '—' }}</strong></span>
+                      <span>Out: <strong class="text-danger">{{ m.quantityOut ? (m.quantityOut | number:'1.0-0') : '—' }}</strong></span>
+                      <span>Running: <strong>{{ m.runningBalance | number:'1.0-0' }}</strong></span>
+                    </div>
+                  </div>
+                </article>
+              }
+            </div>
+          } @else {
+            <div class="table-container">
+              <bb-data-grid flush [columns]="columns" [data]="s.movements" [ariaLabel]="'Serial movements table'">
+                <ng-template bbCellTemplate="movementDate" let-m>
+                  <span>{{ m.movementDate | reportDate }}</span>
+                </ng-template>
+
+                <ng-template bbCellTemplate="documentNumber" let-m>
+                  <span class="font-mono font-bold">{{ m.documentNumber || '—' }}</span>
+                </ng-template>
+
+                <ng-template bbCellTemplate="movementType" let-m>
+                  <span class="badge">{{ m.movementType }}</span>
+                </ng-template>
+
+                <ng-template bbCellTemplate="contactName" let-m>
+                  <span>{{ m.contactName || '—' }}</span>
+                </ng-template>
+
+                <ng-template bbCellTemplate="warehouseName" let-m>
+                  <span>{{ m.warehouseName }}</span>
+                </ng-template>
+
+                <ng-template bbCellTemplate="quantityIn" let-m>
+                  <span class="numeric-cell text-success font-medium">
+                    {{ m.quantityIn ? (m.quantityIn | number:'1.0-0') : '—' }}
+                  </span>
+                </ng-template>
+
+                <ng-template bbCellTemplate="quantityOut" let-m>
+                  <span class="numeric-cell text-danger font-medium">
+                    {{ m.quantityOut ? (m.quantityOut | number:'1.0-0') : '—' }}
+                  </span>
+                </ng-template>
+
+                <ng-template bbCellTemplate="runningBalance" let-m>
+                  <span class="numeric-cell font-bold">
+                    {{ m.runningBalance | number:'1.0-0' }}
+                  </span>
+                </ng-template>
+
+                <ng-template bbCellTemplate="notes" let-m>
+                  <span class="text-muted text-sm">{{ m.notes || '—' }}</span>
+                </ng-template>
+              </bb-data-grid>
+            </div>
+          }
+        </section>
+      }
+    </div>
+  }
+}

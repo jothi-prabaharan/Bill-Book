@@ -197,6 +197,17 @@ export const reportingRoutes: Routes = [
     pathMatch: 'full',
   },
   {
+    path: 'serial-tracking-detail-report',
+    loadComponent: () =>
+      import('./serial-tracking-detail/serial-tracking-detail-report.page').then((m) => m.SerialTrackingDetailReportPageComponent),
+    data: { access: { permission: 'reports.view' } },
+  },
+  {
+    path: 'serial-tracking-detail',
+    redirectTo: 'serial-tracking-detail-report',
+    pathMatch: 'full',
+  },
+  {
     // Its own page on its own endpoint (TK-244), at the path the menu links to.
     path: 'inventory-item-detail',
     loadComponent: () => import('./inventory-item-detail/inventory-item-detail-report.page').then((m) => m.InventoryItemDetailPage),

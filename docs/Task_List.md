@@ -6,7 +6,7 @@ rewrites and stages it whenever the details file changes. **Never edit it by han
 status, edit the card's first line in the details file; the card there holds the rules, lanes,
 where to start, sub-tasks and notes.
 
-**Summary:** 236 completed, 1 working, 20 open, and 2 blocked (259 cards).
+**Summary:** 237 completed, 0 working, 20 open, and 2 blocked (259 cards).
 
 | Card | Title | Group | Status | Completed by | Completed at | Tests | Issue | Note |
 | :--- | :--- | :--- | :---: | :--- | :--- | :--- | :---: | :--- |
@@ -256,7 +256,7 @@ where to start, sub-tasks and notes.
 | [TK-247](./Task_Details.md#tk-247--batch-tracking-status-report-its-own-endpoint-and-page) | Batch Tracking Status Report: its own endpoint and page | Z | ✅ completed | Antigravity | 2026-10-28 | written, not run | [#234](https://github.com/jothi-prabaharan/Bill-Book/issues/234) | tests written, not run |
 | [TK-248](./Task_Details.md#tk-248--batch-tracking-detail-report-its-own-endpoint-and-page) | Batch Tracking Detail Report: its own endpoint and page | Z | ✅ completed | Antigravity | 2026-10-28 | written, not run | [#235](https://github.com/jothi-prabaharan/Bill-Book/issues/235) | tests written, not run |
 | [TK-249](./Task_Details.md#tk-249--serial-tracking-status-report-its-own-endpoint-and-page) | Serial Tracking Status Report: its own endpoint and page | Z | ✅ completed | Antigravity | 2026-10-28 | written, not run | [#236](https://github.com/jothi-prabaharan/Bill-Book/issues/236) | tests written, not run |
-| [TK-250](./Task_Details.md#tk-250--serial-tracking-detail-report-its-own-endpoint-and-page) | Serial Tracking Detail Report: its own endpoint and page | Z | 🔶 working | Antigravity (working) | since 2026-10-28 | — | [#237](https://github.com/jothi-prabaharan/Bill-Book/issues/237) | — |
+| [TK-250](./Task_Details.md#tk-250--serial-tracking-detail-report-its-own-endpoint-and-page) | Serial Tracking Detail Report: its own endpoint and page | Z | ✅ completed | Antigravity | 2026-10-28 | written, not run | [#237](https://github.com/jothi-prabaharan/Bill-Book/issues/237) | tests written, not run |
 | [TK-251](./Task_Details.md#tk-251--warehouse-tracking-status-report-its-own-endpoint-and-page) | Warehouse Tracking Status Report: its own endpoint and page | Z | 🟪 open | — | — | — | [#238](https://github.com/jothi-prabaharan/Bill-Book/issues/238) | — |
 | [TK-252](./Task_Details.md#tk-252--fixed-assets-schedule-its-own-endpoint-and-page) | Fixed Assets Schedule: its own endpoint and page | Z | 🟪 open | — | — | — | [#239](https://github.com/jothi-prabaharan/Bill-Book/issues/239) | — |
 | [TK-253](./Task_Details.md#tk-253--depreciation-schedule-its-own-endpoint-and-page) | Depreciation Schedule: its own endpoint and page | Z | 🟪 open | — | — | — | [#240](https://github.com/jothi-prabaharan/Bill-Book/issues/240) | — |
