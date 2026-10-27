@@ -175,6 +175,17 @@ export const reportingRoutes: Routes = [
     pathMatch: 'full',
   },
   {
+    path: 'batch-tracking-detail-report',
+    loadComponent: () =>
+      import('./batch-tracking-detail/batch-tracking-detail-report.page').then((m) => m.BatchTrackingDetailReportPageComponent),
+    data: { access: { permission: 'reports.view' } },
+  },
+  {
+    path: 'batch-tracking-detail',
+    redirectTo: 'batch-tracking-detail-report',
+    pathMatch: 'full',
+  },
+  {
     // Its own page on its own endpoint (TK-244), at the path the menu links to.
     path: 'inventory-item-detail',
     loadComponent: () => import('./inventory-item-detail/inventory-item-detail-report.page').then((m) => m.InventoryItemDetailPage),

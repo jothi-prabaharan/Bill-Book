@@ -84,3 +84,5 @@ export * from './lib/inventory-aging/inventory-aging-report.models';
 export * from './lib/inventory-aging/inventory-aging-report.service';
 export * from './lib/batch-tracking-status/batch-tracking-status-report.models';
 export * from './lib/batch-tracking-status/batch-tracking-status-report.service';
+export * from './lib/batch-tracking-detail/batch-tracking-detail-report.models';
+export * from './lib/batch-tracking-detail/batch-tracking-detail-report.service';

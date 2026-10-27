@@ -693,6 +693,18 @@ The Batch Tracking Status Report has its own page at `/reports/batch-tracking-st
 - **Arithmetic:** Available quantity is calculated from cumulative movements up to the as-at date. Matches the closing balance of batches in the Batch Tracking Detail Report (TK-248).
 - **Catalog Source:** The catalog's **Batch Tracking Status** report (`batch-tracking-status`) marks the `asOf` date parameter as required (`IsRequired = true`), pre-groups movements to avoid correlated subquery limitations, and lists batches in First-Expired-First-Out (FEFO) order.
 
+## Batch Tracking Detail Report
+
+The Batch Tracking Detail Report has its own page at `/reports/batch-tracking-detail-report` (TK-248), under **Reports › Inventory Report**. Besides access to reports it needs **inventory.view**. It shows every movement of each batch during a chosen period, providing complete lot audit trails and traceability for recalls.
+
+- **From** and **To** dates are both required (D-67). The page opens on the current financial year to date. A To date earlier than From date is refused with inline validation.
+- **Filters:** Optional **Batch**, **Item**, **Warehouse**, and **Party / Contact**.
+- **Summary Metrics:** At the top of the report, metric cards display **Total Batches**, **Total Opening Qty**, **Total In Qty**, **Total Out Qty**, and **Total Closing Qty**.
+- **Grouped Layout:** Batches are listed as individual sections with batch number, item code and name, category, costing method, warehouse, and expiry date. Each batch header features a summary pill strip showing **Opening Balance**, **Total In**, **Total Out**, and **Closing Balance**.
+- **Movements Grid:** Under each batch, movements are listed chronologically: Date, Document number, Movement Type, Party / Contact name, Warehouse, Qty In, Qty Out, and Running Balance.
+- **Arithmetic:** Each batch's closing balance equals opening quantity plus total in minus total out, and matches its available quantity on the Batch Tracking Status Report (TK-247) at the To date.
+- **Catalog Source:** The catalog's **Batch Tracking Detail Report** (`batch-tracking-detail`) marks both From and To parameters as required (`IsRequired = true`).
+
 ## Project reports
 
 Four reports read project accounting, under **Projects** in the list. Running them needs **projects.view** as well as access to reports.
