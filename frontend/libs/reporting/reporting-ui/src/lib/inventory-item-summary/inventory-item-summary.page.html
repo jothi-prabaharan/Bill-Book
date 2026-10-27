@@ -1,0 +1,164 @@
+<header class="page-head">
+  <div>
+    <h1>Inventory Item Summary</h1>
+    <p class="subtitle text-muted">
+      For each stocked item over a period: the stock it opened with, what was purchased, sold and adjusted, what it closed with, and what its sales earned over what they cost.
+      Each column gives the quantity over its value, in the branch's base currency.
+    </p>
+  </div>
+</header>
+
+<form class="filters card" [formGroup]="filters" (ngSubmit)="run()" novalidate>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'iis-from'" label="From" formControlName="fromDate" [required]="true"
+                          [error]="err('fromDate', 'From date')" />
+  </div>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'iis-to'" label="To" formControlName="toDate" [required]="true"
+                          [error]="err('toDate', 'To date')" />
+  </div>
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'iis-category'" label="Item category" placeholder="All categories" [options]="categoryOptions()"
+               [loading]="!choicesLoaded()" emptyText="No item categories" formControlName="itemCategoryId"
+               [error]="err('itemCategoryId', 'Item category')" />
+  </div>
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'iis-item'" label="Item" placeholder="All items" [options]="itemOptions()"
+               [loading]="!choicesLoaded()" emptyText="No items" formControlName="itemId"
+               [error]="err('itemId', 'Item')" />
+  </div>
+  <div class="filters__field filters__field--check">
+    <bb-checkbox text="Show items with no movement" formControlName="showItemsWithNoMovement" />
+  </div>
+  <div class="filters__actions">
+    <button class="btn btn-primary" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Running…' : 'Run report' }}
+    </button>
+  </div>
+</form>
+
+@if (messages().length > 0) {
+  <bb-message-box [messages]="messages()" />
+}
+
+@if (result(); as report) {
+  <p class="period text-muted">
+    {{ report.fromDate | reportDate }} to {{ report.toDate | reportDate }}, in {{ report.baseCurrencyCode }}.
+  </p>
+
+  @if (report.totalItems === 0) {
+    <p class="empty text-muted">No items match these filters. Tick “Show items with no movement” to list every stocked item.</p>
+  } @else if (narrow()) {
+    <div class="cards" role="list" aria-label="Inventory item summary">
+      @for (row of rows(); track row.key) {
+        <article class="card entry" role="listitem" [class.entry--total]="row.kind === 'total'">
+          <header class="entry__head">
+            <strong>{{ row.name }}</strong>
+            @if (row.code) { <span class="text-muted">{{ row.code }}</span> }
+            @if (row.costPending) { <span class="tag tag-warning">Cost pending</span> }
+          </header>
+          @if (row.kind === 'item') {
+            <p class="entry__sub text-muted">
+              {{ row.unitCode ?? 'No unit' }} · {{ row.costing }}@if (row.categoryName) { · {{ row.categoryName }} }
+            </p>
+          }
+          <dl class="figures">
+            @for (f of [
+              { label: 'Opening', qty: row.openingQuantity, value: row.openingValue },
+              { label: 'Purchased', qty: row.purchasedQuantity, value: row.purchasedValue },
+              { label: 'Sold', qty: row.soldQuantity, value: row.salesValue },
+              { label: 'Adjusted', qty: row.adjustedQuantity, value: row.adjustedValue },
+              { label: 'Closing', qty: row.closingQuantity, value: row.closingValue }
+            ]; track f.label) {
+              <div class="figures__row" [class.figures__row--balance]="f.label === 'Closing'">
+                <dt>{{ f.label }}</dt>
+                <dd>
+                  <bb-report-amount [value]="f.value" />
+                  @if (f.qty !== null) { <small class="qty">{{ quantity(f.qty) }} {{ row.unitCode }}</small> }
+                </dd>
+              </div>
+            }
+            <div class="figures__row"><dt>COGS</dt><dd><bb-report-amount [value]="row.cogs" /></dd></div>
+            <div class="figures__row">
+              <dt>Profit</dt>
+              <dd>@if (row.profit !== null) { <bb-report-amount [value]="row.profit" /> } @else { <span class="text-muted">—</span> }</dd>
+            </div>
+          </dl>
+        </article>
+      }
+    </div>
+  } @else {
+    <div class="matrix">
+      <bb-data-grid flush [columns]="columns" [data]="rows()" [rowClass]="rowClass" [sortable]="false"
+                    [showColumnFilters]="false" [showCount]="false" [paged]="false" label="Inventory item summary">
+        <ng-template bbCellTemplate="item" let-row>
+          <span class="item">
+            <strong>{{ row.name }}</strong>
+            @if (row.code) { <span class="item__sub text-muted">{{ row.code }} · {{ row.unitCode ?? 'no unit' }}</span> }
+            @if (row.costing) { <span class="item__sub text-muted">@if (row.categoryName) { {{ row.categoryName }} · } {{ row.costing }}</span> }
+            @if (row.costPending) { <span class="tag tag-warning item__tag" title="A movement has not been costed yet, so the values are short by what it cost.">Cost pending</span> }
+          </span>
+        </ng-template>
+        <ng-template bbCellTemplate="opening" let-row>
+          <span class="stack">
+            @if (row.openingQuantity !== null) { <span class="stack__qty">{{ quantity(row.openingQuantity) }}</span> }
+            @if (row.kind === 'total') { <strong><bb-report-amount [value]="row.openingValue" /></strong> } @else { <bb-report-amount [value]="row.openingValue" /> }
+          </span>
+        </ng-template>
+        <ng-template bbCellTemplate="purchased" let-row>
+          <span class="stack">
+            @if (row.purchasedQuantity !== null) { <span class="stack__qty">{{ quantity(row.purchasedQuantity) }}</span> }
+            @if (row.kind === 'total') { <strong><bb-report-amount [value]="row.purchasedValue" /></strong> } @else { <bb-report-amount [value]="row.purchasedValue" /> }
+          </span>
+        </ng-template>
+        <ng-template bbCellTemplate="sold" let-row>
+          <span class="stack">
+            @if (row.soldQuantity !== null) { <span class="stack__qty">{{ quantity(row.soldQuantity) }}</span> }
+            @if (row.kind === 'total') { <strong><bb-report-amount [value]="row.salesValue" /></strong> } @else { <bb-report-amount [value]="row.salesValue" /> }
+          </span>
+        </ng-template>
+        <ng-template bbCellTemplate="adjusted" let-row>
+          <span class="stack">
+            @if (row.adjustedQuantity !== null) { <span class="stack__qty">{{ quantity(row.adjustedQuantity) }}</span> }
+            @if (row.kind === 'total') { <strong><bb-report-amount [value]="row.adjustedValue" /></strong> } @else { <bb-report-amount [value]="row.adjustedValue" /> }
+          </span>
+        </ng-template>
+        <ng-template bbCellTemplate="closing" let-row>
+          <span class="stack">
+            @if (row.closingQuantity !== null) { <span class="stack__qty">{{ quantity(row.closingQuantity) }}</span> }
+            <strong><bb-report-amount [value]="row.closingValue" /></strong>
+          </span>
+        </ng-template>
+        <ng-template bbCellTemplate="cogs" let-row>
+          @if (row.kind === 'total') { <strong><bb-report-amount [value]="row.cogs" /></strong> } @else { <bb-report-amount [value]="row.cogs" /> }
+        </ng-template>
+        <ng-template bbCellTemplate="profit" let-row>
+          @if (row.profit === null) {
+            <span class="text-muted" title="A movement of what was sold has not been costed yet.">—</span>
+          } @else if (row.kind === 'total') {
+            <strong><bb-report-amount [value]="row.profit" /></strong>
+          } @else {
+            <bb-report-amount [value]="row.profit" />
+          }
+        </ng-template>
+      </bb-data-grid>
+    </div>
+
+    @if (more()) {
+      <div class="more">
+        <button class="btn" type="button" (click)="loadMore()" [disabled]="busy()">Show more items</button>
+        <span class="more__count text-muted">{{ report.items.length }} of {{ report.totalItems }} shown</span>
+      </div>
+    }
+  }
+
+  @if (report.totalItems > 0) {
+    <p class="notes text-muted">
+      Opening is the stock at the start of the From date, every movement before it, and closing is the stock at the end of the To date. Purchased is goods received less goods sent back to
+      vendors, valued at what they cost; sold is goods issued to customers less goods they returned, with its value the net sales before tax and COGS what that stock cost; adjusted is every
+      other movement, counts, opening entries and transfers, signed. Opening plus purchased less sold plus adjusted is closing, in quantity and in value. Profit is sales less COGS, and is blank while
+      a movement of what was sold has not been costed yet; a "Cost pending" item has such a movement and its values are short by its cost. Stock is one pool for the branch, so nothing is split by
+      warehouse, and the total at the foot is of values only, since quantities in different units do not add, over every item the filters match and not only those shown.
+    </p>
+  }
+}

@@ -579,6 +579,19 @@ The Receive Order Track Report has its own page at `/reports/receive-order-track
 
 The catalog's **Receive Order Track**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It has a row for each posted receipt of the period, its **Status** now the billing status above, with the value, the billed value and what is to bill in the branch's currency. Three columns are new, so a branch set up earlier gets them when its report catalog is seeded again.
 
+## Inventory Item Summary
+
+The Inventory Item Summary has its own page at `/reports/inventory-item-summary` (TK-243), under **Reports › Inventory Report**. Besides access to reports it needs **inventory.view**. For each stocked item it shows what the period did to the stock.
+
+- **From** and **To** are both required. The page opens on the financial year to date and runs straight away. A **To** before **From** is refused under **To**. **Item category** and **Item** narrow it, and **Show items with no movement** lists every stocked item; without it an item is listed only if it had stock at the start of **From** or moved in the period.
+- Each item has a row with its name, code, unit, costing method and category, and in each column a **quantity over its value**: **Opening** (the stock at the start of the From date), **Purchased** (goods received less goods sent back to vendors), **Sold** (goods issued to customers less goods they returned, with the sales value, the net sales before tax, under it), **Adjusted** (every other movement, signed: stock counts, opening entries and transfers) and **Closing** (the stock at the end of the To date). Then **COGS** (what the goods sold cost) and **Profit** (sales less COGS).
+- Opening plus purchased less sold plus adjusted is the closing quantity, and the closing value, of every item. Stock is one pool for the branch, so nothing is split by warehouse.
+- Values come from the stock movements once they are **costed**. Costing runs just after a sale or purchase is saved, so an item with a movement that is not costed yet is marked **Cost pending**: its values are short by what that movement will cost, and its **Profit** is left blank (a dash) when what was sold is among them, since it would be overstated. The same goes for the total.
+- The **Total** at the foot is of values only, since quantities in different units do not add; it and the sentence above the list are of every item the filters match, not only those loaded. With every movement costed, the **closing values add up to the balance of the Inventory account** at the To date.
+- The list loads 25 items at a time with **Show more items**. On a phone each item is a card.
+
+The catalog's **Inventory Item Summary**, used for export and scheduled emails, now works (it failed before) and needs both **From** and **To**, refusing a run without them. It has a row for each item that had stock at the start or moved in the period, with the same figures as the page and the accounts the item's sub-accounts are under.
+
 ## Project reports
 
 Four reports read project accounting, under **Projects** in the list. Running them needs **projects.view** as well as access to reports.

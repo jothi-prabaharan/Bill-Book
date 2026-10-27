@@ -35,5 +35,6 @@ export * from './lib/purchase-analysis/purchase-analysis.page';
 export * from './lib/purchase-order-track/purchase-order-track.page';
 export * from './lib/purchase-receive-order-details/purchase-receive-order-details.page';
 export * from './lib/receive-order-track/receive-order-track.page';
+export * from './lib/inventory-item-summary/inventory-item-summary.page';
 export * from './lib/foreign-currency-gain-or-loss/foreign-currency-gain-or-loss.page';
 export * from './lib/foreign-currency-gain-or-loss-details/foreign-currency-gain-or-loss-details.page';

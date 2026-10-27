@@ -1,10 +1,20 @@
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Reporting.Entity.Enums;
+using Reporting.Entity.Models;
 using Reporting.Repository;
+using Reporting.Repository.ReadModels;
 
 namespace Reporting.Repository.Repositories;
 
+/// <summary>
+/// The Inventory Item Summary for export, saved views and scheduled emails (TK-243). One row for each
+/// stocked item that had stock at the From date or moved in the period, from the builders the page uses
+/// (<see cref="InventoryItemSummaryReportRepository.Rows"/>): its opening, purchased, sold, adjusted and
+/// closing quantities and values, its sales, cost of sales and profit (blank while what was sold has a
+/// movement not yet costed), and the names of the accounts its sub-accounts are under. <b>Both dates are
+/// required</b> (D-67).
+/// </summary>
 public sealed class ItemSummarySourceRepository : ReportSource<ItemSummaryRow>
 {
     public override string ReportKey => "inventory-item-summary";
@@ -17,8 +27,8 @@ public sealed class ItemSummarySourceRepository : ReportSource<ItemSummaryRow>
 
     public override IReadOnlyList<ReportParameterRepository> Parameters =>
     [
-        new() { Name = "from", Label = "From", DataType = ColumnDataType.Date },
-        new() { Name = "to", Label = "To", DataType = ColumnDataType.Date },
+        new() { Name = "from", Label = "From", DataType = ColumnDataType.Date, IsRequired = true },
+        new() { Name = "to", Label = "To", DataType = ColumnDataType.Date, IsRequired = true },
     ];
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -53,74 +63,66 @@ public sealed class ItemSummarySourceRepository : ReportSource<ItemSummaryRow>
 
     protected override IQueryable<ItemSummaryRow> Build(ReportParameters parameters, ReportingDbContext db)
     {
-        DateOnly? start = parameters.Date("from");
-        DateOnly? end = parameters.Date("to");
+        DateOnly start = parameters.Date("from") ?? throw new ReportQueryException("From date is required.");
+        DateOnly end = parameters.Date("to") ?? throw new ReportQueryException("To date is required.");
 
-        return from i in db.Items
-               join c in db.ItemCategories on i.ItemCategoryId equals c.ItemCategoryId into categories
-               from c in categories.DefaultIfEmpty()
-               join u in db.UnitsOfMeasure on i.InventoryUomId equals u.UomId into uoms
-               from u in uoms.DefaultIfEmpty()
-               let openingMoves = db.StockMovements.Where(m => m.ItemId == i.ItemId && (start == null || m.MovementDate < start))
-               let periodMoves = db.StockMovements.Where(m => m.ItemId == i.ItemId && (start == null || m.MovementDate >= start) && (end == null || m.MovementDate <= end))
-               
-               // Compute opening
-               let openingQty = openingMoves.Sum(m => m.Direction == StockDirection.In ? m.Quantity : -m.Quantity)
-               let openingBal = openingMoves.Sum(m => m.Direction == StockDirection.In ? (m.TotalCost ?? 0m) : -(m.TotalCost ?? 0m))
+        if (end < start)
+        {
+            throw new ReportQueryException("To date cannot be before the from date.");
+        }
 
-               // Compute period adjustments (Adjustment = 3)
-               let adjMoves = periodMoves.Where(m => m.MovementType == StockMovementType.Adjustment)
-               let adjQty = adjMoves.Sum(m => m.Direction == StockDirection.In ? m.Quantity : -m.Quantity)
-               let adjBal = adjMoves.Sum(m => m.Direction == StockDirection.In ? (m.TotalCost ?? 0m) : -(m.TotalCost ?? 0m))
-               
-               // Compute period totals for closing
-               let periodQty = periodMoves.Sum(m => m.Direction == StockDirection.In ? m.Quantity : -m.Quantity)
-               let periodBal = periodMoves.Sum(m => m.Direction == StockDirection.In ? (m.TotalCost ?? 0m) : -(m.TotalCost ?? 0m))
-               
+        var request = new InventoryItemSummaryReportRequest { FromDate = start, ToDate = end };
+        IQueryable<ItemRead> items = InventoryItemSummaryReportRepository.Items(db.Items, request);
+        IQueryable<InventoryItemSummaryEntry> rows = InventoryItemSummaryReportRepository.Rows(
+            items,
+            db.ItemCategories,
+            db.UnitsOfMeasure,
+            InventoryItemSummaryReportRepository.ItemFigures(InventoryItemSummaryReportRepository.MovementFigures(items, db.StockMovements, start, end)),
+            InventoryItemSummaryReportRepository.ItemSales(items, db.Invoices, db.InvoiceDetails, db.CreditNotes, db.CreditNoteDetails, start, end),
+            showAll: false);
+
+        return from r in rows
+               join ia in AccountNames(db, "Inventory") on r.ItemId equals ia.ItemId into inventory
+               from ia in inventory.DefaultIfEmpty()
+               // Cost of Goods Sold: see ItemListSourceRepository for why "Purchase Account" resolves to this one.
+               join pa in AccountNames(db, "Cost of Goods Sold") on r.ItemId equals pa.ItemId into purchase
+               from pa in purchase.DefaultIfEmpty()
+               join sa in AccountNames(db, "Sales Revenue") on r.ItemId equals sa.ItemId into sold
+               from sa in sold.DefaultIfEmpty()
                select new ItemSummaryRow
                {
-                   ItemId = i.ItemId,
-                   ItemCode = i.ItemCode,
-                   ItemName = i.ItemName,
-                   ItemGroup = c != null ? c.CategoryName : null,
-                   ProductCategory = c != null ? c.CategoryName : null,
-                   InventoryType = i.ItemType.ToString(),
-                   CostingMethod = i.CostingType.ToString(),
-                   UnitOfMeasurement = u != null ? u.UomName : "Unknown",
-                   OpeningQuantity = openingQty,
-                   OpeningBalance = openingBal,
-                   QuantityPurchased = null,
-                   Purchases = null,
-                   QuantitySold = null,
-                   Sales = null,
-                   QuantityAdjusted = adjQty,
-                   Adjustments = adjBal,
-                   Cogs = null,
-                   Profit = null,
-                   ClosingQuantity = openingQty + periodQty,
-                   ClosingBalance = openingBal + periodBal,
-                   InventoryAccount = db.SubAccounts
-                       .Where(sa => sa.ReferenceType == ItemReference && sa.ReferenceId == i.ItemId)
-                       .Join(db.Accounts, sa => sa.AccountId, a => a.AccountId, (sa, a) => a)
-                       .Where(a => a.AccountSystemName == "Inventory")
-                       .Select(a => a.AccountName)
-                       .FirstOrDefault(),
-                   // Cost of Goods Sold — see ItemListSourceRepository for why "Purchase
-                   // Account" resolves to this one.
-                   PurchaseAccount = db.SubAccounts
-                       .Where(sa => sa.ReferenceType == ItemReference && sa.ReferenceId == i.ItemId)
-                       .Join(db.Accounts, sa => sa.AccountId, a => a.AccountId, (sa, a) => a)
-                       .Where(a => a.AccountSystemName == "Cost of Goods Sold")
-                       .Select(a => a.AccountName)
-                       .FirstOrDefault(),
-                   SalesAccount = db.SubAccounts
-                       .Where(sa => sa.ReferenceType == ItemReference && sa.ReferenceId == i.ItemId)
-                       .Join(db.Accounts, sa => sa.AccountId, a => a.AccountId, (sa, a) => a)
-                       .Where(a => a.AccountSystemName == "Sales Revenue")
-                       .Select(a => a.AccountName)
-                       .FirstOrDefault(),
+                   ItemId = r.ItemId,
+                   ItemCode = r.ItemCode,
+                   ItemName = r.ItemName,
+                   ItemGroup = r.CategoryName,
+                   ProductCategory = r.CategoryName,
+                   InventoryType = r.ItemType.ToString(),
+                   CostingMethod = r.CostingType.ToString(),
+                   UnitOfMeasurement = r.UnitName ?? "Unknown",
+                   OpeningQuantity = r.OpeningQuantity,
+                   OpeningBalance = r.OpeningValue,
+                   QuantityPurchased = r.PurchasedQuantity,
+                   Purchases = r.PurchasedValue,
+                   QuantitySold = r.SoldQuantity,
+                   Sales = r.Sales,
+                   QuantityAdjusted = r.AdjustedQuantity,
+                   Adjustments = r.AdjustedValue,
+                   Cogs = r.SoldCost,
+                   Profit = r.SoldUncosted == 0 ? r.Sales - r.SoldCost : null,
+                   ClosingQuantity = r.ClosingQuantity,
+                   ClosingBalance = r.ClosingValue,
+                   InventoryAccount = ia == null ? null : ia.Name,
+                   PurchaseAccount = pa == null ? null : pa.Name,
+                   SalesAccount = sa == null ? null : sa.Name,
                };
     }
+
+    /// <summary>The name of the account an item's sub-account under the named system account belongs to: one row for each item that has one. LINQ only.</summary>
+    private static IQueryable<ItemAccountName> AccountNames(ReportingDbContext db, string systemName) =>
+        from sub in db.SubAccounts
+        join a in db.Accounts on sub.AccountId equals a.AccountId
+        where sub.ReferenceType == ItemReference && a.AccountSystemName == systemName
+        select new ItemAccountName { ItemId = sub.ReferenceId, Name = a.AccountName };
 
     protected override LambdaExpression DefaultOrder =>
         (Expression<Func<ItemSummaryRow, long>>)(r => r.ItemId);
@@ -151,4 +153,12 @@ public sealed class ItemSummaryRow
     public string? InventoryAccount { get; set; }
     public string? PurchaseAccount { get; set; }
     public string? SalesAccount { get; set; }
+}
+
+/// <summary>The name of an account an item's sub-account is under.</summary>
+public sealed class ItemAccountName
+{
+    public long ItemId { get; set; }
+
+    public string Name { get; set; } = string.Empty;
 }

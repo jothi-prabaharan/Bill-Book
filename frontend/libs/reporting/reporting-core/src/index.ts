@@ -70,6 +70,8 @@ export * from './lib/purchase-receive-order-details/purchase-receive-order-detai
 export * from './lib/purchase-receive-order-details/purchase-receive-order-details.service';
 export * from './lib/receive-order-track/receive-order-track.models';
 export * from './lib/receive-order-track/receive-order-track.service';
+export * from './lib/inventory-item-summary/inventory-item-summary.models';
+export * from './lib/inventory-item-summary/inventory-item-summary.service';
 export * from './lib/foreign-currency-gain-or-loss/foreign-currency-gain-or-loss.models';
 export * from './lib/foreign-currency-gain-or-loss/foreign-currency-gain-or-loss.service';
 export * from './lib/foreign-currency-gain-or-loss-details/foreign-currency-gain-or-loss-details.models';
