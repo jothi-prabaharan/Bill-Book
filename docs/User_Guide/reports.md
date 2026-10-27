@@ -566,6 +566,19 @@ The Purchase Receive Order Details has its own page at `/reports/purchase-receiv
 
 The catalog's **Purchase Receive Order Details**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It has a row for each receipt line, with the quantity delivered, accepted and rejected and the value of the accepted goods in the branch's currency. Four columns are new (accepted quantity, rejected quantity, value and the line), so a branch set up earlier gets them when its report catalog is seeded again.
 
+## Receive Order Track Report
+
+The Receive Order Track Report has its own page at `/reports/receive-order-track-report` (TK-242), under **Reports › Purchase Report**. Besides access to reports it needs **purchase.view**. It follows each goods receipt from the goods to the bill.
+
+- **From** and **To** are both required, and are the **receipt date**. The page opens on the financial year to date and runs straight away. A **To** before **From** is refused under **To**. **Vendor** narrows it, and **Not yet billed only** keeps the receipts with something still to bill.
+- **Status tabs** count the receipts at each stage, whichever tab is open: **To bill** (something was accepted and none of it is billed), **Partly billed** (something is billed, but not every line in full), **Billed** (every line with goods accepted is billed in full) and **Nothing to bill** (every line was rejected, so nothing was taken into stock and nothing is owed). **All** is every status. Status counts every line: one line not billed in full keeps the receipt from being billed.
+- Each receipt has a row with its number (a link), date and the vendor's delivery note, the vendor, the purchase order it was raised against (a link), its **Value**, what is **Billed**, what is **To bill** and its status. A receipt in another currency shows its value in that currency under the branch's currency.
+- **Value** is what the accepted goods are worth: the line's value before tax over what was **delivered**, times what was **accepted**, rounded to two places. That is what the receipt debits to **Inventory**, and goods rejected at the door are not in it. **Billed** is the share of it that posted bills naming the receipt's lines add up to, at the receipt's own cost (Purchase refuses a bill line at a different price), so **To bill** is value less billed and the figures add up exactly. A draft or voided bill bills nothing.
+- Only **posted** receipts are listed: a draft has received nothing, and a posted receipt cannot be voided. The **Total** at the foot and the sentence above the list are of every receipt the filters match, not only those loaded.
+- The list loads 25 receipts at a time with **Show more receipts**. On a phone each receipt is a card.
+
+The catalog's **Receive Order Track**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It has a row for each posted receipt of the period, its **Status** now the billing status above, with the value, the billed value and what is to bill in the branch's currency. Three columns are new, so a branch set up earlier gets them when its report catalog is seeded again.
+
 ## Project reports
 
 Four reports read project accounting, under **Projects** in the list. Running them needs **projects.view** as well as access to reports.

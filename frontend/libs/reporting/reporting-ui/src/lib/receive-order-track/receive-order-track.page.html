@@ -1,0 +1,136 @@
+<header class="page-head">
+  <div>
+    <h1>Receive Order Track Report</h1>
+    <p class="subtitle text-muted">
+      Where each goods receipt dated in a period stands with its bills: what its accepted goods are worth, how much of that has been billed and what is still to bill.
+      Values are in the branch's base currency, at the cost the receipt itself stocked the goods at.
+    </p>
+  </div>
+</header>
+
+<form class="filters card" [formGroup]="filters" (ngSubmit)="run()" novalidate>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'rot-from'" label="From" formControlName="fromDate" [required]="true"
+                          [error]="err('fromDate', 'From date')" />
+  </div>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'rot-to'" label="To" formControlName="toDate" [required]="true"
+                          [error]="err('toDate', 'To date')" />
+  </div>
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'rot-vendor'" label="Vendor" placeholder="All vendors" [options]="vendorOptions()"
+               [loading]="!choicesLoaded()" emptyText="No vendors" formControlName="contactId"
+               [error]="err('contactId', 'Vendor')" />
+  </div>
+  <div class="filters__field filters__field--check">
+    <bb-checkbox text="Not yet billed only" formControlName="notYetBilledOnly" />
+  </div>
+  <div class="filters__actions">
+    <button class="btn btn-primary" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Running…' : 'Run report' }}
+    </button>
+  </div>
+</form>
+
+@if (result()) {
+  <bb-status-tabs [tabs]="tabs()" [value]="status()" label="Receipt status" (valueChange)="chooseStatus($event)" />
+}
+
+@if (messages().length > 0) {
+  <bb-message-box [messages]="messages()" />
+}
+
+@if (result(); as report) {
+  <p class="period text-muted">
+    {{ report.fromDate | reportDate }} to {{ report.toDate | reportDate }}, in {{ report.baseCurrencyCode }}.
+  </p>
+
+  @if (report.totalReceipts === 0) {
+    <p class="empty text-muted">No goods receipts match these filters.</p>
+  } @else if (narrow()) {
+    <div class="cards" role="list" aria-label="Receive order track">
+      @for (row of rows(); track row.key) {
+        <article class="card entry" role="listitem" [class.entry--total]="row.kind === 'total'">
+          <header class="entry__head">
+            @if (row.link) { <a class="link" [routerLink]="row.link"><strong>{{ row.name }}</strong></a> } @else { <strong>{{ row.name }}</strong> }
+            @if (row.status) { <span [class]="'tag ' + statusTag(row.status)">{{ statusLabel(row.status) }}</span> }
+          </header>
+          @if (row.kind === 'receipt') {
+            <p class="entry__who">{{ row.contactName }} <span class="text-muted">{{ row.contactCode }}</span></p>
+            <p class="entry__dates text-muted">
+              {{ row.date | reportDate }}
+              @if (row.orderNo) { · order @if (row.orderLink) { <a class="link" [routerLink]="row.orderLink">{{ row.orderNo }}</a> } @else { {{ row.orderNo }} } }
+              @if (row.vendorDeliveryNoteNo) { · delivery note {{ row.vendorDeliveryNoteNo }} }
+              @if (row.currency) { · {{ row.currency }} }
+            </p>
+          }
+          <dl class="figures">
+            <div class="figures__row">
+              <dt>Value</dt>
+              <dd>
+                <bb-report-amount [value]="row.value" />
+                @if (row.ownValue !== null) { <small class="own"><bb-report-amount [value]="row.ownValue" [currency]="row.currency" /></small> }
+              </dd>
+            </div>
+            <div class="figures__row"><dt>Billed</dt><dd><bb-report-amount [value]="row.billedValue" /></dd></div>
+            <div class="figures__row figures__row--balance"><dt>To bill</dt><dd><bb-report-amount [value]="row.toBillValue" /></dd></div>
+          </dl>
+        </article>
+      }
+    </div>
+  } @else {
+    <div class="matrix">
+      <bb-data-grid flush [columns]="columns" [data]="rows()" [rowClass]="rowClass" [sortable]="false"
+                    [showColumnFilters]="false" [showCount]="false" [paged]="false" label="Receive order track">
+        <ng-template bbCellTemplate="document" let-row>
+          <span class="document">
+            @if (row.link) { <a class="link" [routerLink]="row.link">{{ row.name }}</a> } @else { <strong>{{ row.name }}</strong> }
+            @if (row.date) { <span class="document__date text-muted">{{ row.date | reportDate }}</span> }
+            @if (row.vendorDeliveryNoteNo) { <span class="document__note text-muted">delivery note {{ row.vendorDeliveryNoteNo }}</span> }
+          </span>
+        </ng-template>
+        <ng-template bbCellTemplate="vendor" let-row>
+          <span class="customer">
+            <span>{{ row.contactName }}</span>
+            @if (row.contactCode) { <span class="customer__code text-muted">{{ row.contactCode }}</span> }
+          </span>
+        </ng-template>
+        <ng-template bbCellTemplate="order" let-row>
+          @if (row.orderNo) { @if (row.orderLink) { <a class="link" [routerLink]="row.orderLink">{{ row.orderNo }}</a> } @else { {{ row.orderNo }} } }
+        </ng-template>
+        <ng-template bbCellTemplate="value" let-row>
+          <span class="amount">
+            @if (row.kind === 'total') { <strong><bb-report-amount [value]="row.value" /></strong> } @else { <bb-report-amount [value]="row.value" /> }
+            @if (row.ownValue !== null) { <small class="own"><bb-report-amount [value]="row.ownValue" [currency]="row.currency" /></small> }
+          </span>
+        </ng-template>
+        <ng-template bbCellTemplate="billedValue" let-row>
+          @if (row.kind === 'total') { <strong><bb-report-amount [value]="row.billedValue" /></strong> } @else { <bb-report-amount [value]="row.billedValue" /> }
+        </ng-template>
+        <ng-template bbCellTemplate="toBillValue" let-row>
+          <strong><bb-report-amount [value]="row.toBillValue" /></strong>
+        </ng-template>
+        <ng-template bbCellTemplate="status" let-row>
+          @if (row.status) { <span [class]="'tag ' + statusTag(row.status)">{{ statusLabel(row.status) }}</span> }
+        </ng-template>
+      </bb-data-grid>
+    </div>
+
+    @if (more()) {
+      <div class="more">
+        <button class="btn" type="button" (click)="loadMore()" [disabled]="busy()">Show more receipts</button>
+        <span class="more__count text-muted">{{ report.receipts.length }} of {{ report.totalReceipts }} shown</span>
+      </div>
+    }
+  }
+
+  @if (report.totalReceipts > 0) {
+    <p class="notes text-muted">
+      A receipt is listed by its receipt date, and only a posted one: a draft has received nothing. Value is what the accepted goods are worth, the line's value before tax over what was
+      delivered times what was accepted, which is what the receipt debits to Inventory; goods that were rejected at the door are not in it. Billed is the share of it that posted bills naming the
+      receipt's lines add up to, at the receipt's own cost, and to bill is value less billed; a draft or voided bill bills nothing. A receipt is billed when every line with goods accepted is
+      billed in full, partly billed when something is billed but not every line in full, and nothing to bill when every line was rejected. The total at the foot is of every receipt the filters
+      match, not only those shown.
+    </p>
+  }
+}
