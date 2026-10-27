@@ -62,6 +62,8 @@ export * from './lib/bills-track/bills-track.models';
 export * from './lib/bills-track/bills-track.service';
 export * from './lib/bill-dn-payment/bill-dn-payment.models';
 export * from './lib/bill-dn-payment/bill-dn-payment.service';
+export * from './lib/purchase-analysis/purchase-analysis.models';
+export * from './lib/purchase-analysis/purchase-analysis.service';
 export * from './lib/foreign-currency-gain-or-loss/foreign-currency-gain-or-loss.models';
 export * from './lib/foreign-currency-gain-or-loss/foreign-currency-gain-or-loss.service';
 export * from './lib/foreign-currency-gain-or-loss-details/foreign-currency-gain-or-loss-details.models';

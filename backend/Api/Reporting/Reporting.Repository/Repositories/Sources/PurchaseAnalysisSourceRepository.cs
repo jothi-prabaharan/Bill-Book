@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Reporting.Entity.Enums;
+using Reporting.Entity.Models;
 using Reporting.Repository;
 
 namespace Reporting.Repository.Repositories;
@@ -15,6 +16,13 @@ public class PurchaseAnalysisRow
     public decimal GrossAmount { get; set; }
 }
 
+/// <summary>
+/// The Purchase Analysis for export, saved views and scheduled emails (TK-239). One row for each item
+/// bought in the period, from the lines the page adds up
+/// (<see cref="PurchaseAnalysisReportRepository.Lines"/>): the units bought and the gross value in the
+/// branch's base currency, less posted debit notes. A line with no item is left out here, since a row
+/// needs an item to name, and so is a fixed asset bought on a bill. <b>Both dates are required</b> (D-67).
+/// </summary>
 public sealed class PurchaseAnalysisSourceRepository : ReportSource<PurchaseAnalysisRow>
 {
     public override string ReportKey => "purchase-analysis";
@@ -27,8 +35,8 @@ public sealed class PurchaseAnalysisSourceRepository : ReportSource<PurchaseAnal
 
     public override IReadOnlyList<ReportParameterRepository> Parameters =>
     [
-        new() { Name = "from", Label = "From", DataType = ColumnDataType.Date },
-        new() { Name = "to", Label = "To", DataType = ColumnDataType.Date },
+        new() { Name = "from", Label = "From", DataType = ColumnDataType.Date, IsRequired = true },
+        new() { Name = "to", Label = "To", DataType = ColumnDataType.Date, IsRequired = true },
     ];
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -43,29 +51,34 @@ public sealed class PurchaseAnalysisSourceRepository : ReportSource<PurchaseAnal
 
     protected override IQueryable<PurchaseAnalysisRow> Build(ReportParameters parameters, ReportingDbContext db)
     {
-        DateOnly? start = parameters.Date("from");
-        DateOnly? end = parameters.Date("to");
+        DateOnly start = parameters.Date("from") ?? throw new ReportQueryException("From date is required.");
+        DateOnly end = parameters.Date("to") ?? throw new ReportQueryException("To date is required.");
 
-        return from bd in db.BillDetails
-               join b in db.Bills on bd.BillId equals b.BillId
-               where bd.ItemId != null && 
-                     (start == null || b.DocumentDate >= start) &&
-                     (end == null || b.DocumentDate <= end)
-               join i in db.Items on bd.ItemId equals i.ItemId
-               join c in db.ItemCategories on i.ItemCategoryId equals c.ItemCategoryId into categories
-               from c in categories.DefaultIfEmpty()
-               group bd by new { bd.ItemId, i.ItemCode, i.ItemName, c.CategoryName } into g
+        if (end < start)
+        {
+            throw new ReportQueryException("To date cannot be before the from date.");
+        }
+
+        var request = new PurchaseAnalysisReportRequest { FromDate = start, ToDate = end, IncludeDebitNotes = true };
+        IQueryable<PurchaseGroup> groups = PurchaseAnalysisReportRepository.Groups(
+            PurchaseAnalysisReportRepository.Lines(db.Bills, db.BillDetails, db.DebitNotes, db.DebitNoteDetails, db.Items, request, start, end),
+            PurchaseAnalysisGroupBy.Item);
+
+        return from g in groups
+               join item in db.Items on g.Key equals item.ItemId
+               join cat in db.ItemCategories on item.ItemCategoryId equals (long?)cat.ItemCategoryId into gCat
+               from cat in gCat.DefaultIfEmpty()
                select new PurchaseAnalysisRow
                {
-                   ItemId = g.Key.ItemId ?? 0,
-                   ItemCode = g.Key.ItemCode,
-                   ItemName = g.Key.ItemName,
-                   Category = g.Key.CategoryName,
-                   Quantity = g.Sum(x => x.Quantity),
-                   GrossAmount = g.Sum(x => x.GrossAmount)
+                   ItemId = item.ItemId,
+                   ItemCode = item.ItemCode,
+                   ItemName = item.ItemName,
+                   Category = cat == null ? null : cat.CategoryName,
+                   Quantity = g.Quantity,
+                   GrossAmount = g.Gross,
                };
     }
 
     protected override LambdaExpression DefaultOrder =>
-        (Expression<Func<PurchaseAnalysisRow, string>>)(r => r.ItemName);
+        (Expression<Func<PurchaseAnalysisRow, long>>)(r => r.ItemId);
 }

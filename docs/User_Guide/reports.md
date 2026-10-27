@@ -524,6 +524,20 @@ The Bill/DN Payment Report has its own page at `/reports/bill-dn-payment-report`
 
 The catalog's **Bill / DN Payment**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It has a row for each bill a posted payment of the period settled, with the amount settled in the branch's currency.
 
+## Purchase Analysis
+
+The Purchase Analysis has its own page at `/reports/purchase-analysis` (TK-239), under **Reports › Purchase Report**. Besides access to reports it needs **purchase.view**. It shows what was bought in a period, added up by item, item category or vendor.
+
+- **From** and **To** are both required, and are the **bill date**. The page opens on the financial year to date, by item, and runs straight away. A **To** before **From** is refused under **To**. **Group by** chooses item, item category or vendor; **Vendor** and **Item category** narrow it.
+- The list is posted **bills** less posted **debit notes**, largest net purchases first. A debit note takes units off only when it is a purchase return; a price correction or a discount takes value off and no units. Turn **Include debit notes** off to see what was bought before anything went back.
+- **Fixed assets bought on a bill are left out**, since they are not stock; tick **Include fixed assets** to count them. A line with no item, such as freight or a service, is a group of its own.
+- Each group shows its **Qty** (in each item's own unit), **Gross** (quantity times price as keyed, so a price that includes tax shows it there), **Discount**, **Net purchases** (before tax, after discount), the **Avg cost** of a unit and its **Share** of all net purchases. The average cost is shown for an item when adding up by item, where a unit means one thing; it is blank for a category or a vendor, and for the line with no item. The **Total** row and the sentence above the list are of every group the filters match, not only those loaded.
+- Tick **Compare with another period** to add each group's **Net then** and the **Change** in net purchases against it; the second period starts as the period just before this one, and both of its dates are needed. A group with nothing bought then has no change.
+- Amounts are in the branch's currency, each line taken at its bill's own rate. Net purchases of stock items, with debit notes unticked, equal what the bills posted to **Inventory** for the same dates, apart from goods received before they were billed (the receipt posted those) and GST that cannot be claimed (the ledger adds it to the stock's cost; it is not here).
+- The list loads 50 groups at a time with **Show more**. On a phone each group is a card.
+
+The catalog's **Purchase Analysis**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It has a row for each item bought, with the units and the gross value in the branch's currency less debit notes; a line with no item and a fixed asset are left out.
+
 ## Project reports
 
 Four reports read project accounting, under **Projects** in the list. Running them needs **projects.view** as well as access to reports.

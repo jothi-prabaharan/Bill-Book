@@ -96,6 +96,7 @@ public class ReportingDbContext : TenantDbContext
     public DbSet<CreditNoteDetailRead> CreditNoteDetails => Set<CreditNoteDetailRead>();
     public DbSet<BillRead> Bills => Set<BillRead>();
     public DbSet<DebitNoteRead> DebitNotes => Set<DebitNoteRead>();
+    public DbSet<DebitNoteDetailRead> DebitNoteDetails => Set<DebitNoteDetailRead>();
     public DbSet<InvoiceDetailTaxRead> InvoiceDetailTaxes => Set<InvoiceDetailTaxRead>();
 
     public DbSet<SalesOrderRead> SalesOrders => Set<SalesOrderRead>();
@@ -359,6 +360,7 @@ public class ReportingDbContext : TenantDbContext
         MapRead<CreditNoteDetailRead>(modelBuilder, "CreditNoteDetails", "sal", e => e.CreditNoteDetailId);
         MapRead<BillRead>(modelBuilder, "Bills", "pur", e => e.BillId);
         MapRead<DebitNoteRead>(modelBuilder, "DebitNotes", "pur", e => e.DebitNoteId);
+        MapRead<DebitNoteDetailRead>(modelBuilder, "DebitNoteDetails", "pur", e => e.DebitNoteDetailId);
         MapRead<InvoiceDetailTaxRead>(modelBuilder, "InvoiceDetailTaxes", "sal", e => e.InvoiceDetailTaxId);
         MapRead<SalesOrderRead>(modelBuilder, "SalesOrders", "sal", e => e.SalesOrderId);
         MapRead<SalesOrderDetailRead>(modelBuilder, "SalesOrderDetails", "sal", e => e.SalesOrderDetailId);
@@ -408,6 +410,8 @@ public class ReportingDbContext : TenantDbContext
         modelBuilder.Entity<BankAccountRead>().Property(e => e.AccountType).HasConversion<string>().HasMaxLength(15);
         modelBuilder.Entity<CreditNoteRead>().Property(e => e.Status).HasConversion<string>().HasMaxLength(12);
         modelBuilder.Entity<CreditNoteRead>().Property(e => e.ReasonCode).HasConversion<string>().HasMaxLength(20);
+        modelBuilder.Entity<DebitNoteRead>().Property(e => e.ReasonCode).HasConversion<string>().HasMaxLength(20);
+        modelBuilder.Entity<DebitNoteDetailRead>().Property(e => e.LineType).HasConversion<string>().HasMaxLength(10);
         modelBuilder.Entity<QuoteRead>().Property(e => e.Status).HasConversion<string>().HasMaxLength(12);
         modelBuilder.Entity<QuoteRead>().Property(e => e.CustomerResponse).HasConversion<string>().HasMaxLength(10);
         modelBuilder.Entity<SalesOrderRead>().Property(e => e.Status).HasConversion<string>().HasMaxLength(12);

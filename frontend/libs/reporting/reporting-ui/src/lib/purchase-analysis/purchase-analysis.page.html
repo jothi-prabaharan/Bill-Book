@@ -1,0 +1,147 @@
+<header class="page-head">
+  <div>
+    <h1>Purchase Analysis</h1>
+    <p class="subtitle text-muted">
+      What was bought in a period, added up by item, item category or vendor: units, gross value, discount, net purchases before tax, the average cost of a unit and
+      each one's share of the whole, in the branch's base currency. Debit notes are taken off unless you turn them off; fixed assets are left out unless you include them.
+    </p>
+  </div>
+</header>
+
+<form class="filters card" [formGroup]="filters" (ngSubmit)="run()" novalidate>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'pa-from'" label="From" formControlName="fromDate" [required]="true"
+                          [error]="err('fromDate', 'From date')" />
+  </div>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'pa-to'" label="To" formControlName="toDate" [required]="true"
+                          [error]="err('toDate', 'To date')" />
+  </div>
+  <div class="filters__field">
+    <bb-select [id]="'pa-group'" label="Group by" [options]="groupingOptions" formControlName="groupBy"
+               [error]="err('groupBy', 'Group by')" />
+  </div>
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'pa-vendor'" label="Vendor" placeholder="All vendors" [options]="vendorOptions()"
+               [loading]="!choicesLoaded()" emptyText="No vendors" formControlName="contactId"
+               [error]="err('contactId', 'Vendor')" />
+  </div>
+  <div class="filters__field">
+    <bb-select [id]="'pa-category'" label="Item category" placeholder="All categories" [options]="categoryOptions()"
+               [loading]="!choicesLoaded()" emptyText="No item categories" formControlName="itemCategoryId"
+               [error]="err('itemCategoryId', 'Item category')" />
+  </div>
+  <div class="filters__field filters__field--check">
+    <bb-checkbox text="Include debit notes" formControlName="includeDebitNotes" />
+  </div>
+  <div class="filters__field filters__field--check">
+    <bb-checkbox text="Include fixed assets" formControlName="includeFixedAssets" />
+  </div>
+  <div class="filters__field filters__field--check">
+    <bb-checkbox text="Compare with another period" formControlName="compare" />
+  </div>
+  @if (comparing()) {
+    <div class="filters__field">
+      <bb-branch-date-input [id]="'pa-cfrom'" label="Compare from" formControlName="compareFromDate" [required]="true"
+                            [error]="err('compareFromDate', 'Compare from date')" />
+    </div>
+    <div class="filters__field">
+      <bb-branch-date-input [id]="'pa-cto'" label="Compare to" formControlName="compareToDate" [required]="true"
+                            [error]="err('compareToDate', 'Compare to date')" />
+    </div>
+  }
+  <div class="filters__actions">
+    <button class="btn btn-primary" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Running…' : 'Run report' }}
+    </button>
+  </div>
+</form>
+
+@if (messages().length > 0) {
+  <bb-message-box [messages]="messages()" />
+}
+
+@if (result(); as report) {
+  <p class="period text-muted">
+    {{ report.fromDate | reportDate }} to {{ report.toDate | reportDate }}, in {{ report.baseCurrencyCode }}.
+    @if (report.compareFromDate && report.compareToDate) {
+      Compared with {{ report.compareFromDate | reportDate }} to {{ report.compareToDate | reportDate }}.
+    }
+    @if (!report.includesDebitNotes) { Debit notes are not taken off. }
+    @if (report.includesFixedAssets) { Fixed assets bought on a bill are included. }
+  </p>
+
+  @if (report.totalGroups === 0) {
+    <p class="empty text-muted">Nothing was bought with these filters.</p>
+  } @else if (narrow()) {
+    <div class="cards" role="list" aria-label="Purchase analysis">
+      @for (row of rows(); track row.key) {
+        <article class="card entry" role="listitem" [class.entry--total]="row.kind === 'total'">
+          <header class="entry__head">
+            <strong>{{ row.name }}</strong>
+            @if (row.code) { <span class="text-muted">{{ row.code }}</span> }
+          </header>
+          <dl class="figures">
+            <div class="figures__row"><dt>Quantity</dt><dd>{{ row.quantity }}</dd></div>
+            <div class="figures__row"><dt>Gross</dt><dd><bb-report-amount [value]="row.gross" /></dd></div>
+            <div class="figures__row"><dt>Discount</dt><dd><bb-report-amount [value]="row.discount" /></dd></div>
+            <div class="figures__row figures__row--balance"><dt>Net purchases</dt><dd><bb-report-amount [value]="row.net" /></dd></div>
+            @if (row.averageCost !== null) {
+              <div class="figures__row"><dt>Average cost</dt><dd><bb-report-amount [value]="row.averageCost" /></dd></div>
+            }
+            @if (row.sharePercent !== null) {
+              <div class="figures__row"><dt>Share of the whole</dt><dd>{{ row.sharePercent }}%</dd></div>
+            }
+            @if (row.compareNet !== null) {
+              <div class="figures__row">
+                <dt>Net then</dt>
+                <dd>
+                  <bb-report-amount [value]="row.compareNet" />
+                  @if (row.changePercent !== null) { <small class="own">{{ row.changePercent > 0 ? '+' : '' }}{{ row.changePercent }}%</small> }
+                </dd>
+              </div>
+            }
+          </dl>
+        </article>
+      }
+    </div>
+  } @else {
+    <div class="matrix" [class.matrix--wide]="compared()">
+      <bb-data-grid flush [columns]="columns()" [data]="rows()" [rowClass]="rowClass" [sortable]="false"
+                    [showColumnFilters]="false" [showCount]="false" [paged]="false" label="Purchase analysis">
+        <ng-template bbCellTemplate="name" let-row>
+          <span class="group">
+            <span [class.group__total]="row.kind === 'total'">{{ row.name }}</span>
+            @if (row.code) { <span class="group__code text-muted">{{ row.code }}</span> }
+          </span>
+        </ng-template>
+        <ng-template bbCellTemplate="quantity" let-row>{{ row.quantity }}</ng-template>
+        <ng-template bbCellTemplate="gross" let-row><bb-report-amount [value]="row.gross" /></ng-template>
+        <ng-template bbCellTemplate="discount" let-row><bb-report-amount [value]="row.discount" /></ng-template>
+        <ng-template bbCellTemplate="net" let-row><strong><bb-report-amount [value]="row.net" /></strong></ng-template>
+        <ng-template bbCellTemplate="averageCost" let-row>@if (row.averageCost !== null) { <bb-report-amount [value]="row.averageCost" /> }</ng-template>
+        <ng-template bbCellTemplate="sharePercent" let-row>@if (row.sharePercent !== null) { {{ row.sharePercent }}% }</ng-template>
+        <ng-template bbCellTemplate="compareNet" let-row>@if (row.compareNet !== null) { <bb-report-amount [value]="row.compareNet" /> }</ng-template>
+        <ng-template bbCellTemplate="changePercent" let-row>
+          @if (row.changePercent !== null) { <span>{{ row.changePercent > 0 ? '+' : '' }}{{ row.changePercent }}%</span> }
+        </ng-template>
+      </bb-data-grid>
+    </div>
+
+    @if (more()) {
+      <div class="more">
+        <button class="btn" type="button" (click)="loadMore()" [disabled]="busy()">Show more</button>
+        <span class="more__count text-muted">{{ report.groups.length }} of {{ report.totalGroups }} shown</span>
+      </div>
+    }
+  }
+
+  @if (report.totalGroups > 0) {
+    <p class="notes text-muted">
+      Purchases are posted bills, by bill date, less posted debit notes. Net purchases are before tax and after discount; gross and discount are as keyed, so a price that includes tax shows it in gross.
+      Quantity is in each item's base unit, and a debit note takes units off only when it is a purchase return; a price correction or a discount takes value off and no units.
+      The average cost is net purchases over units, and is shown only when adding up by item, where a unit means one thing. A fixed asset bought on a bill is not stock, so it is left out unless you include it.
+      A line with no item, such as freight or a service, is one group of its own. The total is of everything the filters match, not only the groups shown.
+    </p>
+  }
+}

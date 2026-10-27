@@ -43,5 +43,8 @@ public class DebitNoteRead : OrgScopedEntity
 
     public decimal CessAmount { get; set; }
 
+    /// <summary>Why it was raised: only a purchase return sends goods back (TK-239).</summary>
+    public Reporting.Entity.Enums.DebitNoteReason ReasonCode { get; set; }
+
     public Shared.Kernel.Documents.DocumentStatus Status { get; set; }
 }
