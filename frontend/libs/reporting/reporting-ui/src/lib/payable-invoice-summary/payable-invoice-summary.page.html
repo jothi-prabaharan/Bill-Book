@@ -1,0 +1,153 @@
+<header class="page-head">
+  <div>
+    <h1>Payable Invoice Summary</h1>
+    <p class="subtitle text-muted">
+      Every vendor bill dated in a period with its tax and total, what has been paid and what is still due, in the branch's base currency.
+      Paid and due are as at the To date.
+    </p>
+  </div>
+</header>
+
+<form class="filters card" [formGroup]="filters" (ngSubmit)="run()" novalidate>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'pis-from'" label="From" formControlName="fromDate" [required]="true"
+                          [error]="err('fromDate', 'From date')" />
+  </div>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'pis-to'" label="To" formControlName="toDate" [required]="true"
+                          [error]="err('toDate', 'To date')" />
+  </div>
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'pis-vendor'" label="Vendor" placeholder="All vendors" [options]="vendorOptions()"
+               [loading]="!choicesLoaded()" emptyText="No vendors" formControlName="contactId"
+               [error]="err('contactId', 'Vendor')" />
+  </div>
+  <div class="filters__field">
+    <bb-select [id]="'pis-currency'" label="Currency" placeholder="All currencies" [options]="currencyOptions()"
+               [loading]="!choicesLoaded()" emptyText="No currencies" formControlName="currencyCode"
+               [error]="err('currencyCode', 'Currency')" />
+  </div>
+  <div class="filters__field filters__field--check">
+    <bb-checkbox text="Include debit notes" formControlName="includeDebitNotes" />
+  </div>
+  <div class="filters__actions">
+    <button class="btn btn-primary" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Running…' : 'Run report' }}
+    </button>
+  </div>
+</form>
+
+@if (result()) {
+  <bb-status-tabs [tabs]="tabs()" [value]="status()" label="Bill status" (valueChange)="chooseStatus($event)" />
+}
+
+@if (messages().length > 0) {
+  <bb-message-box [messages]="messages()" />
+}
+
+@if (result(); as report) {
+  <p class="period text-muted">
+    {{ report.fromDate | reportDate }} to {{ report.toDate | reportDate }}, in {{ report.baseCurrencyCode }}. Paid and due are as at {{ report.toDate | reportDate }}.
+  </p>
+
+  @if (report.totalInvoices === 0) {
+    <p class="empty text-muted">No bills match these filters.</p>
+  } @else if (narrow()) {
+    <div class="cards" role="list" aria-label="Payable invoices">
+      @for (row of rows(); track row.key) {
+        <article class="card entry" role="listitem" [class.entry--total]="row.kind === 'total'">
+          <header class="entry__head">
+            @if (row.link) { <a class="link" [routerLink]="row.link"><strong>{{ row.name }}</strong></a> } @else { <strong>{{ row.name }}</strong> }
+            @if (row.isDebitNote) { <span class="tag tag-outline">Debit note</span> }
+            @if (row.reverseCharge) { <span class="tag tag-outline" title="The tax is paid by the branch itself">Reverse charge</span> }
+            @if (row.status) { <span [class]="'tag ' + statusTag(row.status)">{{ statusLabel(row.status) }}</span> }
+          </header>
+          @if (row.kind === 'invoice') {
+            <p class="entry__who">{{ row.contactName }} <span class="text-muted">{{ row.contactCode }}</span></p>
+            @if (row.vendorBillNo) { <p class="entry__dates text-muted">Vendor bill {{ row.vendorBillNo }}</p> }
+            <p class="entry__dates text-muted">
+              {{ row.documentDate | reportDate }}
+              @if (row.dueDate) { · due {{ row.dueDate | reportDate }} }
+              @if (row.daysOverdue) { · {{ row.daysOverdue }} days overdue }
+            </p>
+          }
+          <dl class="figures">
+            <div class="figures__row"><dt>Taxable</dt><dd><bb-report-amount [value]="row.taxable" /></dd></div>
+            <div class="figures__row"><dt>Tax</dt><dd><bb-report-amount [value]="row.tax" /></dd></div>
+            <div class="figures__row">
+              <dt>Total</dt>
+              <dd><bb-report-amount [value]="row.total" />
+                @if (row.ownTotal !== null) { <small class="own"><bb-report-amount [value]="row.ownTotal" [currency]="row.currencyCode" /></small> }</dd>
+            </div>
+            @if (row.payableDiffers) {
+              @if (row.tds !== 0) { <div class="figures__row"><dt>TDS withheld</dt><dd><bb-report-amount [value]="row.tds" /></dd></div> }
+              <div class="figures__row"><dt>Owed to the vendor</dt><dd><bb-report-amount [value]="row.payable" /></dd></div>
+            }
+            <div class="figures__row"><dt>Paid</dt><dd><bb-report-amount [value]="row.paid" /></dd></div>
+            <div class="figures__row figures__row--balance"><dt>Due</dt><dd><bb-report-amount [value]="row.due" /></dd></div>
+          </dl>
+        </article>
+      }
+    </div>
+  } @else {
+    <div class="matrix">
+      <bb-data-grid flush [columns]="columns" [data]="rows()" [rowClass]="rowClass" [sortable]="false"
+                    [showColumnFilters]="false" [showCount]="false" [paged]="false" label="Payable invoices">
+        <ng-template bbCellTemplate="document" let-row>
+          <span class="document">
+            @if (row.link) { <a class="link" [routerLink]="row.link">{{ row.name }}</a> } @else { <strong>{{ row.name }}</strong> }
+            @if (row.isDebitNote) { <span class="document__kind text-muted">Debit note</span> }
+            @if (row.vendorBillNo) { <span class="document__kind text-muted">{{ row.vendorBillNo }}</span> }
+            @if (row.reverseCharge) { <span class="document__kind text-muted" title="The tax is paid by the branch itself">Reverse charge</span> }
+          </span>
+        </ng-template>
+        <ng-template bbCellTemplate="documentDate" let-row>@if (row.documentDate) { {{ row.documentDate | reportDate }} }</ng-template>
+        <ng-template bbCellTemplate="dueDate" let-row>
+          @if (row.dueDate) {
+            <span class="due">{{ row.dueDate | reportDate }}
+              @if (row.daysOverdue) { <small class="due__late">{{ row.daysOverdue }} days late</small> }</span>
+          }
+        </ng-template>
+        <ng-template bbCellTemplate="vendor" let-row>
+          <span class="vendor">
+            <span>{{ row.contactName }}</span>
+            @if (row.contactCode) { <span class="vendor__code text-muted">{{ row.contactCode }}</span> }
+          </span>
+        </ng-template>
+        <ng-template bbCellTemplate="taxable" let-row><bb-report-amount [value]="row.taxable" /></ng-template>
+        <ng-template bbCellTemplate="tax" let-row><bb-report-amount [value]="row.tax" /></ng-template>
+        <ng-template bbCellTemplate="total" let-row>
+          <span class="amount">
+            <bb-report-amount [value]="row.total" />
+            @if (row.ownTotal !== null) { <small class="own"><bb-report-amount [value]="row.ownTotal" [currency]="row.currencyCode" /></small> }
+            @if (row.payableDiffers && row.kind === 'invoice') {
+              <small class="own" title="Total less TDS withheld and, on a reverse-charge bill, the tax">owed <bb-report-amount [value]="row.payable" /></small>
+            }
+          </span>
+        </ng-template>
+        <ng-template bbCellTemplate="paid" let-row><bb-report-amount [value]="row.paid" /></ng-template>
+        <ng-template bbCellTemplate="due" let-row><strong><bb-report-amount [value]="row.due" /></strong></ng-template>
+        <ng-template bbCellTemplate="status" let-row>
+          @if (row.status) { <span [class]="'tag ' + statusTag(row.status)">{{ statusLabel(row.status) }}</span> }
+        </ng-template>
+      </bb-data-grid>
+    </div>
+
+    @if (more()) {
+      <div class="more">
+        <button class="btn" type="button" (click)="loadMore()" [disabled]="busy()">Show more bills</button>
+        <span class="more__count text-muted">{{ report.invoices.length }} of {{ report.totalInvoices }} shown</span>
+      </div>
+    }
+  }
+
+  @if (report.totalInvoices > 0) {
+    <p class="notes text-muted">
+      A bill is listed by its bill date. Paid is what payments, and debit notes or advances applied to it, settled on or before {{ report.toDate | reportDate }};
+      due is what is left of what the vendor is owed, which is the total less any TDS withheld and, on a reverse-charge bill, the tax the branch pays itself, so it is the total less paid where there is neither.
+      Overdue means past its due date on that day with something still owed, and wins over partly paid.
+      A voided bill is listed only under Void, and a draft never is. A debit note, when included, is a negative amount: its paid is what has been applied to bills.
+      The totals are of every bill the filters match, not only those shown.
+    </p>
+  }
+}

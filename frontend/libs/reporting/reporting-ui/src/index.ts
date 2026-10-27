@@ -27,5 +27,6 @@ export * from './lib/quotation-track/quotation-track.page';
 export * from './lib/delivery-order-track/delivery-order-track.page';
 export * from './lib/aged-payables-summary/aged-payables-summary.page';
 export * from './lib/aged-payables-details/aged-payables-details.page';
+export * from './lib/payable-invoice-summary/payable-invoice-summary.page';
 export * from './lib/foreign-currency-gain-or-loss/foreign-currency-gain-or-loss.page';
 export * from './lib/foreign-currency-gain-or-loss-details/foreign-currency-gain-or-loss-details.page';

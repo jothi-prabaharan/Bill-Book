@@ -6,7 +6,7 @@ rewrites and stages it whenever the details file changes. **Never edit it by han
 status, edit the card's first line in the details file; the card there holds the rules, lanes,
 where to start, sub-tasks and notes.
 
-**Summary:** 221 completed, 1 working, 35 open, and 2 blocked (259 cards).
+**Summary:** 222 completed, 0 working, 35 open, and 2 blocked (259 cards).
 
 | Card | Title | Group | Status | Completed by | Completed at | Tests | Issue | Note |
 | :--- | :--- | :--- | :---: | :--- | :--- | :--- | :---: | :--- |
@@ -241,7 +241,7 @@ where to start, sub-tasks and notes.
 | [TK-232](./Task_Details.md#tk-232--delivery-order-track-report-its-own-endpoint-and-page) | Delivery Order Track Report: its own endpoint and page | Z | ✅ completed | Claude Sonnet 5.5 | 2026-10-27 | written, not run | [#219](https://github.com/jothi-prabaharan/Bill-Book/issues/219) | — |
 | [TK-233](./Task_Details.md#tk-233--aged-payables-summary-its-own-endpoint-and-page) | Aged Payables Summary: its own endpoint and page | Z | ✅ completed | Claude Sonnet 5.5 | 2026-10-27 | written, not run | [#220](https://github.com/jothi-prabaharan/Bill-Book/issues/220) | — |
 | [TK-234](./Task_Details.md#tk-234--aged-payables-details-its-own-endpoint-and-page) | Aged Payables Details: its own endpoint and page | Z | ✅ completed | Claude Sonnet 5.5 | 2026-10-27 | written, not run | [#221](https://github.com/jothi-prabaharan/Bill-Book/issues/221) | — |
-| [TK-235](./Task_Details.md#tk-235--payable-invoice-summary-its-own-endpoint-and-page) | Payable Invoice Summary: its own endpoint and page | Z | 🔶 working | Claude Sonnet 5.5 (working) | since 2026-10-26 | — | [#222](https://github.com/jothi-prabaharan/Bill-Book/issues/222) | — |
+| [TK-235](./Task_Details.md#tk-235--payable-invoice-summary-its-own-endpoint-and-page) | Payable Invoice Summary: its own endpoint and page | Z | ✅ completed | Claude Sonnet 5.5 | 2026-10-27 | written, not run | [#222](https://github.com/jothi-prabaharan/Bill-Book/issues/222) | — |
 | [TK-236](./Task_Details.md#tk-236--payable-invoice-detail-its-own-endpoint-and-page) | Payable Invoice Detail: its own endpoint and page | Z | 🟪 open | — | — | — | [#223](https://github.com/jothi-prabaharan/Bill-Book/issues/223) | — |
 | [TK-237](./Task_Details.md#tk-237--bills-track-report-its-own-endpoint-and-page) | Bills Track Report: its own endpoint and page | Z | 🟪 open | — | — | — | [#224](https://github.com/jothi-prabaharan/Bill-Book/issues/224) | — |
 | [TK-238](./Task_Details.md#tk-238--billdn-payment-report-its-own-endpoint-and-page) | Bill/DN Payment Report: its own endpoint and page | Z | 🟪 open | — | — | — | [#225](https://github.com/jothi-prabaharan/Bill-Book/issues/225) | — |

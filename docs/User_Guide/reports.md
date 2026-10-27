@@ -467,6 +467,21 @@ The Aged Payables Details has its own page at `/reports/aged-payables-details` (
 
 The catalog's **Aged Payables Details**, used for export and scheduled emails, now needs **As at** and refuses a run without it (it used to treat the date as optional and listed every bill at its full total). It lists a row for each open document, with its total and what is left, and a debit note or an unapplied payment shows as negative.
 
+## Payable Invoice Summary
+
+The Payable Invoice Summary has its own page at `/reports/payable-invoice-summary` (TK-235), under **Reports › Purchase Report**. Besides access to reports it needs **purchase.view**. It is the Receivable Invoice Summary the other way round: every vendor bill in a period with its tax and total, what has been paid and what is still due.
+
+- **From** and **To** are both required, and are the **bill date**. The page opens on the financial year to date and runs straight away. A **To** before **From** is refused under **To**. **Vendor** and **Currency** narrow it, and **Include debit notes** lists debit notes too, as negative amounts.
+- **Status tabs** count the documents at each status, whichever tab is open: **Awaiting payment** (nothing paid, not yet due), **Partly paid**, **Overdue** (past its due date on the To date with something still owed, which wins over partly paid), **Paid** and **Void**. **All** is every status except Void, which is listed only under its own tab. Drafts are never listed.
+- Each bill is a row with our number (a link) and the vendor's own bill number under it, its date, due date (with how many days late when it is overdue), the vendor, the currency, **Taxable**, **Tax**, **Total**, **Paid**, **Due** and the status. A bill in another currency shows its own total under the total in the branch's currency.
+- **Paid and due are as at the To date**, so a report for a past period reads the same when it is run again. Paid is what payments, and debit notes or advances applied to the bill, settled on or before that date; a payment in the vendor's currency is taken to the branch's currency at the bill's own rate. A settlement that was released, or takes effect after the To date, does not count.
+- **What the vendor is owed is not always the total.** **TDS withheld** is not paid to the vendor, and on a **reverse-charge** bill the tax is the branch's own to pay, so the row shows **owed** under the total where it differs, and **Due** is what is owed less what was paid. Where there is neither, due is the total less paid.
+- A **debit note**, when included, is negative: its **Paid** is what has been applied to bills and its **Due** what has not yet been.
+- The **Total** row and the sentence above the list are of every document the filters match, not only those loaded. The taxable total is the sum of the posted bills' taxable amounts in the branch's currency, which is what the purchase register adds up for the same bills.
+- The list loads 50 at a time with **Show more bills**. On a phone each bill is a card.
+
+The catalog's **Payable Invoice Summary**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It lists the posted bills of the period with their total in the branch's currency and what is still due on the **To** date; voided bills and debit notes are not listed.
+
 ## Project reports
 
 Four reports read project accounting, under **Projects** in the list. Running them needs **projects.view** as well as access to reports.

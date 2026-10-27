@@ -13137,6 +13137,12 @@ namespace Reporting.Repository.Migrations.Tenant
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("BillId"));
 
+                    b.Property<decimal>("CessAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("CgstAmount")
+                        .HasColumnType("numeric");
+
                     b.Property<long>("ContactId")
                         .HasColumnType("bigint");
 
@@ -13169,6 +13175,12 @@ namespace Reporting.Repository.Migrations.Tenant
                     b.Property<decimal>("ExchangeRate")
                         .HasColumnType("numeric");
 
+                    b.Property<decimal>("IgstAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<bool>("IsReverseCharge")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTimeOffset?>("ModifiedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -13178,12 +13190,24 @@ namespace Reporting.Repository.Migrations.Tenant
                     b.Property<Guid>("OrgId")
                         .HasColumnType("uuid");
 
+                    b.Property<decimal>("SgstAmount")
+                        .HasColumnType("numeric");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(12)
                         .HasColumnType("character varying(12)");
 
+                    b.Property<decimal>("TaxableAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("TdsAmount")
+                        .HasColumnType("numeric");
+
                     b.Property<decimal>("TotalAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("TotalAmountBase")
                         .HasColumnType("numeric");
 
                     b.Property<string>("TransactionTypeCode")
@@ -13970,6 +13994,98 @@ namespace Reporting.Repository.Migrations.Tenant
                     b.HasIndex("CustomerId", "OrgId");
 
                     b.ToTable("DailyAttendances", "tla", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
+                });
+
+            modelBuilder.Entity("Reporting.Repository.ReadModels.DebitNoteRead", b =>
+                {
+                    b.Property<long>("DebitNoteId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("DebitNoteId"));
+
+                    b.Property<long>("BillId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("CessAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("CgstAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<long>("ContactId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CurrencyCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("DocumentDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("DocumentNo")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("ExchangeRate")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("IgstAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("SgstAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)");
+
+                    b.Property<decimal>("TaxableAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("TotalAmountBase")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("TransactionTypeCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("DebitNoteId");
+
+                    b.HasIndex("CustomerId", "OrgId");
+
+                    b.ToTable("DebitNotes", "pur", t =>
                         {
                             t.ExcludeFromMigrations();
                         });
