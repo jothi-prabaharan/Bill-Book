@@ -1,0 +1,209 @@
+<div class="report-container">
+  <header class="report-header">
+    <div class="report-title-group">
+      <h1 class="report-title">Fixed Asset Reconciliation</h1>
+      <p class="report-subtitle">
+        Reconciles the fixed asset register against the general ledger account by account. Shows opening, debits, credits, and closing balances, highlighting discrepancies and differences in plain words.
+      </p>
+    </div>
+  </header>
+
+  <!-- Filter Card -->
+  <section class="filter-card card" aria-label="Report Filters">
+    <form [formGroup]="filters" (ngSubmit)="run()" class="filter-form">
+      <div class="filter-row">
+        <bb-branch-date-input
+          formControlName="fromDate"
+          label="From Date"
+          [required]="true"
+          [error]="err('fromDate', 'From Date')"
+        />
+
+        <bb-branch-date-input
+          formControlName="toDate"
+          label="To Date"
+          [required]="true"
+          [error]="err('toDate', 'To Date')"
+        />
+
+        <div class="filter-actions">
+          <button
+            type="submit"
+            class="btn-primary"
+            [disabled]="loading()"
+          >
+            @if (loading()) {
+              Loading...
+            } @else {
+              Run Reconciliation
+            }
+          </button>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  @if (messages().length > 0) {
+    <bb-message-box [messages]="messages()" />
+  }
+
+  @if (reportData(); as res) {
+    <!-- Grand Summary Cards -->
+    <div class="summary-grid" aria-label="Grand Summary">
+      <div class="summary-card">
+        <span class="summary-label">Total Accounts</span>
+        <span class="summary-value count">{{ res.summary.totalAccounts }}</span>
+        <span class="summary-subtext">As at {{ res.toDate | reportDate }}</span>
+      </div>
+
+      <div class="summary-card">
+        <span class="summary-label">Reconciled Accounts</span>
+        <span class="summary-value success">{{ res.summary.reconciledAccounts }}</span>
+        <span class="summary-subtext">Register matches general ledger</span>
+      </div>
+
+      <div class="summary-card">
+        <span class="summary-label">Discrepant Accounts</span>
+        <span class="summary-value" [class.danger]="res.summary.discrepantAccounts > 0">
+          {{ res.summary.discrepantAccounts }}
+        </span>
+        <span class="summary-subtext">Accounts with variance</span>
+      </div>
+
+      <div class="summary-card">
+        <span class="summary-label">Register Net Book Value</span>
+        <span class="summary-value">
+          <bb-report-amount [value]="res.summary.registerTotalNbv" />
+        </span>
+        <span class="summary-subtext">Asset cost less accum dep</span>
+      </div>
+
+      <div class="summary-card">
+        <span class="summary-label">Ledger Net Book Value</span>
+        <span class="summary-value">
+          <bb-report-amount [value]="res.summary.ledgerTotalNbv" />
+        </span>
+        <span class="summary-subtext">General ledger balances</span>
+      </div>
+
+      <div class="summary-card accent">
+        <span class="summary-label">Total NBV Difference</span>
+        <span class="summary-value" [class.danger]="res.summary.totalNbvDifference !== 0">
+          <bb-report-amount [value]="res.summary.totalNbvDifference" />
+        </span>
+        <span class="summary-subtext">{{ res.summary.explanation }}</span>
+      </div>
+    </div>
+
+    @if (res.accounts.length === 0) {
+      <div class="empty-state-card">
+        <div class="empty-icon">📁</div>
+        <h3>No Fixed Asset Accounts Found</h3>
+        <p>No fixed asset categories or accounts are registered for this branch.</p>
+      </div>
+    } @else {
+      @if (narrow()) {
+        <!-- Mobile Card View (< 800px) -->
+        <div class="mobile-accounts-list">
+          @for (acc of res.accounts; track acc.accountId) {
+            <div class="mobile-account-card" [class.discrepant-card]="!acc.isReconciled">
+              <div class="acc-card-header">
+                <div class="acc-title-block">
+                  <span class="font-mono font-medium code-pill">{{ acc.accountCode }}</span>
+                  <h2 class="acc-name">{{ acc.accountName }}</h2>
+                </div>
+                <span class="type-pill" [class.accum-pill]="acc.accountType === 'AccumulatedDepreciation'">
+                  {{ acc.accountType === 'AccumulatedDepreciation' ? 'Accum Dep A/c' : 'Asset Cost A/c' }}
+                </span>
+              </div>
+
+              <div class="status-banner" [class.status-match]="acc.isReconciled" [class.status-diff]="!acc.isReconciled">
+                <span class="status-icon">{{ acc.isReconciled ? '✓' : '⚠' }}</span>
+                <span class="status-text">{{ acc.differenceExplanation }}</span>
+              </div>
+
+              <div class="mobile-comparison-grid">
+                <div class="comparison-block">
+                  <span class="block-title">Register</span>
+                  <div class="row"><span>Opening:</span> <bb-report-amount [value]="acc.accountType === 'AccumulatedDepreciation' ? acc.register.openingAccumDep : acc.register.openingCost" /></div>
+                  <div class="row"><span>Debits:</span> <bb-report-amount [value]="acc.accountType === 'AccumulatedDepreciation' ? acc.register.accumDepDebits : acc.register.costDebits" /></div>
+                  <div class="row"><span>Credits:</span> <bb-report-amount [value]="acc.accountType === 'AccumulatedDepreciation' ? acc.register.accumDepCredits : acc.register.costCredits" /></div>
+                  <div class="row font-bold"><span>Closing:</span> <bb-report-amount [value]="acc.register.closingBalance" /></div>
+                </div>
+
+                <div class="comparison-block">
+                  <span class="block-title">General Ledger</span>
+                  <div class="row"><span>Opening:</span> <bb-report-amount [value]="acc.accountType === 'AccumulatedDepreciation' ? acc.ledger.openingAccumDep : acc.ledger.openingCost" /></div>
+                  <div class="row"><span>Debits:</span> <bb-report-amount [value]="acc.accountType === 'AccumulatedDepreciation' ? acc.ledger.accumDepDebits : acc.ledger.costDebits" /></div>
+                  <div class="row"><span>Credits:</span> <bb-report-amount [value]="acc.accountType === 'AccumulatedDepreciation' ? acc.ledger.accumDepCredits : acc.ledger.costCredits" /></div>
+                  <div class="row font-bold"><span>Closing:</span> <bb-report-amount [value]="acc.ledger.closingBalance" /></div>
+                </div>
+              </div>
+
+              <div class="mobile-diff-strip" [class.highlight-diff]="!acc.isReconciled">
+                <span class="diff-lbl">Closing Difference:</span>
+                <span class="diff-val"><bb-report-amount [value]="acc.closingDifference" /></span>
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <!-- Desktop Structured Account Sections with bb-data-grid -->
+        <div class="account-sections">
+          @for (acc of res.accounts; track acc.accountId) {
+            <section class="account-section card" [class.has-difference]="!acc.isReconciled">
+              <header class="account-header">
+                <div class="acc-title-group">
+                  <span class="font-mono font-medium code-badge">{{ acc.accountCode }}</span>
+                  <h2 class="acc-title">{{ acc.accountName }}</h2>
+                  <span class="acc-type-tag" [class.accum-tag]="acc.accountType === 'AccumulatedDepreciation'">
+                    {{ acc.accountType === 'AccumulatedDepreciation' ? 'Accumulated Depreciation A/c' : 'Asset Cost A/c' }}
+                  </span>
+                </div>
+
+                <div class="reconciliation-badge" [class.reconciled]="acc.isReconciled" [class.discrepancy]="!acc.isReconciled">
+                  <span class="badge-icon">{{ acc.isReconciled ? '✓' : '⚠' }}</span>
+                  <span class="badge-text">{{ acc.differenceExplanation }}</span>
+                </div>
+              </header>
+
+              <div class="grid-container">
+                <bb-data-grid flush [columns]="comparisonColumns" [data]="rowsForAccount(acc)" [ariaLabel]="acc.accountName + ' reconciliation'">
+                  <ng-template bbCellTemplate="side" let-item>
+                    <span class="side-cell" [class.side-diff]="item.isDiff" [class.font-bold]="item.isDiff">
+                      {{ item.side }}
+                    </span>
+                  </ng-template>
+
+                  <ng-template bbCellTemplate="opening" let-item>
+                    <span [class.diff-val]="item.isDiff" [class.font-medium]="item.isDiff">
+                      <bb-report-amount [value]="item.opening" />
+                    </span>
+                  </ng-template>
+
+                  <ng-template bbCellTemplate="debits" let-item>
+                    <span [class.diff-val]="item.isDiff" [class.font-medium]="item.isDiff">
+                      <bb-report-amount [value]="item.debits" />
+                    </span>
+                  </ng-template>
+
+                  <ng-template bbCellTemplate="credits" let-item>
+                    <span [class.diff-val]="item.isDiff" [class.font-medium]="item.isDiff">
+                      <bb-report-amount [value]="item.credits" />
+                    </span>
+                  </ng-template>
+
+                  <ng-template bbCellTemplate="closing" let-item>
+                    <span class="closing-cell" [class.diff-cell]="item.isDiff" [class.font-bold]="item.isDiff">
+                      <bb-report-amount [value]="item.closing" />
+                    </span>
+                  </ng-template>
+                </bb-data-grid>
+              </div>
+            </section>
+          }
+        </div>
+      }
+    }
+  }
+</div>

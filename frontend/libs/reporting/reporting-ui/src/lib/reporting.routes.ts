@@ -243,6 +243,12 @@ export const reportingRoutes: Routes = [
     pathMatch: 'full',
   },
   {
+    path: 'fixed-asset-reconciliation',
+    loadComponent: () =>
+      import('./fixed-asset-reconciliation/fixed-asset-reconciliation-report.page').then((m) => m.FixedAssetReconciliationReportPageComponent),
+    data: { access: { permission: 'reports.view', addOns: ['FixedAssets'] } },
+  },
+  {
     // Its own page on its own endpoint (TK-244), at the path the menu links to.
     path: 'inventory-item-detail',
     loadComponent: () => import('./inventory-item-detail/inventory-item-detail-report.page').then((m) => m.InventoryItemDetailPage),

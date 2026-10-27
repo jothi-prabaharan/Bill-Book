@@ -201,6 +201,19 @@ The Disposal Schedule Report has its own page at `/reports/disposal-schedule-rep
 - **Responsive Layout:** On mobile viewports (< 800px), tables transform into stacked disposal cards with metrics grids and reference notes.
 - **Catalog Source:** The catalog's **Disposal Schedule** report (`disposal-schedule`) marks both From and To parameters as required (`IsRequired = true`) and requires `AddOn.FixedAssets`.
 
+### Fixed Asset Reconciliation
+
+The Fixed Asset Reconciliation report has its own page at `/reports/fixed-asset-reconciliation` (TK-255), under **Reports > Fixed Asset**. Besides access to reports and **accounting.view**, it requires the **FixedAssets** add-on alone. It compares what the fixed asset register says against what has been posted to the general ledger, account by account for each asset cost account and accumulated depreciation account.
+
+- **From** and **To** dates are both required (D-67). The page opens on the current financial year to date (`rangeForPreset('this-financial-year')` to today). A To date earlier than From date is refused with an inline error under To.
+- **Summary Metric Cards:** Top metric cards display **Total Cost Accounts** (count of asset cost accounts analyzed), **Total Accum Dep Accounts** (count of accumulated depreciation accounts analyzed), and **Discrepancy Status** ("All accounts reconciled" in green when register equals ledger across all accounts, or count of accounts with discrepancies highlighted).
+- **Side-by-Side Account Breakdown:** Each fixed asset account card displays its code, name, and classification (Asset Cost A/c or Accumulated Depreciation A/c). Within each card, a comparison grid contrasts **Register** vs **Ledger**:
+  - Asset Cost accounts compare Opening Cost, Acquisitions / Debits, Disposals / Credits, and Closing Cost.
+  - Accumulated Depreciation accounts compare Opening Accum Dep, Period Charges / Credits, Disposal Write-backs / Debits, and Closing Accum Dep.
+  - The net difference is clearly labeled and stated in plain words (e.g. *"Register matches ledger"*, *"Register is ₹X below the ledger"*, or *"Register is ₹X above the ledger"*).
+- **Responsive Layout:** On mobile viewports (< 800px), account comparisons transform into stacked mobile cards with discrepancy tags.
+- **Catalog Source:** The catalog's **Fixed Asset Reconciliation** report (`fixed-asset-reconciliation`) marks both From and To parameters as required (`IsRequired = true`) and requires `AddOn.FixedAssets`.
+
 ## Budget reports
 
 Three reports compare the branch's budget with what was posted, under **Reports › Financial performance** in the menu. They need the **Budget** add-on.

@@ -53,3 +53,6 @@ export * from './lib/depreciation-schedule/depreciation-schedule-report.page';
 
 export * from './lib/disposal-schedule/disposal-schedule-report.page';
 
+export * from './lib/fixed-asset-reconciliation/fixed-asset-reconciliation-report.page';
+
+
