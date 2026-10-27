@@ -219,6 +219,12 @@ export const reportingRoutes: Routes = [
     pathMatch: 'full',
   },
   {
+    path: 'fixed-assets-schedule',
+    loadComponent: () =>
+      import('./fixed-assets-schedule/fixed-assets-schedule-report.page').then((m) => m.FixedAssetsScheduleReportPageComponent),
+    data: { access: { permission: 'reports.view', addOns: ['FixedAssets'] } },
+  },
+  {
     // Its own page on its own endpoint (TK-244), at the path the menu links to.
     path: 'inventory-item-detail',
     loadComponent: () => import('./inventory-item-detail/inventory-item-detail-report.page').then((m) => m.InventoryItemDetailPage),

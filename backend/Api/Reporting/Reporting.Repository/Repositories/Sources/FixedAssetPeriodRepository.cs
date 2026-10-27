@@ -11,7 +11,7 @@ internal static class FixedAssetPeriodRepository
 {
     public static IReadOnlyList<ReportParameterRepository> Parameters { get; } =
     [
-        new() { Name = "from", Label = "From", DataType = ColumnDataType.Date },
-        new() { Name = "to", Label = "To", DataType = ColumnDataType.Date },
+        new() { Name = "from", Label = "From", DataType = ColumnDataType.Date, IsRequired = true },
+        new() { Name = "to", Label = "To", DataType = ColumnDataType.Date, IsRequired = true },
     ];
 }

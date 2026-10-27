@@ -92,3 +92,6 @@ export * from './lib/serial-tracking-detail/serial-tracking-detail-report.models
 export * from './lib/serial-tracking-detail/serial-tracking-detail-report.service';
 export * from './lib/warehouse-tracking-status/warehouse-tracking-status-report.models';
 export * from './lib/warehouse-tracking-status/warehouse-tracking-status-report.service';
+
+export * from './lib/fixed-assets-schedule/fixed-assets-schedule-report.models';
+export * from './lib/fixed-assets-schedule/fixed-assets-schedule-report.service';

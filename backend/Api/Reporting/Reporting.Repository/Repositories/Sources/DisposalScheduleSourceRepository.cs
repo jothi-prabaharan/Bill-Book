@@ -1,3 +1,4 @@
+using Shared.Kernel.Apps;
 using System.Linq.Expressions;
 using Reporting.Entity.Enums;
 using Reporting.Repository;
@@ -28,6 +29,8 @@ public sealed class DisposalScheduleSourceRepository : ReportSource<FixedAssetPe
     public override string Title => "Disposal Schedule Report";
 
     public override ReportModule Module => ReportModule.FixedAssets;
+
+    public override AddOn RequiredAddOn => AddOn.FixedAssets;
 
     public override string RequiredPermission => "accounting.view";
 

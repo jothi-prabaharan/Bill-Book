@@ -1,3 +1,4 @@
+using Shared.Kernel.Apps;
 using System.Linq.Expressions;
 using Reporting.Entity.Enums;
 using Reporting.Repository;
@@ -34,6 +35,8 @@ public sealed class FixedAssetReconciliationSourceRepository : ReportSource<Fixe
     public override string Title => "Fixed Asset Reconciliation";
 
     public override ReportModule Module => ReportModule.FixedAssets;
+
+    public override AddOn RequiredAddOn => AddOn.FixedAssets;
 
     public override string RequiredPermission => "accounting.view";
 

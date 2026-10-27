@@ -1,0 +1,460 @@
+<div class="report-container">
+  <div class="report-header">
+    <div class="title-section">
+      <h1 class="report-title">Fixed Assets Schedule</h1>
+      <p class="report-subtitle">
+        Movement schedule of the fixed asset register: cost, additions, disposals, depreciation charged, and net book values.
+      </p>
+    </div>
+  </div>
+
+  @if (messages().length) {
+    <bb-message-box [messages]="messages()" />
+  }
+
+  <form [formGroup]="filters" (ngSubmit)="run()" class="filters-card">
+    <div class="filters-grid">
+      <div class="filter-field">
+        <bb-branch-date-input
+          formControlName="fromDate"
+          label="From Date *"
+          [id]="'fa-from-date'"
+          [error]="err('fromDate', 'From Date')"
+        />
+      </div>
+
+      <div class="filter-field">
+        <bb-branch-date-input
+          formControlName="toDate"
+          label="To Date *"
+          [id]="'fa-to-date'"
+          [error]="err('toDate', 'To Date')"
+        />
+      </div>
+
+      <div class="filter-field">
+        <bb-select
+          formControlName="categoryId"
+          label="Asset Category"
+          [id]="'fa-category'"
+          [options]="categoryOptions()"
+        />
+      </div>
+
+      <div class="filter-field">
+        <bb-select
+          formControlName="status"
+          label="Status"
+          [id]="'fa-status'"
+          [options]="statusOptions()"
+        />
+      </div>
+
+      <div class="filter-field">
+        <bb-select
+          formControlName="book"
+          label="Depreciation Book"
+          [id]="'fa-book'"
+          [options]="bookOptions()"
+        />
+      </div>
+
+      <div class="filter-field">
+        <bb-text-input
+          formControlName="search"
+          label="Search Asset"
+          [id]="'fa-search'"
+          placeholder="Code, name, or serial number..."
+        />
+      </div>
+    </div>
+
+    <div class="filters-actions">
+      <div class="checkbox-toggle">
+        <bb-checkbox
+          formControlName="showDisposalColumns"
+          text="Show Disposal Details"
+        />
+      </div>
+
+      <button type="submit" class="btn-primary" [disabled]="busy()">
+        @if (busy()) {
+          <span>Running...</span>
+        } @else {
+          <span>Run Report</span>
+        }
+      </button>
+    </div>
+  </form>
+
+  @if (result(); as res) {
+    <div class="summary-cards">
+      <div class="summary-card">
+        <span class="summary-label">Total Assets</span>
+        <span class="summary-value">{{ res.summary.totalAssets }}</span>
+        <span class="summary-subtext">{{ res.summary.activeAssets }} Active · {{ res.summary.disposedAssets }} Disposed</span>
+      </div>
+
+      <div class="summary-card">
+        <span class="summary-label">Opening Cost</span>
+        <span class="summary-value">
+          <bb-report-amount [value]="res.summary.totalOpeningCost" />
+        </span>
+        <span class="summary-subtext">Before {{ res.fromDate | reportDate }}</span>
+      </div>
+
+      <div class="summary-card">
+        <span class="summary-label">Additions</span>
+        <span class="summary-value positive">
+          <bb-report-amount [value]="res.summary.totalAdditionCost" />
+        </span>
+        <span class="summary-subtext">During period</span>
+      </div>
+
+      <div class="summary-card">
+        <span class="summary-label">Disposals</span>
+        <span class="summary-value">
+          <bb-report-amount [value]="res.summary.totalDisposalCost" />
+        </span>
+        <span class="summary-subtext">Cost written off</span>
+      </div>
+
+      <div class="summary-card primary">
+        <span class="summary-label">Closing Cost</span>
+        <span class="summary-value">
+          <bb-report-amount [value]="res.summary.totalClosingCost" />
+        </span>
+        <span class="summary-subtext">As at {{ res.toDate | reportDate }}</span>
+      </div>
+
+      <div class="summary-card">
+        <span class="summary-label">Depreciation Charged</span>
+        <span class="summary-value">
+          <bb-report-amount [value]="res.summary.totalDepreciation" />
+        </span>
+        <span class="summary-subtext">Period expense</span>
+      </div>
+
+      <div class="summary-card">
+        <span class="summary-label">Closing Accum Dep</span>
+        <span class="summary-value">
+          <bb-report-amount [value]="res.summary.totalClosingAccumDep" />
+        </span>
+        <span class="summary-subtext">Total depreciation to date</span>
+      </div>
+
+      <div class="summary-card accent">
+        <span class="summary-label">Closing Net Book Value</span>
+        <span class="summary-value">
+          <bb-report-amount [value]="res.summary.totalClosingNbv" />
+        </span>
+        <span class="summary-subtext">Balance Sheet Carry Value</span>
+      </div>
+    </div>
+
+    @if (res.categories.length === 0) {
+      <div class="empty-state-card">
+        <div class="empty-icon">📁</div>
+        <h3>No Fixed Assets Found</h3>
+        <p>No fixed assets were active or acquired in the chosen date range with the selected filters.</p>
+      </div>
+    } @else {
+      @if (narrow()) {
+        <!-- Mobile Card View (< 800px) -->
+        <div class="mobile-categories-list">
+          @for (cat of res.categories; track cat.categoryId) {
+            <div class="mobile-category-card">
+              <div class="cat-card-header">
+                <div class="cat-card-title">
+                  <h2>{{ cat.categoryName }}</h2>
+                  <span class="cat-accounts">{{ cat.assetAccount }} · {{ cat.accumDepAccount }}</span>
+                </div>
+                <div class="cat-nbv-pill">
+                  <span class="pill-label">Closing NBV:</span>
+                  <bb-report-amount [value]="cat.closingNbv" />
+                </div>
+              </div>
+
+              <div class="cat-summary-strip">
+                <div class="stat">
+                  <span class="lbl">Cost:</span>
+                  <bb-report-amount [value]="cat.closingCost" />
+                </div>
+                <div class="stat">
+                  <span class="lbl">Accum Dep:</span>
+                  <bb-report-amount [value]="cat.closingAccumDep" />
+                </div>
+                <div class="stat">
+                  <span class="lbl">Period Dep:</span>
+                  <bb-report-amount [value]="cat.depreciation" />
+                </div>
+              </div>
+
+              <div class="mobile-assets-list">
+                @for (asset of cat.assets; track asset.fixedAssetId) {
+                  <div class="mobile-asset-card" [class.disposed]="asset.status === 'Disposed'">
+                    <div class="asset-card-top">
+                      <div class="asset-identity">
+                        <span class="asset-code">{{ asset.assetCode }}</span>
+                        <span class="asset-name">{{ asset.assetName }}</span>
+                      </div>
+                      <span class="status-badge" [class.disposed]="asset.status === 'Disposed'">
+                        {{ asset.status }}
+                      </span>
+                    </div>
+
+                    <div class="asset-specs">
+                      <span>Purchased: {{ asset.purchaseDate | reportDate }}</span>
+                      @if (asset.depMethod) {
+                        <span>{{ asset.depMethod }} ({{ asset.rate }}%)</span>
+                      }
+                    </div>
+
+                    <div class="asset-metrics-grid">
+                      <div class="m-cell">
+                        <span class="m-lbl">Opening Cost</span>
+                        <bb-report-amount [value]="asset.openingCost" />
+                      </div>
+                      <div class="m-cell">
+                        <span class="m-lbl">Additions</span>
+                        <bb-report-amount [value]="asset.additionCost" />
+                      </div>
+                      <div class="m-cell">
+                        <span class="m-lbl">Disposals</span>
+                        <bb-report-amount [value]="asset.disposalCost" />
+                      </div>
+                      <div class="m-cell highlight">
+                        <span class="m-lbl">Closing Cost</span>
+                        <bb-report-amount [value]="asset.closingCost" />
+                      </div>
+                      <div class="m-cell">
+                        <span class="m-lbl">Period Dep</span>
+                        <bb-report-amount [value]="asset.depreciation" />
+                      </div>
+                      <div class="m-cell highlight">
+                        <span class="m-lbl">Closing NBV</span>
+                        <bb-report-amount [value]="asset.closingNbv" />
+                      </div>
+                    </div>
+
+                    @if (asset.disposalDate) {
+                      <div class="disposal-summary-box">
+                        <div class="d-row">
+                          <span>Disposed On: {{ asset.disposalDate | reportDate }}</span>
+                          <span>Proceeds: <bb-report-amount [value]="asset.saleProceeds ?? 0" /></span>
+                        </div>
+                        <div class="d-row">
+                          @if ((asset.gainOnDisposal ?? 0) > 0) {
+                            <span class="gain">Gain: <bb-report-amount [value]="asset.gainOnDisposal!" /></span>
+                          }
+                          @if ((asset.lossOnDisposal ?? 0) > 0) {
+                            <span class="loss">Loss: <bb-report-amount [value]="asset.lossOnDisposal!" /></span>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <!-- Desktop Structured Category Sections with bb-data-grid -->
+        <div class="category-sections">
+          @for (cat of res.categories; track cat.categoryId) {
+            <section class="category-section card">
+              <header class="category-header">
+                <div class="cat-title-block">
+                  <h2 class="cat-name">📂 {{ cat.categoryName }}</h2>
+                  <span class="cat-ledger-accounts">
+                    Asset A/c: <strong>{{ cat.assetAccount }}</strong> ·
+                    Accum Dep A/c: <strong>{{ cat.accumDepAccount }}</strong>
+                  </span>
+                </div>
+                <div class="cat-nbv-badge">
+                  <span class="badge-label">Closing NBV</span>
+                  <span class="badge-amount"><bb-report-amount [value]="cat.closingNbv" /></span>
+                </div>
+              </header>
+
+              <div class="grid-container">
+                <bb-data-grid flush [columns]="columns()" [data]="cat.assets" [ariaLabel]="cat.categoryName + ' table'">
+                  <ng-template bbCellTemplate="assetCode" let-item>
+                    <span class="font-mono font-medium code-text">{{ item.assetCode }}</span>
+                  </ng-template>
+
+                  <ng-template bbCellTemplate="assetName" let-item>
+                    <div class="name-desc">
+                      <span class="font-medium name-text">{{ item.assetName }}</span>
+                      @if (item.serialNumber) {
+                        <span class="serial-text text-muted">S/N: {{ item.serialNumber }}</span>
+                      }
+                    </div>
+                  </ng-template>
+
+                  <ng-template bbCellTemplate="purchaseDate" let-item>
+                    <span class="date-text">{{ item.purchaseDate | reportDate }}</span>
+                  </ng-template>
+
+                  <ng-template bbCellTemplate="openingCost" let-item>
+                    <span class="numeric-cell">
+                      <bb-report-amount [value]="item.openingCost" />
+                    </span>
+                  </ng-template>
+
+                  <ng-template bbCellTemplate="additionCost" let-item>
+                    <span class="numeric-cell">
+                      <bb-report-amount [value]="item.additionCost" />
+                    </span>
+                  </ng-template>
+
+                  <ng-template bbCellTemplate="disposalCost" let-item>
+                    <span class="numeric-cell">
+                      <bb-report-amount [value]="item.disposalCost" />
+                    </span>
+                  </ng-template>
+
+                  <ng-template bbCellTemplate="closingCost" let-item>
+                    <span class="numeric-cell font-bold total-col">
+                      <bb-report-amount [value]="item.closingCost" />
+                    </span>
+                  </ng-template>
+
+                  <ng-template bbCellTemplate="openingAccumDep" let-item>
+                    <span class="numeric-cell">
+                      <bb-report-amount [value]="item.openingAccumDep" />
+                    </span>
+                  </ng-template>
+
+                  <ng-template bbCellTemplate="depreciation" let-item>
+                    <span class="numeric-cell">
+                      <bb-report-amount [value]="item.depreciation" />
+                    </span>
+                  </ng-template>
+
+                  <ng-template bbCellTemplate="disposalAccumDep" let-item>
+                    <span class="numeric-cell">
+                      <bb-report-amount [value]="item.disposalAccumDep" />
+                    </span>
+                  </ng-template>
+
+                  <ng-template bbCellTemplate="closingAccumDep" let-item>
+                    <span class="numeric-cell font-bold total-col">
+                      <bb-report-amount [value]="item.closingAccumDep" />
+                    </span>
+                  </ng-template>
+
+                  <ng-template bbCellTemplate="openingNbv" let-item>
+                    <span class="numeric-cell">
+                      <bb-report-amount [value]="item.openingNbv" />
+                    </span>
+                  </ng-template>
+
+                  <ng-template bbCellTemplate="closingNbv" let-item>
+                    <span class="numeric-cell font-bold highlight-col">
+                      <bb-report-amount [value]="item.closingNbv" />
+                    </span>
+                  </ng-template>
+
+                  <ng-template bbCellTemplate="disposalDate" let-item>
+                    <span>{{ item.disposalDate ? (item.disposalDate | reportDate) : '—' }}</span>
+                  </ng-template>
+
+                  <ng-template bbCellTemplate="saleProceeds" let-item>
+                    <span class="numeric-cell">
+                      @if (item.saleProceeds !== null && item.saleProceeds !== undefined) {
+                        <bb-report-amount [value]="item.saleProceeds" />
+                      } @else {
+                        —
+                      }
+                    </span>
+                  </ng-template>
+
+                  <ng-template bbCellTemplate="gainLoss" let-item>
+                    <span class="numeric-cell">
+                      @if ((item.gainOnDisposal ?? 0) > 0) {
+                        <span class="gain-text font-medium">+<bb-report-amount [value]="item.gainOnDisposal!" /></span>
+                      } @else if ((item.lossOnDisposal ?? 0) > 0) {
+                        <span class="loss-text font-medium">-<bb-report-amount [value]="item.lossOnDisposal!" /></span>
+                      } @else {
+                        —
+                      }
+                    </span>
+                  </ng-template>
+
+                  <ng-template bbCellTemplate="status" let-item>
+                    <span class="status-badge" [class.disposed]="item.status === 'Disposed'">
+                      {{ item.status }}
+                    </span>
+                  </ng-template>
+                </bb-data-grid>
+              </div>
+
+              <!-- Category Subtotals Footer Strip -->
+              <footer class="category-footer">
+                <span class="subtotal-title">Subtotal · {{ cat.categoryName }}:</span>
+                <div class="subtotal-pills">
+                  <div class="sub-pill">
+                    <span class="p-lbl">Cost:</span>
+                    <bb-report-amount [value]="cat.closingCost" />
+                  </div>
+                  <div class="sub-pill">
+                    <span class="p-lbl">Accum Dep:</span>
+                    <bb-report-amount [value]="cat.closingAccumDep" />
+                  </div>
+                  <div class="sub-pill">
+                    <span class="p-lbl">Period Dep:</span>
+                    <bb-report-amount [value]="cat.depreciation" />
+                  </div>
+                  <div class="sub-pill highlight">
+                    <span class="p-lbl">NBV:</span>
+                    <bb-report-amount [value]="cat.closingNbv" />
+                  </div>
+                </div>
+              </footer>
+            </section>
+          }
+
+          <!-- Grand Total Summary Card -->
+          <div class="grand-total-card">
+            <div class="gt-title-block">
+              <h3>Grand Total (All Categories)</h3>
+              <p>Combined roll-forward for {{ res.categories.length }} categories and {{ res.summary.totalAssets }} assets</p>
+            </div>
+            <div class="gt-metrics-grid">
+              <div class="gt-metric">
+                <span class="gt-lbl">Opening Cost</span>
+                <bb-report-amount [value]="res.summary.totalOpeningCost" />
+              </div>
+              <div class="gt-metric">
+                <span class="gt-lbl">Additions</span>
+                <bb-report-amount [value]="res.summary.totalAdditionCost" />
+              </div>
+              <div class="gt-metric">
+                <span class="gt-lbl">Disposals</span>
+                <bb-report-amount [value]="res.summary.totalDisposalCost" />
+              </div>
+              <div class="gt-metric font-bold">
+                <span class="gt-lbl">Closing Cost</span>
+                <bb-report-amount [value]="res.summary.totalClosingCost" />
+              </div>
+              <div class="gt-metric">
+                <span class="gt-lbl">Period Dep</span>
+                <bb-report-amount [value]="res.summary.totalDepreciation" />
+              </div>
+              <div class="gt-metric font-bold">
+                <span class="gt-lbl">Closing Accum Dep</span>
+                <bb-report-amount [value]="res.summary.totalClosingAccumDep" />
+              </div>
+              <div class="gt-metric grand-highlight">
+                <span class="gt-lbl">Closing NBV</span>
+                <bb-report-amount [value]="res.summary.totalClosingNbv" />
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    }
+  }
+</div>

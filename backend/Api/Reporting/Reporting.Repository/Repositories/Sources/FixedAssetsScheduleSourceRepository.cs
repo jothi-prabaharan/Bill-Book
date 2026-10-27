@@ -1,3 +1,4 @@
+using Shared.Kernel.Apps;
 using System.Linq.Expressions;
 using Reporting.Entity.Enums;
 using Reporting.Repository;
@@ -20,6 +21,8 @@ public sealed class FixedAssetsScheduleSourceRepository : ReportSource<FixedAsse
     public override string Title => "Fixed Assets Schedule";
 
     public override ReportModule Module => ReportModule.FixedAssets;
+
+    public override AddOn RequiredAddOn => AddOn.FixedAssets;
 
     public override string RequiredPermission => "accounting.view";
 

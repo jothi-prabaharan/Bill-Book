@@ -1,3 +1,4 @@
+using Shared.Kernel.Apps;
 using System.Linq.Expressions;
 using Reporting.Entity.Enums;
 using Reporting.Repository;
@@ -21,6 +22,8 @@ public sealed class DepreciationScheduleSourceRepository : ReportSource<FixedAss
     public override string Title => "Depreciation Schedule";
 
     public override ReportModule Module => ReportModule.FixedAssets;
+
+    public override AddOn RequiredAddOn => AddOn.FixedAssets;
 
     public override string RequiredPermission => "accounting.view";
 

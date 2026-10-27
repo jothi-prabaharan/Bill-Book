@@ -165,6 +165,18 @@ A few rules decide what appears:
 
 The register does not record brand, outlet, warranty expiry, cost limit or averaging method, so these reports have no columns for them.
 
+### Fixed Assets Schedule
+
+The Fixed Assets Schedule has its own page at `/reports/fixed-assets-schedule` (TK-252), under **Reports > Fixed Asset**. Besides access to reports and **accounting.view**, it requires the **FixedAssets** add-on alone. It displays the fixed asset register roll-forward over a required period.
+
+- **From** and **To** dates are both required (D-67). The page opens on the current financial year to date (`rangeForPreset('this-financial-year')` to today). A To date earlier than From date is refused with an inline error under To.
+- **Filters:** Optional **Category**, **Status** (All, Active, Disposed), **Depreciation Book** (Books / Tax), **Search** (matching code, name, or serial number), and a **Show Disposal Details** column chooser toggle.
+- **Summary Metrics:** At the top of the report, metric cards display **Total Assets**, **Opening Cost**, **Additions**, **Disposals**, **Closing Cost**, **Depreciation Charged**, **Closing Accum Dep**, and **Closing Net Book Value**.
+- **Grouped Layout:** Assets are grouped by category with category name, Asset Account, and Accumulated Depreciation Account metadata. Each category displays asset-by-asset cost roll-forward, depreciation roll-forward, and closing book values, followed by category subtotals.
+- **Grand Total:** A prominent summary card aggregates roll-forwards across all categories.
+- **Disposal Details:** Toggling disposal details surfaces disposal date, sale proceeds, and gain/loss on disposal.
+- **Catalog Source:** The catalog's **Fixed Assets Schedule** report (`fixed-assets-schedule`) marks both From and To parameters as required (`IsRequired = true`) and requires `AddOn.FixedAssets`.
+
 ## Budget reports
 
 Three reports compare the branch's budget with what was posted, under **Reports › Financial performance** in the menu. They need the **Budget** add-on.
