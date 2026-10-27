@@ -255,6 +255,12 @@ export const reportingRoutes: Routes = [
     data: { access: { permission: 'reports.view' } },
   },
   {
+    path: 'project-budget-vs-actual',
+    loadComponent: () =>
+      import('./project-budget-vs-actual/project-budget-vs-actual-report.page').then((m) => m.ProjectBudgetVsActualReportPageComponent),
+    data: { access: { permission: 'reports.view' } },
+  },
+  {
     // Its own page on its own endpoint (TK-244), at the path the menu links to.
     path: 'inventory-item-detail',
     loadComponent: () => import('./inventory-item-detail/inventory-item-detail-report.page').then((m) => m.InventoryItemDetailPage),

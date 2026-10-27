@@ -91,8 +91,15 @@ public static class ProjectReports
         IQueryable<ProjectTaskRead> tasks,
         IQueryable<TimeEntryRead> time,
         IQueryable<JournalLedgerRead> ledger,
-        IQueryable<AccountRead> accounts)
+        IQueryable<AccountRead> accounts,
+        DateOnly? asOf = null)
     {
+        IQueryable<JournalLedgerRead> filteredLedger = ledger.Where(l =>
+            l.ProjectId != null
+            && (asOf == null || l.LedgerDate <= asOf));
+        IQueryable<TimeEntryRead> filteredTime = time.Where(t =>
+            asOf == null || t.WorkDate <= asOf);
+
         IQueryable<ProjectBudgetRow> rows =
             from p in projects
             select new ProjectBudgetRow
@@ -102,12 +109,12 @@ public static class ProjectReports
                 ProjectName = p.ProjectName,
                 Status = p.Status,
                 BudgetAmount = p.BudgetAmount,
-                ActualCost = (from l in ledger
+                ActualCost = (from l in filteredLedger
                               join a in accounts on l.AccountId equals a.AccountId
                               where l.ProjectId == p.ProjectId && a.AccountTypeId == ProjectAccountTypes.Expense
                               select l.DebitAmountBase - l.CreditAmountBase).Sum(),
                 BudgetHours = tasks.Where(k => k.ProjectId == p.ProjectId && k.BudgetHours != null).Sum(k => k.BudgetHours),
-                ActualHours = time.Where(t => t.ProjectId == p.ProjectId).Sum(t => t.Hours),
+                ActualHours = filteredTime.Where(t => t.ProjectId == p.ProjectId).Sum(t => t.Hours),
             };
 
         return rows.Select(r => new ProjectBudgetRow
@@ -334,6 +341,11 @@ public sealed class ProjectBudgetSource : ReportSource<ProjectBudgetRow>
     public override ReportModule Module => ReportModule.Projects;
     public override string RequiredPermission => "projects.view";
 
+    public override IReadOnlyList<ReportParameterRepository> Parameters =>
+    [
+        new() { Name = "asOf", Label = "As at", DataType = ColumnDataType.Date, IsRequired = true },
+    ];
+
     public override IReadOnlyList<ReportColumn> Columns =>
     [
         ReportColumn.Of<ProjectBudgetRow, string>("projectCode", ColumnDataType.Text, r => r.ProjectCode),
@@ -350,7 +362,7 @@ public sealed class ProjectBudgetSource : ReportSource<ProjectBudgetRow>
     ];
 
     protected override IQueryable<ProjectBudgetRow> Build(ReportParameters parameters, ReportingDbContext db) =>
-        ProjectReports.BudgetAgainstActual(db.Projects, db.ProjectTasks, db.TimeEntries, db.Ledger, db.Accounts);
+        ProjectReports.BudgetAgainstActual(db.Projects, db.ProjectTasks, db.TimeEntries, db.Ledger, db.Accounts, parameters.Date("asOf"));
 
     protected override LambdaExpression DefaultOrder =>
         (Expression<Func<ProjectBudgetRow, string>>)(r => r.ProjectCode);

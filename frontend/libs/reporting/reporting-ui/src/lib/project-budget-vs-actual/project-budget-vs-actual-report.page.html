@@ -1,0 +1,305 @@
+<div class="report-container">
+  <header class="report-header">
+    <div class="header-titles">
+      <h1 class="report-title">Project Budget vs Actual</h1>
+      <p class="report-subtitle">
+        Each project's cost and hours budget against actual costs posted and hours logged to date.
+      </p>
+    </div>
+  </header>
+
+  <form [formGroup]="filters" (ngSubmit)="run()" class="filters-card">
+    <div class="filters-grid">
+      <div class="filter-item">
+        <bb-branch-date-input
+          [id]="'pb-asof'"
+          label="As at"
+          formControlName="asOfDate"
+          [required]="true"
+          [error]="err('asOfDate', 'As at date')"
+        />
+      </div>
+
+      <div class="filter-item">
+        <bb-select
+          [id]="'pb-status'"
+          label="Status"
+          placeholder="All statuses"
+          [options]="statusOptions()"
+          formControlName="status"
+        />
+      </div>
+
+      <div class="filter-item">
+        <bb-select
+          [id]="'pb-customer'"
+          label="Customer"
+          placeholder="All customers"
+          [options]="customerOptions()"
+          formControlName="customerId"
+        />
+      </div>
+
+      <div class="filter-item">
+        <bb-select
+          [id]="'pb-project'"
+          label="Project"
+          placeholder="All projects"
+          [options]="projectOptions()"
+          formControlName="projectId"
+        />
+      </div>
+    </div>
+
+    <div class="filters-actions">
+      <button type="submit" class="btn btn-primary" [disabled]="loading()">
+        {{ loading() ? 'Loading...' : 'Update Report' }}
+      </button>
+      <button type="button" class="btn btn-secondary" (click)="resetFilters()" [disabled]="loading()">
+        Reset
+      </button>
+    </div>
+  </form>
+
+  @if (failure()) {
+    <bb-message-box [messages]="messages()" />
+  }
+
+  @if (reportData(); as data) {
+    <section class="summary-cards">
+      <div class="metric-card">
+        <span class="metric-label">Total Projects</span>
+        <span class="metric-value">{{ data.summary.totalProjects }}</span>
+      </div>
+
+      <div class="metric-card">
+        <span class="metric-label">Cost Budget</span>
+        <span class="metric-value">
+          <bb-report-amount [value]="data.summary.totalBudgetAmount" />
+        </span>
+      </div>
+
+      <div class="metric-card">
+        <span class="metric-label">Actual Cost</span>
+        <span class="metric-value">
+          <bb-report-amount [value]="data.summary.totalActualCost" />
+        </span>
+      </div>
+
+      <div class="metric-card" [class.metric-positive]="data.summary.totalCostVariance >= 0" [class.metric-negative]="data.summary.totalCostVariance < 0">
+        <span class="metric-label">Cost Variance</span>
+        <span class="metric-value">
+          <bb-report-amount [value]="data.summary.totalCostVariance" />
+        </span>
+      </div>
+
+      <div class="metric-card">
+        <span class="metric-label">Budget Hours</span>
+        <span class="metric-value">
+          {{ data.summary.totalBudgetHours | number:'1.1-2' }}h
+        </span>
+      </div>
+
+      <div class="metric-card">
+        <span class="metric-label">Actual Hours</span>
+        <span class="metric-value">
+          {{ data.summary.totalActualHours | number:'1.1-2' }}h
+        </span>
+      </div>
+
+      <div class="metric-card" [class.metric-positive]="data.summary.totalHoursVariance >= 0" [class.metric-negative]="data.summary.totalHoursVariance < 0">
+        <span class="metric-label">Hours Variance</span>
+        <span class="metric-value">
+          {{ data.summary.totalHoursVariance | number:'1.1-2' }}h
+        </span>
+      </div>
+
+      <div class="metric-card" [class.metric-alert]="data.summary.overBudgetProjectsCount > 0">
+        <span class="metric-label">Over Budget</span>
+        <span class="metric-value">
+          {{ data.summary.overBudgetProjectsCount }}
+        </span>
+      </div>
+    </section>
+
+    <div class="projects-list">
+      @for (project of data.projects; track project.projectId) {
+        <article class="project-budget-card" [class.over-budget-card]="project.isCostOverBudget || project.isHoursOverBudget">
+          <header class="project-card-header">
+            <div class="project-identity">
+              <button
+                type="button"
+                class="expand-toggle-btn"
+                (click)="toggleExpand(project.projectId)"
+                [attr.aria-expanded]="isExpanded(project.projectId)"
+                title="Toggle Task Breakdown"
+              >
+                {{ isExpanded(project.projectId) ? '▼' : '▶' }}
+              </button>
+              <span class="project-code">{{ project.projectCode }}</span>
+              <h2 class="project-name">{{ project.projectName }}</h2>
+              <span class="customer-tag">{{ project.customer }}</span>
+            </div>
+
+            <div class="header-badges">
+              <span class="status-badge status-{{ project.status.toLowerCase() }}">
+                {{ project.status }}
+              </span>
+              @if (project.isCostOverBudget) {
+                <span class="alert-pill alert-cost">Cost Over Budget</span>
+              }
+              @if (project.isHoursOverBudget) {
+                <span class="alert-pill alert-hours">Hours Over Budget</span>
+              }
+            </div>
+          </header>
+
+          <div class="project-metrics-strip">
+            <div class="kpi-group cost-group">
+              <div class="kpi-item">
+                <span class="kpi-label">Cost Budget</span>
+                <span class="kpi-value">
+                  @if (project.budgetAmount !== null) {
+                    <bb-report-amount [value]="project.budgetAmount" />
+                  } @else {
+                    —
+                  }
+                </span>
+              </div>
+
+              <div class="kpi-item">
+                <span class="kpi-label">Actual Cost</span>
+                <span class="kpi-value">
+                  <bb-report-amount [value]="project.actualCost" />
+                </span>
+              </div>
+
+              <div class="kpi-item" [class.kpi-negative]="project.isCostOverBudget" [class.kpi-positive]="project.costVariance !== null && !project.isCostOverBudget">
+                <span class="kpi-label">Cost Variance</span>
+                <span class="kpi-value">
+                  @if (project.costVariance !== null) {
+                    <bb-report-amount [value]="project.costVariance" />
+                  } @else {
+                    —
+                  }
+                </span>
+              </div>
+
+              <div class="kpi-item">
+                <span class="kpi-label">Cost % Used</span>
+                <span class="kpi-value" [class.kpi-negative]="project.isCostOverBudget">
+                  {{ project.costUsedPercent !== null ? (project.costUsedPercent | number:'1.1-2') + '%' : '—' }}
+                </span>
+              </div>
+            </div>
+
+            <div class="kpi-group hours-group">
+              <div class="kpi-item">
+                <span class="kpi-label">Budget Hours</span>
+                <span class="kpi-value">
+                  {{ project.budgetHours !== null ? (project.budgetHours | number:'1.1-2') + 'h' : '—' }}
+                </span>
+              </div>
+
+              <div class="kpi-item">
+                <span class="kpi-label">Actual Hours</span>
+                <span class="kpi-value">
+                  {{ project.actualHours | number:'1.1-2' }}h
+                </span>
+              </div>
+
+              <div class="kpi-item" [class.kpi-negative]="project.isHoursOverBudget" [class.kpi-positive]="project.hoursVariance !== null && !project.isHoursOverBudget">
+                <span class="kpi-label">Hours Variance</span>
+                <span class="kpi-value">
+                  {{ project.hoursVariance !== null ? (project.hoursVariance | number:'1.1-2') + 'h' : '—' }}
+                </span>
+              </div>
+
+              <div class="kpi-item">
+                <span class="kpi-label">Hours % Used</span>
+                <span class="kpi-value" [class.kpi-negative]="project.isHoursOverBudget">
+                  {{ project.hoursUsedPercent !== null ? (project.hoursUsedPercent | number:'1.1-2') + '%' : '—' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          @if (isExpanded(project.projectId)) {
+            <div class="project-tasks-section">
+              <h3 class="tasks-heading">Task Breakdown</h3>
+              @if (project.tasks.length > 0) {
+                @if (!narrow()) {
+                  <bb-data-grid
+                    flush
+                    [data]="project.tasks"
+                    [columns]="taskColumns"
+                    [ariaLabel]="project.projectName + ' tasks'"
+                  >
+                    <ng-template bbCellTemplate="taskName" let-row>
+                      <span class="task-name-text">{{ row.taskName }}</span>
+                    </ng-template>
+
+                    <ng-template bbCellTemplate="budgetHours" let-row>
+                      <span>{{ row.budgetHours !== null ? (row.budgetHours | number:'1.1-2') + 'h' : '—' }}</span>
+                    </ng-template>
+
+                    <ng-template bbCellTemplate="actualHours" let-row>
+                      <span>{{ row.actualHours | number:'1.1-2' }}h</span>
+                    </ng-template>
+
+                    <ng-template bbCellTemplate="hoursVariance" let-row>
+                      <span [class.kpi-negative]="row.isOverBudget" [class.kpi-positive]="row.hoursVariance !== null && !row.isOverBudget">
+                        {{ row.hoursVariance !== null ? (row.hoursVariance | number:'1.1-2') + 'h' : '—' }}
+                      </span>
+                    </ng-template>
+
+                    <ng-template bbCellTemplate="hoursUsedPercent" let-row>
+                      <span [class.kpi-negative]="row.isOverBudget">
+                        {{ row.hoursUsedPercent !== null ? (row.hoursUsedPercent | number:'1.1-2') + '%' : '—' }}
+                      </span>
+                    </ng-template>
+
+                    <ng-template bbCellTemplate="status" let-row>
+                      @if (row.isOverBudget) {
+                        <span class="status-pill-danger">Over Budget</span>
+                      } @else {
+                        <span class="status-pill-success">On Track</span>
+                      }
+                    </ng-template>
+                  </bb-data-grid>
+                } @else {
+                  <div class="mobile-tasks-list">
+                    @for (task of project.tasks; track task.projectTaskId) {
+                      <div class="mobile-task-item" [class.task-overbudget]="task.isOverBudget">
+                        <div class="task-header-row">
+                          <span class="task-title">{{ task.taskName }}</span>
+                          @if (task.isOverBudget) {
+                            <span class="status-pill-danger">Over Budget</span>
+                          } @else {
+                            <span class="status-pill-success">On Track</span>
+                          }
+                        </div>
+                        <div class="task-metrics-row">
+                          <div><span class="sub-label">Budget:</span> {{ task.budgetHours !== null ? (task.budgetHours | number:'1.1-2') + 'h' : '—' }}</div>
+                          <div><span class="sub-label">Actual:</span> {{ task.actualHours | number:'1.1-2' }}h</div>
+                          <div><span class="sub-label">Variance:</span> {{ task.hoursVariance !== null ? (task.hoursVariance | number:'1.1-2') + 'h' : '—' }}</div>
+                          <div><span class="sub-label">% Used:</span> {{ task.hoursUsedPercent !== null ? (task.hoursUsedPercent | number:'1.1-2') + '%' : '—' }}</div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              } @else {
+                <p class="no-tasks-message">No task hour budgets recorded for this project.</p>
+              }
+            </div>
+          }
+        </article>
+      } @empty {
+        <div class="empty-state">
+          <p>No project budget vs actual data found for the selected date.</p>
+        </div>
+      }
+    </div>
+  }
+</div>

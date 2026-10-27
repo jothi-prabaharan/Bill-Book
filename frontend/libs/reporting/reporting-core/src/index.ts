@@ -108,4 +108,7 @@ export * from './lib/fixed-asset-reconciliation/fixed-asset-reconciliation-repor
 export * from './lib/project-profitability/project-profitability-report.models';
 export * from './lib/project-profitability/project-profitability-report.service';
 
+export * from './lib/project-budget-vs-actual/project-budget-vs-actual-report.models';
+export * from './lib/project-budget-vs-actual/project-budget-vs-actual-report.service';
+
 

@@ -813,6 +813,19 @@ The Project Profitability report has its own page at `/reports/project-profitabi
 - **Responsive Layout:** On mobile viewports (< 800px), projects transform into stacked cards showing status badges, metadata, paired metrics, and drill buttons.
 - **Catalog Source:** The catalog's **Project Profitability** report (`project-profitability`) marks both From and To parameters as required (`IsRequired = true`).
 
+### Project Budget vs Actual
+
+The Project Budget vs Actual report has its own page at `/reports/project-budget-vs-actual` (TK-257), under **Reports > Projects**. It requires **reports.view**, **projects.view**, and the branch's business type. It compares each project's overall cost budget against actual expense ledger postings as at a chosen date, and displays task-level estimated hours versus actual time logged.
+
+- **As at** date is required (D-67). The page opens on today.
+- **Filters:** Optional **Customer**, **Status** (Active, Completed, OnHold, Cancelled), **Billing Method** (FixedFee, TimeAndMaterials, NonBillable), and **Project** dropdowns.
+- **Summary Metric Cards:** Top metric cards display **Total Projects**, **Total Budget Cost**, **Total Actual Cost**, **Cost Variance** (favourable/unfavourable badges), **Over Budget Projects**, and **Total Hours Logged**.
+- **Collapsible Hierarchical Project Rows:** Projects display Project Code, Name, Customer, Status badge, Billing Method, Cost Budget, Actual Cost, Cost Variance, Budget Used %, Task Count, Hours Logged, and a toggle button to expand task breakdown.
+- **Task-Level Detail Grid:** For expanded projects, each task shows Task Name, Milestone, Status, Budget Hours, Actual Hours, Hours Variance, and Hours Used %, highlighting tasks exceeding their estimated hours.
+- **Direct Drill Link:** A direct link opens Budget vs Actual by Project (`/reports/budget-vs-actual-by-project?projectId=...`) for deep account-level general ledger inspection.
+- **Responsive Layout:** On mobile viewports (< 800px), projects transform into stacked cards showing status badges, metadata, paired budget metrics, and task breakdown cards.
+- **Catalog Source:** The catalog's **Project Budget vs Actual** report (`project-budget-vs-actual`) marks the `asOf` date parameter as required (`IsRequired = true`).
+
 ## Salary Increment Report
 
 Every salary revision that takes effect in a period, under **Payroll** in the list, or straight at `/reports/salary-increment`. It needs the Payroll add-on and **payroll.view** (TK-198). Unlike the other reports it has a page of its own, so it has no column chooser, saved views, schedule or export.
