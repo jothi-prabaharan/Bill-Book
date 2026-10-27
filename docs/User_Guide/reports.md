@@ -425,6 +425,21 @@ The Quotation Track Report has its own page at `/reports/quotation-track-report`
 
 The catalog's **Quotation Track**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It lists the quotes of the period but void ones, with the **Valid until** date, the **Outcome** and the value in the branch's currency. Two columns are new, so a branch set up earlier gets them when its report catalog is seeded again.
 
+## Delivery Order Track Report
+
+The Delivery Order Track Report has its own page at `/reports/delivery-order-track-report` (TK-232), under **Reports › Sales Reports**. Besides access to reports it needs **sales.view**. It follows each delivery challan from the goods leaving to the invoice.
+
+- **From** and **To** are both required, and are the **challan date**. The page opens on the financial year to date and runs straight away. A **To** before **From** is refused under **To**. **Customer** and **Challan type** (sale, job work, approval, branch transfer or sample) narrow it, and **Not yet invoiced only** keeps the challans with something still to bill.
+- **Status tabs** count the challans at each stage, whichever tab is open: **Not invoiced** (nothing on it billed), **Partly invoiced** (something billed and something still to bill, even if one line is billed in full) and **Invoiced** (every line billed in full), then **Void**. **All** is every status except Void, which is listed only under its own tab. A challan can be voided only as a draft, so a void challan delivered nothing.
+- Each challan has a heading with its number (a link), status, type, date, the day it was dispatched, the customer, the **sales order it was delivered against** (a link) and the **invoices raised from it** (links). Under it, a row for each **line** with the item, **Delivered**, **Invoiced** (what invoices raised from the challan have billed) and **To bill** (delivered less invoiced), in the line's own unit, and the line's **Delivered value**, **Invoiced value** and **To bill value**. A **Challan value** row closes it.
+- **Values are before tax in the branch's currency, at the challan's own price per unit**, so the invoiced and to-bill values are shares of the delivered value and add up exactly.
+- **Invoiced is the line's own running figure**, which an invoice raised from the challan advances (and voiding it takes back). An invoice raised from the sales order that does not name the challan bills the order's lines and clears the goods-delivered-not-invoiced account, but does not advance the challan's figure, so the challan keeps reading as not invoiced; raise the invoice from the challan to keep the two in step.
+- Only a sale challan is a supply. Job work, approval, branch transfer and sample challans move goods without a sale, so they stay unbilled unless an invoice names them (for an approval the customer keeps).
+- The **Total** at the foot and the sentence above the list are of every challan the filters match, not only those loaded.
+- The list loads 25 challans at a time with **Show more challans**. On a phone each challan is a card with its lines inside.
+
+The catalog's **Delivery Challan Track**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It lists the challans of the period but void ones, with the type, how far each has been billed, its value and what is still to bill in the branch's currency. Four columns are new, so a branch set up earlier gets them when its report catalog is seeded again.
+
 ## Project reports
 
 Four reports read project accounting, under **Projects** in the list. Running them needs **projects.view** as well as access to reports.

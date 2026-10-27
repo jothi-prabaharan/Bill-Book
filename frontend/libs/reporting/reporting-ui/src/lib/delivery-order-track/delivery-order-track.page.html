@@ -1,0 +1,171 @@
+<header class="page-head">
+  <div>
+    <h1>Delivery Order Track Report</h1>
+    <p class="subtitle text-muted">
+      Each delivery challan raised in a period and how far it has been billed: what was delivered and invoiced of every line, and what is still to bill,
+      with the order it was delivered against and the invoices raised from it. Values are before tax in the branch's base currency, at the challan's own price.
+    </p>
+  </div>
+</header>
+
+<form class="filters card" [formGroup]="filters" (ngSubmit)="run()" novalidate>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'dot-from'" label="From" formControlName="fromDate" [required]="true"
+                          [error]="err('fromDate', 'From date')" />
+  </div>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'dot-to'" label="To" formControlName="toDate" [required]="true"
+                          [error]="err('toDate', 'To date')" />
+  </div>
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'dot-customer'" label="Customer" placeholder="All customers" [options]="customerOptions()"
+               [loading]="!choicesLoaded()" emptyText="No customers" formControlName="contactId"
+               [error]="err('contactId', 'Customer')" />
+  </div>
+  <div class="filters__field">
+    <bb-select [id]="'dot-type'" label="Challan type" placeholder="All types" [options]="typeOptions"
+               formControlName="challanType" [error]="err('challanType', 'Challan type')" />
+  </div>
+  <div class="filters__field filters__field--check">
+    <bb-checkbox text="Not yet invoiced only" formControlName="notInvoicedOnly" />
+  </div>
+  <div class="filters__actions">
+    <button class="btn btn-primary" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Running…' : 'Run report' }}
+    </button>
+  </div>
+</form>
+
+@if (result()) {
+  <bb-status-tabs [tabs]="tabs()" [value]="progress()" label="Challan status" (valueChange)="chooseProgress($event)" />
+}
+
+@if (messages().length > 0) {
+  <bb-message-box [messages]="messages()" />
+}
+
+@if (result(); as report) {
+  <p class="period text-muted">
+    {{ report.fromDate | reportDate }} to {{ report.toDate | reportDate }}. Quantities are in each line's own unit; values are in {{ report.baseCurrencyCode }}.
+  </p>
+
+  @if (report.totalChallans === 0) {
+    <p class="empty text-muted">No challans match these filters.</p>
+  } @else if (narrow()) {
+    <div class="cards" role="list" aria-label="Delivery order track">
+      @for (card of cards(); track card[0].key) {
+        <article class="card entry" role="listitem">
+          @for (row of card; track row.key) {
+            @switch (row.kind) {
+              @case ('challan') {
+                <header class="entry__head">
+                  @if (row.link) { <a class="link" [routerLink]="row.link"><strong>{{ row.name }}</strong></a> }
+                  @if (row.progress) { <span [class]="'tag ' + progressTag(row.progress)">{{ progressLabel(row.progress) }}</span> }
+                </header>
+                <p class="entry__who">{{ row.contactName }}</p>
+                <p class="entry__dates text-muted">
+                  {{ row.date | reportDate }}
+                  @if (row.challanType) { · {{ typeLabel(row.challanType) }} }
+                  @if (row.currency) { · {{ row.currency }} }
+                </p>
+                @if (row.orderNo) {
+                  <p class="entry__dates text-muted">Against @if (row.orderLink) { <a class="link" [routerLink]="row.orderLink">{{ row.orderNo }}</a> } @else { {{ row.orderNo }} }</p>
+                }
+                @if (row.invoices.length > 0) {
+                  <p class="entry__dates text-muted">Invoiced on @for (invoice of row.invoices; track invoice.no; let last = $last) { <a class="link" [routerLink]="invoice.link">{{ invoice.no }}</a>@if (!last) {, } }</p>
+                }
+              }
+              @case ('line') {
+                <section class="doc">
+                  <div class="doc__head">
+                    <strong>{{ row.name }}</strong>
+                    @if (row.code) { <span class="text-muted">{{ row.code }}</span> }
+                  </div>
+                  <dl class="figures">
+                    <div class="figures__row"><dt>Delivered</dt><dd>{{ row.delivered }} {{ row.unitCode }}</dd></div>
+                    <div class="figures__row"><dt>Invoiced</dt><dd>{{ row.invoiced }}</dd></div>
+                    <div class="figures__row figures__row--balance"><dt>To bill</dt><dd>{{ row.toBill }}</dd></div>
+                  </dl>
+                </section>
+              }
+              @case ('subtotal') {
+                <dl class="figures figures--subtotal">
+                  <div class="figures__row"><dt>Delivered value</dt><dd><bb-report-amount [value]="row.deliveredValue" /></dd></div>
+                  <div class="figures__row"><dt>Invoiced value</dt><dd><bb-report-amount [value]="row.invoicedValue" /></dd></div>
+                  <div class="figures__row figures__row--balance"><dt>To bill</dt><dd><bb-report-amount [value]="row.toBillValue" /></dd></div>
+                </dl>
+              }
+              @case ('total') {
+                <header class="entry__head"><strong>{{ row.name }}</strong></header>
+                <dl class="figures">
+                  <div class="figures__row"><dt>Delivered value</dt><dd><bb-report-amount [value]="row.deliveredValue" /></dd></div>
+                  <div class="figures__row"><dt>Invoiced value</dt><dd><bb-report-amount [value]="row.invoicedValue" /></dd></div>
+                  <div class="figures__row figures__row--balance"><dt>To bill</dt><dd><bb-report-amount [value]="row.toBillValue" /></dd></div>
+                </dl>
+              }
+            }
+          }
+        </article>
+      }
+    </div>
+  } @else {
+    <div class="matrix">
+      <bb-data-grid flush [columns]="columns" [data]="rows()" [rowClass]="rowClass" [sortable]="false"
+                    [showColumnFilters]="false" [showCount]="false" [paged]="false" label="Delivery order track">
+        <ng-template bbCellTemplate="item" let-row>
+          @switch (row.kind) {
+            @case ('challan') {
+              <span class="challan">
+                @if (row.link) { <a class="link" [routerLink]="row.link"><strong>{{ row.name }}</strong></a> }
+                @if (row.progress) { <span [class]="'tag ' + progressTag(row.progress)">{{ progressLabel(row.progress) }}</span> }
+                @if (row.challanType) { <span class="tag tag-outline">{{ typeLabel(row.challanType) }}</span> }
+                <span class="challan__meta text-muted">
+                  <span>{{ row.date | reportDate }}</span>
+                  <span>dispatched {{ row.dispatchDate | reportDate }}</span>
+                  <span class="challan__who">{{ row.contactName }}</span>
+                  @if (row.currency) { <span>{{ row.currency }}</span> }
+                  @if (row.orderNo) {
+                    <span>against @if (row.orderLink) { <a class="link" [routerLink]="row.orderLink">{{ row.orderNo }}</a> } @else { {{ row.orderNo }} }</span>
+                  }
+                  @if (row.invoices.length > 0) {
+                    <span class="challan__invoices">invoiced on
+                      @for (invoice of row.invoices; track invoice.no) { <a class="link" [routerLink]="invoice.link">{{ invoice.no }}</a> }</span>
+                  }
+                </span>
+              </span>
+            }
+            @case ('line') {
+              <span class="item">
+                {{ row.name }}
+                @if (row.code) { <span class="item__code text-muted">{{ row.code }}</span> }
+              </span>
+            }
+            @default { <strong class="label">{{ row.name }}</strong> }
+          }
+        </ng-template>
+        <ng-template bbCellTemplate="delivered" let-row>@if (row.delivered !== null) { <span class="qty">{{ row.delivered }} <small class="text-muted">{{ row.unitCode }}</small></span> }</ng-template>
+        <ng-template bbCellTemplate="invoiced" let-row>@if (row.invoiced !== null) { {{ row.invoiced }} }</ng-template>
+        <ng-template bbCellTemplate="toBill" let-row>@if (row.toBill !== null) { <strong>{{ row.toBill }}</strong> }</ng-template>
+        <ng-template bbCellTemplate="deliveredValue" let-row>@if (row.deliveredValue !== null) { <bb-report-amount [value]="row.deliveredValue" /> }</ng-template>
+        <ng-template bbCellTemplate="invoicedValue" let-row>@if (row.invoicedValue !== null) { <bb-report-amount [value]="row.invoicedValue" /> }</ng-template>
+        <ng-template bbCellTemplate="toBillValue" let-row>@if (row.toBillValue !== null) { <strong><bb-report-amount [value]="row.toBillValue" /></strong> }</ng-template>
+      </bb-data-grid>
+    </div>
+
+    @if (more()) {
+      <div class="more">
+        <button class="btn" type="button" (click)="loadMore()" [disabled]="busy()">Show more challans</button>
+        <span class="more__count text-muted">{{ report.challans.length }} of {{ report.totalChallans }} shown</span>
+      </div>
+    }
+  }
+
+  @if (report.totalChallans > 0) {
+    <p class="notes text-muted">
+      A challan is listed by its challan date. Invoiced is each line's own running figure, advanced by an invoice raised from the challan; to bill is delivered less invoiced, on every line.
+      A challan is invoiced when every line is billed in full, not invoiced when nothing is, and partly invoiced between. An invoice raised from the sales order that does not name the challan bills the order's lines and does not advance the challan's own figure, so the challan still reads as unbilled.
+      Only a sale challan is a supply; job work, approval, branch transfer and sample challans move goods without a sale, so goods on them are not to bill unless the customer keeps them and an invoice names the challan.
+      A void challan was withdrawn as a draft and delivered nothing, so it is listed only under Void. The total at the foot is of every challan the filters match, not only those shown.
+    </p>
+  }
+}

@@ -263,6 +263,7 @@ builder.Services.AddScoped<SalesAnalysisReportRepository>();
 builder.Services.AddScoped<SalesAnalysisDetailReportRepository>();
 builder.Services.AddScoped<SalesOrderTrackReportRepository>();
 builder.Services.AddScoped<QuotationTrackReportRepository>();
+builder.Services.AddScoped<DeliveryOrderTrackReportRepository>();
 
 // The report builder's datasets (TK-113). Their custom field columns come
 // from Master's definitions, cached five minutes per branch and kind.

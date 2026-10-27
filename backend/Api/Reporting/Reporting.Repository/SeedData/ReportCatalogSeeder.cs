@@ -975,14 +975,20 @@ public sealed class ReportCatalogSeeder
             Title = "Delivery Challan Track",
             Module = ReportModule.Sales,
             RequiredPermission = "sales.view",
-            Description = "Every delivery challan with its status.",
+            Description = "Every delivery challan dated in a period with how far it has been billed and what is still to bill.",
             SortOrder = 120,
             Columns =
             [
                 new("documentNo", "Challan No", ColumnDataType.Text, IsDefault: true, IsPrimary: true),
                 new("documentDate", "Date", ColumnDataType.Date, IsDefault: true),
                 new("contactName", "Customer", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
-                new("status", "Status", ColumnDataType.Text, IsDefault: true),
+                new("status", "Status", ColumnDataType.Text),
+                new("challanType", "Type", ColumnDataType.Enum, IsDefault: true, IsGroupable: true),
+                new("progress", "Billing", ColumnDataType.Enum, IsDefault: true, IsGroupable: true),
+                new("deliveredValue", "Delivered value", ColumnDataType.Money, IsDefault: true,
+                    Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("toBillValue", "To bill", ColumnDataType.Money, IsDefault: true,
+                    Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
             ],
         },
         new()

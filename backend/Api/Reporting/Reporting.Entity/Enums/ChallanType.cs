@@ -10,4 +10,5 @@ public enum ChallanType
     JobWork = 1,
     Approval = 2,
     BranchTransfer = 3,
+    Sample = 4,
 }
