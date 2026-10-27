@@ -43,3 +43,4 @@ export * from './lib/inventory-item-list/inventory-item-list-report.page';
 export * from './lib/inventory-aging/inventory-aging-report.page';
 export * from './lib/batch-tracking-status/batch-tracking-status-report.page';
 export * from './lib/batch-tracking-detail/batch-tracking-detail-report.page';
+export * from './lib/serial-tracking-status/serial-tracking-status-report.page';

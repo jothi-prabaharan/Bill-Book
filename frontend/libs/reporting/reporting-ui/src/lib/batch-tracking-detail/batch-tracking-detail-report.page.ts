@@ -18,7 +18,6 @@ import {
   DataGridCellTemplateDirective,
   DataGridComponent,
   MessageBoxComponent,
-  ReportAmountComponent,
   ReportDatePipe,
   SelectComponent,
   UiMessage,

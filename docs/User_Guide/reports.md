@@ -705,6 +705,17 @@ The Batch Tracking Detail Report has its own page at `/reports/batch-tracking-de
 - **Arithmetic:** Each batch's closing balance equals opening quantity plus total in minus total out, and matches its available quantity on the Batch Tracking Status Report (TK-247) at the To date.
 - **Catalog Source:** The catalog's **Batch Tracking Detail Report** (`batch-tracking-detail`) marks both From and To parameters as required (`IsRequired = true`).
 
+## Serial Tracking Status Report
+
+The Serial Tracking Status Report has its own page at `/reports/serial-tracking-status-report` (TK-249), under **Reports > Inventory Report**. Besides access to reports it needs **inventory.view**. It shows every tracked serial number created on or before a chosen as-at date, with its current status, item details, warehouse, and receipt/issue documents.
+
+- **As at** date is required (D-67). The page defaults to today's date.
+- **Filters:** Optional **Item**, **Warehouse**, **Status** (All, In Stock, Issued, Returned, Damaged, Expired), and **Search** (matching serial number, item code, or item name).
+- **Summary Metrics:** At the top of the report, metric cards display **Total Serials**, **In Stock**, **Issued**, and **Other Status** (Damaged/Expired/Returned).
+- **Columns & Badges:** Serial Number, Item Code, Item Name, Category, Warehouse, Received Date, GRN / Receipt Ref, Status (with dynamic color badges), Issued Date, and Sale / Issue Ref.
+- **Status Evaluation:** Effective status is evaluated as at the chosen As-At date: an item issued after the As-At date is accurately reported as In Stock as of that date.
+- **Catalog Source:** The catalog's **Serial Tracking Status** report (`serial-tracking-status`) marks the `asOf` date parameter as required (`IsRequired = true`), joining `ReceivedMovement` and `IssuedMovement` to provide document references.
+
 ## Project reports
 
 Four reports read project accounting, under **Projects** in the list. Running them needs **projects.view** as well as access to reports.

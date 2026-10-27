@@ -1,0 +1,230 @@
+<header class="page-head">
+  <div>
+    <h1>Serial Tracking Status Report</h1>
+    <p class="subtitle text-muted">
+      Every serial number as at a date: in stock, sold (to whom), returned or written off, and warehouse location.
+    </p>
+  </div>
+</header>
+
+<form class="filters card" [formGroup]="filters" (ngSubmit)="run()" novalidate>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'sts-asof'" label="As at" formControlName="asOfDate" [required]="true"
+                          [error]="err('asOfDate', 'As at date')" />
+  </div>
+
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'sts-item'" label="Item" placeholder="All items" [options]="itemOptions()"
+               [loading]="!choicesLoaded()" emptyText="No serial items" formControlName="itemId" />
+  </div>
+
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'sts-warehouse'" label="Warehouse" placeholder="All warehouses" [options]="warehouseOptions()"
+               [loading]="!choicesLoaded()" emptyText="No warehouses" formControlName="warehouseId" />
+  </div>
+
+  <div class="filters__field">
+    <bb-select [id]="'sts-status'" label="Status" [options]="statusOptions" formControlName="status" />
+  </div>
+
+  <div class="filters__field filters__field--search">
+    <bb-text-input [id]="'sts-search'" label="Search" placeholder="Search serial number…" formControlName="search" />
+  </div>
+
+  <div class="filters__actions">
+    <button class="btn btn-primary" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Running…' : 'Run report' }}
+    </button>
+  </div>
+</form>
+
+@if (messages().length > 0) {
+  <bb-message-box [messages]="messages()" />
+}
+
+@if (result(); as report) {
+  <div class="summary-bar">
+    <p class="period text-muted">
+      As at {{ report.asOfDate | reportDate }}.
+      Showing {{ serials().length }} of {{ report.totalItems }} serial{{ report.totalItems === 1 ? '' : 's' }}.
+    </p>
+  </div>
+
+  <!-- Interactive Status Summary Cards -->
+  <div class="metrics-grid">
+    <div class="metric-card" [class.metric-card--active]="filters.value.status === 'All'"
+         (click)="setStatusFilter('All')" role="button" tabindex="0">
+      <span class="metric-label">Total Tracked</span>
+      <span class="metric-value">{{ report.totals.totalSerials }}</span>
+      <span class="metric-sub text-muted">All serial numbers</span>
+    </div>
+
+    <div class="metric-card" [class.metric-card--active]="filters.value.status === 'InStock'"
+         (click)="setStatusFilter('InStock')" role="button" tabindex="0">
+      <span class="metric-label">In Stock (Available)</span>
+      <span class="metric-value text-success font-bold">{{ report.totals.inStockCount }}</span>
+      <span class="metric-sub text-muted">On hand in warehouse</span>
+    </div>
+
+    <div class="metric-card" [class.metric-card--active]="filters.value.status === 'Sold'"
+         (click)="setStatusFilter('Sold')" role="button" tabindex="0">
+      <span class="metric-label">Sold</span>
+      <span class="metric-value text-info font-bold">{{ report.totals.soldCount }}</span>
+      <span class="metric-sub text-muted">Delivered to customers</span>
+    </div>
+
+    <div class="metric-card" [class.metric-card--active]="filters.value.status === 'Returned'"
+         (click)="setStatusFilter('Returned')" role="button" tabindex="0">
+      <span class="metric-label">Returned</span>
+      <span class="metric-value text-warning font-bold">{{ report.totals.returnedCount }}</span>
+      <span class="metric-sub text-muted">Back in stock / pending</span>
+    </div>
+
+    <div class="metric-card" [class.metric-card--active]="filters.value.status === 'Scrapped'"
+         (click)="setStatusFilter('Scrapped')" role="button" tabindex="0">
+      <span class="metric-label">Scrapped / Written Off</span>
+      <span class="metric-value text-danger font-bold">{{ report.totals.scrappedCount }}</span>
+      <span class="metric-sub text-muted">Damaged or written off</span>
+    </div>
+  </div>
+
+  @if (serials().length === 0) {
+    <p class="empty text-muted">No serial numbers match these filters.</p>
+  } @else if (narrow()) {
+    <div class="cards" role="list" aria-label="Serial tracking status list">
+      @for (s of serials(); track s.itemSerialId) {
+        <article class="card serial-card" role="listitem">
+          <header class="serial-card__head">
+            <div class="serial-card__title">
+              <strong class="font-mono text-lg">{{ s.serialNumber }}</strong>
+              <span>{{ s.itemName }} <span class="text-muted">({{ s.itemCode }})</span></span>
+            </div>
+            <span class="badge" [class.badge-success]="s.status === 'InStock'"
+                                [class.badge-info]="s.status === 'Sold'"
+                                [class.badge-warning]="s.status === 'Returned'"
+                                [class.badge-danger]="s.status === 'Scrapped'">
+              {{ s.status }}
+            </span>
+          </header>
+
+          <div class="serial-card__meta">
+            @if (s.categoryName) { <span class="badge">{{ s.categoryName }}</span> }
+            <span class="badge">{{ s.warehouseName }}</span>
+            @if (s.hallmarkNumber) {
+              <span class="badge badge-hallmark">HUID: {{ s.hallmarkNumber }}</span>
+            }
+          </div>
+
+          <div class="serial-card__body">
+            @if (s.receivedDate) {
+              <div>
+                <span class="text-muted">Received: </span>
+                <span>{{ s.receivedDate | reportDate }}</span>
+                @if (s.receivedDocumentNumber) {
+                  <span class="font-mono"> ({{ s.receivedDocumentNumber }})</span>
+                }
+                @if (s.receivedFromContactName) {
+                  <span> from {{ s.receivedFromContactName }}</span>
+                }
+              </div>
+            }
+
+            @if (s.soldDate) {
+              <div>
+                <span class="text-muted">Sold: </span>
+                <span>{{ s.soldDate | reportDate }}</span>
+                @if (s.soldDocumentNumber) {
+                  <span class="font-mono"> ({{ s.soldDocumentNumber }})</span>
+                }
+                @if (s.soldToContactName) {
+                  <span> to <strong>{{ s.soldToContactName }}</strong></span>
+                }
+              </div>
+            }
+
+            @if (s.expiryDate) {
+              <div>
+                <span class="text-muted">Expiry / Warranty: </span>
+                <span>{{ s.expiryDate | reportDate }}</span>
+              </div>
+            }
+          </div>
+        </article>
+      }
+    </div>
+  } @else {
+    <div class="table-container">
+      <bb-data-grid flush [columns]="columns" [data]="serials()" [ariaLabel]="'Serial tracking status table'">
+        <ng-template bbCellTemplate="serialNumber" let-s>
+          <div class="serial-cell">
+            <strong class="font-mono">{{ s.serialNumber }}</strong>
+            @if (s.hallmarkNumber) {
+              <span class="badge badge-hallmark">HUID: {{ s.hallmarkNumber }}</span>
+            }
+          </div>
+        </ng-template>
+
+        <ng-template bbCellTemplate="itemCode" let-s>
+          <span class="font-mono text-muted">{{ s.itemCode }}</span>
+        </ng-template>
+
+        <ng-template bbCellTemplate="itemName" let-s>
+          <span>{{ s.itemName }}</span>
+        </ng-template>
+
+        <ng-template bbCellTemplate="status" let-s>
+          <span class="badge" [class.badge-success]="s.status === 'InStock'"
+                              [class.badge-info]="s.status === 'Sold'"
+                              [class.badge-warning]="s.status === 'Returned'"
+                              [class.badge-danger]="s.status === 'Scrapped'">
+            {{ s.status }}
+          </span>
+        </ng-template>
+
+        <ng-template bbCellTemplate="warehouseName" let-s>
+          <span>{{ s.warehouseName }}</span>
+        </ng-template>
+
+        <ng-template bbCellTemplate="receivedDate" let-s>
+          @if (s.receivedDate) {
+            <div class="provenance-cell">
+              <span>{{ s.receivedDate | reportDate }}</span>
+              @if (s.receivedDocumentNumber) {
+                <span class="text-muted font-mono text-xs">{{ s.receivedDocumentNumber }}</span>
+              }
+              @if (s.receivedFromContactName) {
+                <span class="text-muted text-xs">{{ s.receivedFromContactName }}</span>
+              }
+            </div>
+          } @else {
+            <span class="text-muted">—</span>
+          }
+        </ng-template>
+
+        <ng-template bbCellTemplate="soldDate" let-s>
+          @if (s.soldDate) {
+            <div class="provenance-cell">
+              <span class="font-medium">{{ s.soldToContactName || 'Customer' }}</span>
+              <div class="text-muted text-xs">
+                <span>{{ s.soldDate | reportDate }}</span>
+                @if (s.soldDocumentNumber) {
+                  <span class="font-mono"> · {{ s.soldDocumentNumber }}</span>
+                }
+              </div>
+            </div>
+          } @else {
+            <span class="text-muted">—</span>
+          }
+        </ng-template>
+
+        <ng-template bbCellTemplate="expiryDate" let-s>
+          @if (s.expiryDate) {
+            <span>{{ s.expiryDate | reportDate }}</span>
+          } @else {
+            <span class="text-muted">—</span>
+          }
+        </ng-template>
+      </bb-data-grid>
+    </div>
+  }
+}

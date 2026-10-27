@@ -15,6 +15,11 @@ public sealed class SerialTrackingStatusSourceRepository : ReportSource<SerialTr
 
     public override string RequiredPermission => "inventory.view";
 
+    public override IReadOnlyList<ReportParameterRepository> Parameters =>
+    [
+        new() { Name = "asOf", Label = "As at", DataType = ColumnDataType.Date, IsRequired = true },
+    ];
+
     public override IReadOnlyList<ReportColumn> Columns =>
     [
         ReportColumn.Of<SerialTrackingStatusRow, string>("serialNo", ColumnDataType.Text, r => r.SerialNo),
@@ -31,6 +36,8 @@ public sealed class SerialTrackingStatusSourceRepository : ReportSource<SerialTr
 
     protected override IQueryable<SerialTrackingStatusRow> Build(ReportParameters parameters, ReportingDbContext db)
     {
+        DateOnly? asOf = parameters.Date("asOf");
+
         return from s in db.ItemSerials
                join i in db.Items on s.ItemId equals i.ItemId
                join c in db.ItemCategories on i.ItemCategoryId equals c.ItemCategoryId into categories
@@ -39,8 +46,13 @@ public sealed class SerialTrackingStatusSourceRepository : ReportSource<SerialTr
                from b in batches.DefaultIfEmpty()
                join w in db.Warehouses on s.WarehouseId equals w.WarehouseId into warehouses
                from w in warehouses.DefaultIfEmpty()
-               // InStock = 0, Sold = 1, Returned = 2, Scrapped = 3
-               let isAvailable = s.Status == SerialStatus.InStock || s.Status == SerialStatus.Returned
+               join rm in db.StockMovements on s.ReceivedMovementId equals (long?)rm.StockMovementId into recMoves
+               from rm in recMoves.DefaultIfEmpty()
+               join im in db.StockMovements on s.IssuedMovementId equals (long?)im.StockMovementId into issMoves
+               from im in issMoves.DefaultIfEmpty()
+               where asOf == null || rm == null || rm.MovementDate <= asOf.Value
+               let issuedByAsOf = asOf != null && im != null && im.MovementDate <= asOf.Value
+               let isAvailable = (s.Status == SerialStatus.InStock || s.Status == SerialStatus.Returned) && !issuedByAsOf
                select new SerialTrackingStatusRow
                {
                    ItemSerialId = s.ItemSerialId,
