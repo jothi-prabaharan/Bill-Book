@@ -227,6 +227,8 @@ The catalog's **Journal Report**, used for export and scheduled emails, now need
 
 ## Account Transaction
 
+![Account Transaction](assets/screenshots/report-account-transaction.png)
+
 The Account Transaction report has its own page at `/reports/account-transaction` (TK-218), under **Reports › Accounting**. Besides access to reports it needs **accounting.view**. It is the detailed general ledger across many accounts at once: every posting in a period, account by account, with its contact, tax rate and a running balance.
 
 - **From** and **To** are both required. The page opens on the financial year to date and runs straight away. A **To** before **From** is refused under **To**.
@@ -259,6 +261,8 @@ The catalog's **Bank Summary**, used for export and scheduled emails, now needs 
 
 ## Foreign Currency Gain or Loss
 
+![Foreign Currency Gain or Loss](assets/screenshots/report-foreign-currency-gain-or-loss.png)
+
 The Foreign Currency Gain or Loss report has its own page at `/reports/foreign-currency-gain-or-loss` (TK-220), under **Reports › Accounting**. Besides access to reports it needs **accounting.view**. It shows what exchange rates have gained or lost on the branch's foreign-currency balances: **realized** when a settlement posted a difference, and **unrealized** on what is still open, at a rate you give for each currency. It posts nothing.
 
 - **From** and **As at** are both required. The page opens on the financial year to date, as at today, and runs straight away. An **As at** before **From** is refused under **As at**. **Currency** narrows the report to one currency; it lists the currencies the branch holds a balance in at the as-at date.
@@ -274,6 +278,8 @@ The catalog's **Foreign Currency Gain or Loss**, used for export, saved views an
 
 ## Foreign Currency Gain or Loss Details
 
+![Foreign Currency Gain or Loss Details](assets/screenshots/report-foreign-currency-gain-or-loss-details.png)
+
 The Foreign Currency Gain or Loss Details report has its own page at `/reports/foreign-currency-gain-or-loss-details` (TK-221), under **Reports › Accounting**. Besides access to reports it needs **accounting.view**. It shows the gains and losses of the **Foreign Currency Gain or Loss** report document by document: which settlement made each realized amount, and which open document carries each unrealized one. Its totals for each currency and account are that report's for the same dates and rates, worked out by the same code. It posts nothing.
 
 - **From** and **To** are both required. The page opens on the financial year to date and runs straight away. A **To** before **From** is refused under **To**. Realized covers **From** to **To**; open documents and unrealized are as at **To**. **Currency**, **Contact** and **Account** narrow the report; each lists only what has a foreign-currency posting up to **To**, and a contact or account that is not the branch's is refused at its own field.
@@ -288,6 +294,8 @@ The Foreign Currency Gain or Loss Details report has its own page at `/reports/f
 The catalog's **Foreign Currency Gain or Loss Details**, used for export, saved views and scheduled emails, now needs both **From** and **To** and refuses a run without them. It lists the ledger's postings rather than netting a settlement against the document it settles: one row for each foreign-currency balance posting up to **To**, with the amount in the currency and in base at the booked rate, and one for each realized difference in the period, so its rows add up to the same figures for each currency. The revaluation, unrealized, net, exposure and year-to-date columns are left empty there, because a rate is something you give for each run on the page. Until TK-221 it failed to run on any branch with a foreign-currency balance.
 
 ## Aged Receivables Summary
+
+![Aged Receivables Summary](assets/screenshots/report-aged-receivables-summary.png)
 
 The Aged Receivables Summary has its own page at `/reports/aged-receivables-summary` (TK-222), under **Reports › Sales Reports**. Besides access to reports it needs **sales.view**. It shows what each customer owed on a date and how overdue it was, in the branch's base currency.
 
@@ -305,6 +313,8 @@ The catalog's **Aged Receivables Summary**, used for export and scheduled emails
 
 ## Aged Receivables Detail
 
+![Aged Receivables Detail](assets/screenshots/report-aged-receivables-detail.png)
+
 The Aged Receivables Detail has its own page at `/reports/aged-receivables-detail` (TK-223), under **Reports › Sales Reports**. Besides access to reports it needs **sales.view**. It is the Aged Receivables Summary one document at a time: what makes up each customer's balance.
 
 - **As at**, **Age by**, **Column width** and **Customer** are the summary's, and **As at** is required. The page opens as at today, or on the date, ageing and customer the summary's link opened it with.
@@ -321,6 +331,8 @@ The catalog's **Aged Receivables Detail**, used for export and scheduled emails,
 
 ## Receivable Invoice Summary
 
+![Receivable Invoice Summary](assets/screenshots/report-receivable-invoice-summary.png)
+
 The Receivable Invoice Summary has its own page at `/reports/receivable-invoice-summary` (TK-224), under **Reports › Sales Reports**. Besides access to reports it needs **sales.view**. It lists the sales invoices raised in a period, newest first, with what each came to, what has been received and what is still due.
 
 - **From** and **To** are both required, and are the **invoice date**. The page opens on the financial year to date and runs straight away. A **To** before **From** is refused under **To**. **Customer** and **Currency** narrow it, and **Include credit notes** adds them as negative amounts.
@@ -336,6 +348,8 @@ The catalog's **Receivable Invoice Summary**, used for export and scheduled emai
 
 ## Receivable Invoice Detail
 
+![Receivable Invoice Detail](assets/screenshots/report-receivable-invoice-detail.png)
+
 The Receivable Invoice Detail has its own page at `/reports/receivable-invoice-detail` (TK-225), under **Reports › Sales Reports**. Besides access to reports it needs **sales.view**. It is the Receivable Invoice Summary line by line: the sales invoices raised in a period, newest first, each with the items, quantities, prices, discounts and taxes it is made of.
 
 - **From** and **To** are both required, and are the **invoice date**. The page opens on the financial year to date and runs straight away. A **To** before **From** is refused under **To**. **Customer**, **Item** and **Item category** narrow it. The **status tabs** above the list are the Receivable Invoice Summary's, with the same rules: **Awaiting payment**, **Partly paid**, **Overdue**, **Paid** and **Void**, and **All** is every status except Void. The statuses are as at the **To** date.
@@ -348,6 +362,8 @@ The Receivable Invoice Detail has its own page at `/reports/receivable-invoice-d
 The catalog's **Receivable Invoice Detail**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It lists a row for each line of the posted invoices in the period, with the line total in the branch's currency; voided invoices are not in it.
 
 ## Invoice Track Report
+
+![Invoice Track Report](assets/screenshots/report-invoice-track.png)
 
 The Invoice Track Report has its own page at `/reports/invoice-track-report` (TK-226), under **Reports › Sales Reports**. Besides access to reports it needs **sales.view**. It follows each sales invoice through its life: where it stands, the day it was posted, when it falls due, the last payment against it and what is still owed.
 
@@ -362,6 +378,8 @@ The catalog's **Invoice Track**, used for export and scheduled emails, now needs
 
 ## Invoice/DN Payment Collection Report
 
+![Invoice/DN Payment Collection Report](assets/screenshots/report-invoice-dn-payment-collection.png)
+
 The Invoice/DN Payment Collection Report has its own page at `/reports/invoice-dn-payment-collection-report` (TK-227), under **Reports › Sales Reports**. Besides access to reports it needs **sales.view**. It shows what was collected in a period and which invoices each receipt settled.
 
 - **From** and **To** are both required, and are the **receipt date**. The page opens on the financial year to date and runs straight away. A **To** before **From** is refused under **To**. **Customer**, **Bank account** and **Payment method** narrow it.
@@ -374,6 +392,8 @@ The Invoice/DN Payment Collection Report has its own page at `/reports/invoice-d
 The catalog's **Invoice/DN Payment Collection**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It lists a row for each invoice a posted receipt of the period settled, with the amount settled in the branch's currency.
 
 ## Sales Analysis
+
+![Sales Analysis](assets/screenshots/report-sales-analysis.png)
 
 The Sales Analysis has its own page at `/reports/sales-analysis` (TK-228), under **Reports › Sales Reports**. Besides access to reports it needs **sales.view**. It adds up what sold in a period by item, item category or customer.
 
@@ -388,6 +408,8 @@ The catalog's **Sales Analysis**, used for export and scheduled emails, now need
 
 ## Sales Analysis Detail Report
 
+![Sales Analysis Detail Report](assets/screenshots/report-sales-analysis-detail.png)
+
 The Sales Analysis Detail Report has its own page at `/reports/sales-analysis-detail-report` (TK-229), under **Reports › Sales Reports**. Besides access to reports it needs **sales.view**. It is the Sales Analysis before it is added up: the lines behind each figure.
 
 - **From** and **To** are both required, and are the **invoice date**. The page opens on the financial year to date and runs straight away. A **To** before **From** is refused under **To**. **Group by** chooses item, item category or customer. **Item**, **Item category**, **Customer** and **Warehouse** narrow it. **Include credit notes** is on, and lists a credit note's lines as negative amounts.
@@ -399,6 +421,8 @@ The Sales Analysis Detail Report has its own page at `/reports/sales-analysis-de
 The catalog's **Sales Analysis Detail**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It lists a row for each line, credit note lines included as negatives, with the unit price and the line's net sales in the branch's currency.
 
 ## Sales Order Track Report
+
+![Sales Order Track Report](assets/screenshots/report-sales-order-track.png)
 
 The Sales Order Track Report has its own page at `/reports/sales-order-track-report` (TK-230), under **Reports › Sales Reports**. Besides access to reports it needs **sales.view**. It follows each sales order from the order to the invoice.
 
@@ -413,6 +437,8 @@ The catalog's **Sales Order Track**, used for export and scheduled emails, now n
 
 ## Quotation Track Report
 
+![Quotation Track Report](assets/screenshots/report-quotation-track.png)
+
 The Quotation Track Report has its own page at `/reports/quotation-track-report` (TK-231), under **Reports › Sales Reports**. Besides access to reports it needs **sales.view**. It shows what became of each quote you sent.
 
 - **From** and **To** are both required, and are the **quote date**. The page opens on the financial year to date and runs straight away. A **To** before **From** is refused under **To**. **Customer** narrows it.
@@ -426,6 +452,8 @@ The Quotation Track Report has its own page at `/reports/quotation-track-report`
 The catalog's **Quotation Track**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It lists the quotes of the period but void ones, with the **Valid until** date, the **Outcome** and the value in the branch's currency. Two columns are new, so a branch set up earlier gets them when its report catalog is seeded again.
 
 ## Delivery Order Track Report
+
+![Delivery Order Track Report](assets/screenshots/report-delivery-order-track.png)
 
 The Delivery Order Track Report has its own page at `/reports/delivery-order-track-report` (TK-232), under **Reports › Sales Reports**. Besides access to reports it needs **sales.view**. It follows each delivery challan from the goods leaving to the invoice.
 
@@ -442,6 +470,8 @@ The catalog's **Delivery Challan Track**, used for export and scheduled emails, 
 
 ## Aged Payables Summary
 
+![Aged Payables Summary](assets/screenshots/report-aged-payables-summary.png)
+
 The Aged Payables Summary has its own page at `/reports/aged-payables-summary` (TK-233), under **Reports › Purchase Report**. Besides access to reports it needs **purchase.view**. It is the Aged Receivables Summary the other way round: what the branch owed each vendor on a date and how overdue it was, in the branch's base currency.
 
 - **As at** is required. The page opens as at today and runs straight away; a missing date is refused under the field.
@@ -457,6 +487,8 @@ The catalog's **Aged Payables Summary**, used for export and scheduled emails, n
 
 ## Aged Payables Details
 
+![Aged Payables Details](assets/screenshots/report-aged-payables-details.png)
+
 The Aged Payables Details has its own page at `/reports/aged-payables-details` (TK-234), under **Reports › Purchase Report**. Besides access to reports it needs **purchase.view**. It is the Aged Payables Summary one document at a time: what makes up what the branch owes each vendor on a date.
 
 - **As at** is required. The page opens as at today and runs straight away, or on the date, ageing, column width and vendor the summary linked it with; a missing date is refused under the field. **Age by**, **Column width** and **Vendor** are the summary's.
@@ -468,6 +500,8 @@ The Aged Payables Details has its own page at `/reports/aged-payables-details` (
 The catalog's **Aged Payables Details**, used for export and scheduled emails, now needs **As at** and refuses a run without it (it used to treat the date as optional and listed every bill at its full total). It lists a row for each open document, with its total and what is left, and a debit note or an unapplied payment shows as negative.
 
 ## Payable Invoice Summary
+
+![Payable Invoice Summary](assets/screenshots/report-payable-invoice-summary.png)
 
 The Payable Invoice Summary has its own page at `/reports/payable-invoice-summary` (TK-235), under **Reports › Purchase Report**. Besides access to reports it needs **purchase.view**. It is the Receivable Invoice Summary the other way round: every vendor bill in a period with its tax and total, what has been paid and what is still due.
 
@@ -484,6 +518,8 @@ The catalog's **Payable Invoice Summary**, used for export and scheduled emails,
 
 ## Payable Invoice Detail
 
+![Payable Invoice Detail](assets/screenshots/report-payable-invoice-detail.png)
+
 The Payable Invoice Detail has its own page at `/reports/payable-invoice-detail` (TK-236), under **Reports › Purchase Report**. Besides access to reports it needs **purchase.view**. It is the Payable Invoice Summary line by line: every vendor bill in a period with the items, quantities, prices, discounts and taxes it is made of.
 
 - **From** and **To** are both required, and are the **bill date**. The page opens on the financial year to date and runs straight away. A **To** before **From** is refused under **To**. **Vendor**, **Item** and **Item category** narrow it.
@@ -497,6 +533,8 @@ The Payable Invoice Detail has its own page at `/reports/payable-invoice-detail`
 The catalog's **Payable Invoice Detail**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It has a row for each line of each posted bill of the period, with the line total in the branch's currency; voided bills and drafts are not listed.
 
 ## Bills Track Report
+
+![Bills Track Report](assets/screenshots/report-bills-track.png)
 
 The Bills Track Report has its own page at `/reports/bills-track-report` (TK-237), under **Reports › Purchase Report**. Besides access to reports it needs **purchase.view**. It follows each vendor bill through its life: where it is stuck or standing, the dates of its steps and what is still owed to the vendor.
 
@@ -513,6 +551,8 @@ The catalog's **Bills Track**, used for export and scheduled emails, now needs b
 
 ## Bill/DN Payment Report
 
+![Bill/DN Payment Report](assets/screenshots/report-bill-dn-payment.png)
+
 The Bill/DN Payment Report has its own page at `/reports/bill-dn-payment-report` (TK-238), under **Reports › Purchase Report**. Besides access to reports it needs **purchase.view**. It shows what was paid to vendors in a period and which bills each payment settled.
 
 - **From** and **To** are both required, and are the **payment date**. The page opens on the financial year to date and runs straight away. A **To** before **From** is refused under **To**. **Vendor**, **Bank account** and **Payment method** narrow it.
@@ -525,6 +565,8 @@ The Bill/DN Payment Report has its own page at `/reports/bill-dn-payment-report`
 The catalog's **Bill / DN Payment**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It has a row for each bill a posted payment of the period settled, with the amount settled in the branch's currency.
 
 ## Purchase Analysis
+
+![Purchase Analysis](assets/screenshots/report-purchase-analysis.png)
 
 The Purchase Analysis has its own page at `/reports/purchase-analysis` (TK-239), under **Reports › Purchase Report**. Besides access to reports it needs **purchase.view**. It shows what was bought in a period, added up by item, item category or vendor.
 
@@ -540,6 +582,8 @@ The catalog's **Purchase Analysis**, used for export and scheduled emails, now n
 
 ## Purchase Order Track Report
 
+![Purchase Order Track Report](assets/screenshots/report-purchase-order-track.png)
+
 The Purchase Order Track Report has its own page at `/reports/purchase-order-track-report` (TK-240), under **Reports › Purchase Report**. Besides access to reports it needs **purchase.view**. It follows each purchase order from the order to the receipt and the bill.
 
 - **From** and **To** are both required, and are the **order date**. The page opens on the financial year to date and runs straight away. A **To** before **From** is refused under **To**. **Vendor** narrows it, and **Outstanding only** keeps the orders with something still to receive or to bill.
@@ -553,6 +597,8 @@ The Purchase Order Track Report has its own page at `/reports/purchase-order-tra
 The catalog's **Purchase Order Track**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It lists the orders of the period but cancelled ones; its **Fulfilment status** column is the order's progress, and its total is in the branch's currency.
 
 ## Purchase Receive Order Details
+
+![Purchase Receive Order Details](assets/screenshots/report-purchase-receive-order-details.png)
 
 The Purchase Receive Order Details has its own page at `/reports/purchase-receive-order-details` (TK-241), under **Reports › Purchase Report**. Besides access to reports it needs **purchase.view**. It lists every goods receipt line of a period: what arrived, from whom, against which purchase order, into which warehouse and at what cost.
 
@@ -568,6 +614,8 @@ The catalog's **Purchase Receive Order Details**, used for export and scheduled 
 
 ## Receive Order Track Report
 
+![Receive Order Track Report](assets/screenshots/report-receive-order-track.png)
+
 The Receive Order Track Report has its own page at `/reports/receive-order-track-report` (TK-242), under **Reports › Purchase Report**. Besides access to reports it needs **purchase.view**. It follows each goods receipt from the goods to the bill.
 
 - **From** and **To** are both required, and are the **receipt date**. The page opens on the financial year to date and runs straight away. A **To** before **From** is refused under **To**. **Vendor** narrows it, and **Not yet billed only** keeps the receipts with something still to bill.
@@ -580,6 +628,8 @@ The Receive Order Track Report has its own page at `/reports/receive-order-track
 The catalog's **Receive Order Track**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It has a row for each posted receipt of the period, its **Status** now the billing status above, with the value, the billed value and what is to bill in the branch's currency. Three columns are new, so a branch set up earlier gets them when its report catalog is seeded again.
 
 ## Inventory Item Summary
+
+![Inventory Item Summary](assets/screenshots/report-inventory-item-summary.png)
 
 The Inventory Item Summary has its own page at `/reports/inventory-item-summary` (TK-243), under **Reports › Inventory Report**. Besides access to reports it needs **inventory.view**. For each stocked item it shows what the period did to the stock.
 
