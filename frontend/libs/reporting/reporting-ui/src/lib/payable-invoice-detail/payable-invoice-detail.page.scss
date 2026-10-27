@@ -1,0 +1,229 @@
+/* The Payable Invoice Detail (TK-236): the filters, the status tabs, then each bill with its lines. */
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.page-head h1 {
+  font-size: 1.3rem;
+  margin: 0.2rem 0 0;
+}
+
+.subtitle,
+.period,
+.empty,
+.notes {
+  margin: 0;
+}
+
+.notes {
+  font-size: 12px;
+}
+
+/* Said when an item or category narrows the lines, so a subtotal is not read as a whole bill. */
+.narrowed {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-left: 3px solid var(--color-primary);
+  background: var(--color-surface-muted);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--space-2) var(--space-3);
+  align-items: start;
+  padding: var(--space-3);
+}
+
+.filters__field {
+  min-width: 0;
+}
+
+/* The button sits level with the inputs, below their labels. */
+.filters__actions {
+  align-self: end;
+  padding-bottom: var(--space-1);
+}
+
+.matrix {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.matrix bb-data-grid {
+  min-width: 56rem;
+}
+
+/* A bill's heading: number and status, then date, due date and vendor. The group row's small
+   capitals are for a section name, so the details are put back to a normal weight and case. */
+.bill {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px var(--space-2);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.bill strong {
+  font-size: 13px;
+}
+
+.bill__meta {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-3);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.bill__meta > span:not(.bill__who) {
+  white-space: nowrap;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: var(--space-3);
+}
+
+.item__code,
+.item__note {
+  font-size: 12px;
+}
+
+.item__asset {
+  margin-left: var(--space-1);
+  font-size: 11px;
+}
+
+.item__code {
+  margin-left: var(--space-1);
+}
+
+.label {
+  padding-left: var(--space-3);
+}
+
+.qty,
+.price {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* A discount's percentage and a foreign bill's total in base sit under the amount, smaller. */
+.amount {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.own {
+  display: block;
+  font-size: 11px;
+  color: var(--color-text-subtle);
+}
+
+.more {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.more__count {
+  font-size: 12px;
+}
+
+/* Phone: one card for each bill. */
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.entry {
+  padding: var(--space-2) var(--space-3);
+}
+
+.entry__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px var(--space-2);
+  font-size: 13px;
+}
+
+.entry__who,
+.entry__dates,
+.doc__note {
+  margin: 2px 0 0;
+  font-size: 12px;
+}
+
+.doc {
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-divider);
+}
+
+.doc__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px var(--space-2);
+  font-size: 13px;
+}
+
+.figures {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: var(--space-1) 0 0;
+  font-size: 13px;
+}
+
+.figures--subtotal {
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 2px solid var(--color-divider);
+}
+
+.figures__row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+
+.figures dt {
+  color: var(--color-text-muted);
+}
+
+.figures dd {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-variant-numeric: tabular-nums;
+}
+
+.figures__row--balance {
+  padding-top: var(--space-1);
+  border-top: 1px solid var(--color-divider);
+  font-weight: 600;
+}
+
+.figures__row--balance dt {
+  color: inherit;
+}

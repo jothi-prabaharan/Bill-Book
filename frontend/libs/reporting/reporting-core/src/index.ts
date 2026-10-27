@@ -56,6 +56,8 @@ export * from './lib/aged-payables-details/aged-payables-details.models';
 export * from './lib/aged-payables-details/aged-payables-details.service';
 export * from './lib/payable-invoice-summary/payable-invoice-summary.models';
 export * from './lib/payable-invoice-summary/payable-invoice-summary.service';
+export * from './lib/payable-invoice-detail/payable-invoice-detail.models';
+export * from './lib/payable-invoice-detail/payable-invoice-detail.service';
 export * from './lib/foreign-currency-gain-or-loss/foreign-currency-gain-or-loss.models';
 export * from './lib/foreign-currency-gain-or-loss/foreign-currency-gain-or-loss.service';
 export * from './lib/foreign-currency-gain-or-loss-details/foreign-currency-gain-or-loss-details.models';

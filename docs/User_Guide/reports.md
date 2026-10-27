@@ -482,6 +482,20 @@ The Payable Invoice Summary has its own page at `/reports/payable-invoice-summar
 
 The catalog's **Payable Invoice Summary**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It lists the posted bills of the period with their total in the branch's currency and what is still due on the **To** date; voided bills and debit notes are not listed.
 
+## Payable Invoice Detail
+
+The Payable Invoice Detail has its own page at `/reports/payable-invoice-detail` (TK-236), under **Reports › Purchase Report**. Besides access to reports it needs **purchase.view**. It is the Payable Invoice Summary line by line: every vendor bill in a period with the items, quantities, prices, discounts and taxes it is made of.
+
+- **From** and **To** are both required, and are the **bill date**. The page opens on the financial year to date and runs straight away. A **To** before **From** is refused under **To**. **Vendor**, **Item** and **Item category** narrow it.
+- **The bills are the summary's**: the same period, the same statuses and the same tab counts (**Awaiting payment**, **Partly paid**, **Overdue**, **Paid** and **Void**; All is every status except Void). A bill is the heading of its lines, with its number (a link), the vendor's own bill number, its dates, the vendor and its status; a **Reverse charge** bill says so. Debit notes are not listed here, and drafts never are.
+- Each line shows the item with its code, the description when it says more than the name, the quantity and unit, the unit price, any discount, the taxable value and the tax with its rate, and the line total. A line that is not for an item, such as freight or a service, shows its own description. **A line bought as a fixed asset is marked** with its asset category, such as **Fixed asset · Plant and machinery**.
+- **Lines and a bill's total are in the bill's own currency**, with its total in the branch's currency beside it on a foreign bill. **Round off**, what the rupee rounding added, is given as a row of its own, so the lines and the round off make the bill's total, the same figure the summary shows.
+- **Choosing an item or a category narrows the lines as well as the bills.** Only a bill with such a line is listed, and only those lines, so a bill's total below is of those lines and not of the whole bill: no round off is shown, and the page says so. The status tabs count only those bills.
+- The **Total** row and the sentence above the list are in the branch's currency, of every bill the filters match and not only those loaded; each line is taken to the branch's currency at its bill's rate. For the same bills, with nothing narrowing the lines, the taxable and tax totals equal the Payable Invoice Summary's.
+- The list loads 25 bills at a time with **Show more bills**. On a phone each bill is a card with its lines.
+
+The catalog's **Payable Invoice Detail**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It has a row for each line of each posted bill of the period, with the line total in the branch's currency; voided bills and drafts are not listed.
+
 ## Project reports
 
 Four reports read project accounting, under **Projects** in the list. Running them needs **projects.view** as well as access to reports.

@@ -183,6 +183,7 @@ public sealed class PayableInvoiceSummaryReportRepository
                 ContactId = b.ContactId,
                 CurrencyCode = b.CurrencyCode,
                 Sign = 1,
+                ExchangeRate = b.ExchangeRate,
                 IsVoid = b.Status == DocumentStatus.Void,
                 ReverseCharge = b.IsReverseCharge,
                 Taxable = Math.Round(b.TaxableAmount * b.ExchangeRate, 2),
@@ -218,6 +219,7 @@ public sealed class PayableInvoiceSummaryReportRepository
                     ContactId = d.ContactId,
                     CurrencyCode = d.CurrencyCode,
                     Sign = -1,
+                    ExchangeRate = d.ExchangeRate,
                     IsVoid = d.Status == DocumentStatus.Void,
                     ReverseCharge = false,
                     Taxable = -Math.Round(d.TaxableAmount * d.ExchangeRate, 2),
@@ -337,6 +339,7 @@ public sealed class PayableInvoiceSummaryReportRepository
                    ContactId = f.ContactId,
                    CurrencyCode = f.CurrencyCode,
                    ReverseCharge = f.ReverseCharge,
+                   ExchangeRate = f.ExchangeRate,
                    TotalSource = f.TotalSource,
                    Taxable = f.Taxable,
                    Cgst = f.Cgst,
@@ -462,6 +465,9 @@ public sealed class PayableInvoiceFigure
     /// <summary>1 for a bill, −1 for a debit note.</summary>
     public int Sign { get; set; }
 
+    /// <summary>The document's rate, base per unit of its own currency (TK-236: the detail takes a line to base with it).</summary>
+    public decimal ExchangeRate { get; set; }
+
     public bool IsVoid { get; set; }
 
     public bool ReverseCharge { get; set; }
@@ -530,6 +536,8 @@ public sealed class PayableInvoiceRow
     public string CurrencyCode { get; set; } = string.Empty;
 
     public bool ReverseCharge { get; set; }
+
+    public decimal ExchangeRate { get; set; }
 
     public decimal TotalSource { get; set; }
 

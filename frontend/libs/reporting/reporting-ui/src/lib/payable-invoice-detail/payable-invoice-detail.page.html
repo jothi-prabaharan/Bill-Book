@@ -1,0 +1,228 @@
+<header class="page-head">
+  <div>
+    <h1>Payable Invoice Detail</h1>
+    <p class="subtitle text-muted">
+      Every vendor bill dated in a period, line by line: the items, quantities, prices, discounts and taxes each is made of, with fixed assets marked. Lines and bill
+      totals are in the bill's own currency; the totals of the whole report are in the branch's base currency.
+    </p>
+  </div>
+</header>
+
+<form class="filters card" [formGroup]="filters" (ngSubmit)="run()" novalidate>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'pid-from'" label="From" formControlName="fromDate" [required]="true"
+                          [error]="err('fromDate', 'From date')" />
+  </div>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'pid-to'" label="To" formControlName="toDate" [required]="true"
+                          [error]="err('toDate', 'To date')" />
+  </div>
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'pid-vendor'" label="Vendor" placeholder="All vendors" [options]="vendorOptions()"
+               [loading]="!choicesLoaded()" emptyText="No vendors" formControlName="contactId"
+               [error]="err('contactId', 'Vendor')" />
+  </div>
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'pid-item'" label="Item" placeholder="All items" [options]="itemOptions()"
+               [loading]="!choicesLoaded()" emptyText="No items" formControlName="itemId"
+               [error]="err('itemId', 'Item')" />
+  </div>
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'pid-category'" label="Item category" placeholder="All categories" [options]="categoryOptions()"
+               [loading]="!choicesLoaded()" emptyText="No item categories" formControlName="itemCategoryId"
+               [error]="err('itemCategoryId', 'Item category')" />
+  </div>
+  <div class="filters__actions">
+    <button class="btn btn-primary" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Running…' : 'Run report' }}
+    </button>
+  </div>
+</form>
+
+@if (result()) {
+  <bb-status-tabs [tabs]="tabs()" [value]="status()" label="Bill status" (valueChange)="chooseStatus($event)" />
+}
+
+@if (messages().length > 0) {
+  <bb-message-box [messages]="messages()" />
+}
+
+@if (result(); as report) {
+  <p class="period text-muted">
+    {{ report.fromDate | reportDate }} to {{ report.toDate | reportDate }}. Lines are in each bill's own currency; the totals are in {{ report.baseCurrencyCode }}.
+  </p>
+
+  @if (report.linesFiltered) {
+    <p class="narrowed">
+      Only the lines for the chosen item or category are shown, so a bill's total below is of those lines and not of the whole bill.
+    </p>
+  }
+
+  @if (report.totalBills === 0) {
+    <p class="empty text-muted">No bills match these filters.</p>
+  } @else if (narrow()) {
+    <div class="cards" role="list" aria-label="Payable invoice detail">
+      @for (group of groups(); track group[0].key) {
+        <article class="card entry" role="listitem">
+          @for (row of group; track row.key) {
+            @switch (row.kind) {
+              @case ('heading') {
+                <header class="entry__head">
+                  @if (row.link) { <a class="link" [routerLink]="row.link"><strong>{{ row.name }}</strong></a> } @else { <strong>{{ row.name }}</strong> }
+                  @if (row.status) { <span [class]="'tag ' + statusTag(row.status)">{{ statusLabel(row.status) }}</span> }
+                  @if (row.reverseCharge) { <span class="tag tag-outline">Reverse charge</span> }
+                </header>
+                <p class="entry__who">{{ row.contactName }} <span class="text-muted">{{ row.contactCode }}</span></p>
+                <p class="entry__dates text-muted">
+                  @if (row.vendorBillNo) { Vendor bill {{ row.vendorBillNo }} · }
+                  {{ row.documentDate | reportDate }}
+                  @if (row.dueDate) { · due {{ row.dueDate | reportDate }} }
+                  @if (row.currency) { · {{ row.currency }} }
+                </p>
+              }
+              @case ('line') {
+                <section class="doc">
+                  <div class="doc__head">
+                    <strong>{{ row.itemName }}</strong>
+                    @if (row.itemCode) { <span class="text-muted">{{ row.itemCode }}</span> }
+                    @if (row.isCapital) { <span class="tag tag-info">Fixed asset@if (row.assetCategory) { · {{ row.assetCategory }} }</span> }
+                  </div>
+                  @if (row.description) { <p class="doc__note text-muted">{{ row.description }}</p> }
+                  <dl class="figures">
+                    <div class="figures__row">
+                      <dt>Qty × price</dt>
+                      <dd>{{ quantity(row.quantity) }} @if (row.unitCode) { {{ row.unitCode }} } × {{ unitPrice(row.unitPrice) }}</dd>
+                    </div>
+                    @if (row.discount) {
+                      <div class="figures__row">
+                        <dt>Discount @if (row.discountPercent) { ({{ row.discountPercent }}%) }</dt>
+                        <dd><bb-report-amount [value]="row.discount" [currency]="row.currency" /></dd>
+                      </div>
+                    }
+                    <div class="figures__row"><dt>Taxable</dt><dd><bb-report-amount [value]="row.taxable" [currency]="row.currency" /></dd></div>
+                    <div class="figures__row"><dt>Tax @if (row.taxRate) { ({{ row.taxRate }}%) }</dt><dd><bb-report-amount [value]="row.tax" [currency]="row.currency" /></dd></div>
+                    <div class="figures__row figures__row--balance"><dt>Line total</dt><dd><bb-report-amount [value]="row.total" [currency]="row.currency" /></dd></div>
+                  </dl>
+                </section>
+              }
+              @case ('roundoff') {
+                <dl class="figures">
+                  <div class="figures__row"><dt>{{ row.name }}</dt><dd><bb-report-amount [value]="row.total" [currency]="row.currency" /></dd></div>
+                </dl>
+              }
+              @case ('subtotal') {
+                <dl class="figures figures--subtotal">
+                  <div class="figures__row"><dt>Taxable</dt><dd><bb-report-amount [value]="row.taxable" [currency]="row.currency" /></dd></div>
+                  <div class="figures__row"><dt>Tax</dt><dd><bb-report-amount [value]="row.tax" [currency]="row.currency" /></dd></div>
+                  <div class="figures__row figures__row--balance">
+                    <dt>{{ row.name }}</dt>
+                    <dd>
+                      <bb-report-amount [value]="row.total" [currency]="row.currency" />
+                      @if (row.baseTotal !== null) { <small class="own"><bb-report-amount [value]="row.baseTotal" /></small> }
+                    </dd>
+                  </div>
+                </dl>
+              }
+              @case ('total') {
+                <header class="entry__head"><strong>{{ row.name }}</strong></header>
+                <dl class="figures">
+                  <div class="figures__row"><dt>Taxable</dt><dd><bb-report-amount [value]="row.taxable" /></dd></div>
+                  <div class="figures__row"><dt>Tax</dt><dd><bb-report-amount [value]="row.tax" /></dd></div>
+                  <div class="figures__row figures__row--balance"><dt>Total</dt><dd><bb-report-amount [value]="row.total" /></dd></div>
+                </dl>
+              }
+            }
+          }
+        </article>
+      }
+    </div>
+  } @else {
+    <div class="matrix">
+      <bb-data-grid flush [columns]="columns" [data]="rows()" [rowClass]="rowClass" [sortable]="false"
+                    [showColumnFilters]="false" [showCount]="false" [paged]="false" label="Payable invoice detail">
+        <ng-template bbCellTemplate="item" let-row>
+          @switch (row.kind) {
+            @case ('heading') {
+              <span class="bill">
+                @if (row.link) { <a class="link" [routerLink]="row.link"><strong>{{ row.name }}</strong></a> } @else { <strong>{{ row.name }}</strong> }
+                @if (row.status) { <span [class]="'tag ' + statusTag(row.status)">{{ statusLabel(row.status) }}</span> }
+                @if (row.reverseCharge) { <span class="tag tag-outline">Reverse charge</span> }
+                <span class="bill__meta text-muted">
+                  @if (row.vendorBillNo) { <span>Vendor bill {{ row.vendorBillNo }}</span> }
+                  <span>{{ row.documentDate | reportDate }}</span>
+                  @if (row.dueDate) { <span>due {{ row.dueDate | reportDate }}</span> }
+                  <span class="bill__who">{{ row.contactName }}@if (row.contactCode) { ({{ row.contactCode }}) }</span>
+                  @if (row.currency) { <span>{{ row.currency }}</span> }
+                </span>
+              </span>
+            }
+            @case ('line') {
+              <span class="item">
+                <span>
+                  {{ row.itemName }}
+                  @if (row.itemCode) { <span class="item__code text-muted">{{ row.itemCode }}</span> }
+                  @if (row.isCapital) { <span class="tag tag-info item__asset">Fixed asset@if (row.assetCategory) { · {{ row.assetCategory }} }</span> }
+                </span>
+                @if (row.description) { <span class="item__note text-muted">{{ row.description }}</span> }
+              </span>
+            }
+            @default { <strong class="label">{{ row.name }}</strong> }
+          }
+        </ng-template>
+        <ng-template bbCellTemplate="quantity" let-row>
+          @if (row.kind === 'line') {
+            <span class="qty">{{ quantity(row.quantity) }} @if (row.unitCode) { <small class="text-muted">{{ row.unitCode }}</small> }</span>
+          }
+        </ng-template>
+        <ng-template bbCellTemplate="unitPrice" let-row>
+          @if (row.kind === 'line') { <span class="price">{{ unitPrice(row.unitPrice) }}</span> }
+        </ng-template>
+        <ng-template bbCellTemplate="discount" let-row>
+          @if (row.kind === 'line' && row.discount) {
+            <span class="amount">
+              <bb-report-amount [value]="row.discount" [currency]="row.currency" />
+              @if (row.discountPercent) { <small class="own">{{ row.discountPercent }}%</small> }
+            </span>
+          }
+        </ng-template>
+        <ng-template bbCellTemplate="taxable" let-row>
+          @if (row.taxable !== null) { <bb-report-amount [value]="row.taxable" [currency]="row.currency" /> }
+        </ng-template>
+        <ng-template bbCellTemplate="tax" let-row>
+          @if (row.tax !== null) {
+            <span class="amount">
+              <bb-report-amount [value]="row.tax" [currency]="row.currency" />
+              @if (row.kind === 'line' && row.taxRate) { <small class="own">{{ row.taxRate }}%</small> }
+            </span>
+          }
+        </ng-template>
+        <ng-template bbCellTemplate="total" let-row>
+          @if (row.total !== null) {
+            <span class="amount">
+              @if (row.kind === 'line') { <bb-report-amount [value]="row.total" [currency]="row.currency" /> }
+              @else { <strong><bb-report-amount [value]="row.total" [currency]="row.currency" /></strong> }
+              @if (row.baseTotal !== null) { <small class="own"><bb-report-amount [value]="row.baseTotal" /></small> }
+            </span>
+          }
+        </ng-template>
+      </bb-data-grid>
+    </div>
+
+    @if (more()) {
+      <div class="more">
+        <button class="btn" type="button" (click)="loadMore()" [disabled]="busy()">Show more bills</button>
+        <span class="more__count text-muted">{{ report.bills.length }} of {{ report.totalBills }} shown</span>
+      </div>
+    }
+  }
+
+  @if (report.totalBills > 0) {
+    <p class="notes text-muted">
+      A bill is listed by its bill date. Each line shows the item bought, its quantity and unit price, any discount, the taxable value and the tax at the line's rate;
+      a line bought as a fixed asset is marked with its asset category. Round off is what the rupee rounding added to the bill, so the lines and the round off make the
+      bill total; it is not shown when an item or category narrows the lines. On a reverse-charge bill the tax is the branch's own to pay, not the vendor's.
+      A voided bill is listed only under Void, and a draft never is. Choosing an item or category lists only bills with such a line, and only those lines.
+      The totals at the foot are in {{ report.baseCurrencyCode }} and are of every bill the filters match, not only those shown.
+    </p>
+  }
+}

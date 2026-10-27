@@ -107,6 +107,7 @@ public class ReportingDbContext : TenantDbContext
     public DbSet<PurchaseOrderRead> PurchaseOrders => Set<PurchaseOrderRead>();
     public DbSet<GoodsReceiptRead> GoodsReceipts => Set<GoodsReceiptRead>();
     public DbSet<BillDetailRead> BillDetails => Set<BillDetailRead>();
+    public DbSet<BillDetailTaxRead> BillDetailTaxes => Set<BillDetailTaxRead>();
     public DbSet<ReceiveMoneyRead> ReceiveMoney => Set<ReceiveMoneyRead>();
     public DbSet<ReceiveMoneyDetailRead> ReceiveMoneyDetails => Set<ReceiveMoneyDetailRead>();
     public DbSet<SpendMoneyRead> SpendMoney => Set<SpendMoneyRead>();
@@ -368,6 +369,7 @@ public class ReportingDbContext : TenantDbContext
         MapRead<PurchaseOrderRead>(modelBuilder, "PurchaseOrders", "pur", e => e.PurchaseOrderId);
         MapRead<GoodsReceiptRead>(modelBuilder, "GoodsReceipts", "pur", e => e.GoodsReceiptId);
         MapRead<BillDetailRead>(modelBuilder, "BillDetails", "pur", e => e.BillDetailId);
+        MapRead<BillDetailTaxRead>(modelBuilder, "BillDetailTaxes", "pur", e => e.BillDetailTaxId);
         MapRead<ReceiveMoneyRead>(modelBuilder, "ReceiveMoney", "acc", e => e.ReceiveMoneyId);
         MapRead<ReceiveMoneyDetailRead>(modelBuilder, "ReceiveMoneyDetails", "acc", e => e.ReceiveMoneyDetailId);
         MapRead<SpendMoneyRead>(modelBuilder, "SpendMoney", "acc", e => e.SpendMoneyId);
@@ -470,6 +472,7 @@ public class ReportingDbContext : TenantDbContext
         modelBuilder.Entity<GoodsReceiptDetailRead>().Property(e => e.LineType).HasConversion<string>().HasMaxLength(10);
         modelBuilder.Entity<GoodsReceiptDetailRead>().Property(e => e.TaxTreatment).HasConversion<string>().HasMaxLength(10);
         modelBuilder.Entity<InvoiceDetailTaxRead>().Property(e => e.TaxComponent).HasConversion<string>().HasMaxLength(6);
+        modelBuilder.Entity<BillDetailTaxRead>().Property(e => e.TaxComponent).HasConversion<string>().HasMaxLength(6);
 
         // HRMS (hrm)
         MapRead<EmployeeRecordRead>(modelBuilder, "Employees", "hrm", e => e.EmployeeId);

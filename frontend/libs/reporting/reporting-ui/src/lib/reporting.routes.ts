@@ -88,6 +88,12 @@ export const reportingRoutes: Routes = [
     data: { access: { permission: 'reports.view' } },
   },
   {
+    // Its own page on its own endpoint (TK-236), at the path the menu links to.
+    path: 'payable-invoice-detail',
+    loadComponent: () => import('./payable-invoice-detail/payable-invoice-detail.page').then((m) => m.PayableInvoiceDetailPage),
+    data: { access: { permission: 'reports.view' } },
+  },
+  {
     // Its own page on its own endpoint (TK-235), at the path the menu links to.
     path: 'payable-invoice-summary',
     loadComponent: () => import('./payable-invoice-summary/payable-invoice-summary.page').then((m) => m.PayableInvoiceSummaryPage),
