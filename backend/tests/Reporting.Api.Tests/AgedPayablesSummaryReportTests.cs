@@ -34,9 +34,10 @@ namespace Reporting.Api.Tests;
 public sealed class AgedPayablesSummaryReportTests
 {
     private const long Payable = 1, Inventory = 2, Returns = 3, Bank = 4, Receivable = 5;
-    private const long Steelco = 201, Boltworks = 202, IdleVendor = 203, CustomerOnly = 204;
+    internal const long Steelco = 201, Boltworks = 202, IdleVendor = 203, CustomerOnly = 204;
 
-    private static readonly DateOnly October31 = new(2026, 10, 31);
+    // The books below are shared with the Aged Payables Details tests, which read the same open documents.
+    internal static readonly DateOnly October31 = new(2026, 10, 31);
 
     private static AccountRead Account(long id, string name, string? system = null) =>
         new() { AccountId = id, AccountCode = id.ToString(), AccountName = name, AccountSystemName = system, AccountTypeId = 1, IsActive = true };
@@ -53,7 +54,7 @@ public sealed class AgedPayablesSummaryReportTests
     private static ContactRead Contact(long id, string code, string name, bool vendor = true, bool msme = false) =>
         new() { ContactId = id, ContactCode = code, DisplayName = name, IsVendor = vendor, IsCustomer = !vendor, IsMsme = msme, CurrencyCode = "INR", IsActive = true };
 
-    private static readonly List<ContactRead> Contacts =
+    internal static readonly List<ContactRead> Contacts =
     [
         Contact(Steelco, "STEELCO", "Steelco Supplies", msme: true),
         Contact(Boltworks, "BOLTWORKS", "Boltworks Ltd"),
@@ -139,7 +140,7 @@ public sealed class AgedPayablesSummaryReportTests
         return AgedPayablesSummaryReportRepository.Documents(ledger, Accounts.AsQueryable(), asAt);
     }
 
-    private static List<OpenReceivable> OpenOn(DateOnly asAt, long? contact = null)
+    internal static List<OpenReceivable> OpenOn(DateOnly asAt, long? contact = null)
     {
         IQueryable<ReceivableDocument> documents = DocumentsOn(asAt, contact);
         return
@@ -151,7 +152,7 @@ public sealed class AgedPayablesSummaryReportTests
         ];
     }
 
-    private static List<VendorRef> Vendors(bool everyVendor = false) =>
+    internal static List<VendorRef> Vendors(bool everyVendor = false) =>
     [
         .. Contacts
             .Where(c => everyVendor ? c.IsVendor : c.ContactId is Steelco or Boltworks)

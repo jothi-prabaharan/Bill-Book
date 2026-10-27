@@ -73,7 +73,13 @@
             }
             <div class="figures__row figures__row--balance">
               <dt>Total</dt>
-              <dd><bb-report-amount [value]="row.total" /></dd>
+              <dd>
+                @if (opensDetail(row)) {
+                  <a class="link" routerLink="/reports/aged-payables-details" [queryParams]="detailQuery(row)"><bb-report-amount [value]="row.total" /></a>
+                } @else {
+                  <bb-report-amount [value]="row.total" />
+                }
+              </dd>
             </div>
           </dl>
         </article>
@@ -97,7 +103,14 @@
         <ng-template bbCellTemplate="bucket2" let-row><bb-report-amount [value]="row.bucket2" /></ng-template>
         <ng-template bbCellTemplate="bucket3" let-row><bb-report-amount [value]="row.bucket3" /></ng-template>
         <ng-template bbCellTemplate="bucket4" let-row><bb-report-amount [value]="row.bucket4" /></ng-template>
-        <ng-template bbCellTemplate="total" let-row><strong><bb-report-amount [value]="row.total" /></strong></ng-template>
+        <ng-template bbCellTemplate="total" let-row>
+          @if (opensDetail(row)) {
+            <a class="link" routerLink="/reports/aged-payables-details" [queryParams]="detailQuery(row)"
+               [attr.aria-label]="'Open the documents behind ' + row.name"><strong><bb-report-amount [value]="row.total" /></strong></a>
+          } @else {
+            <strong><bb-report-amount [value]="row.total" /></strong>
+          }
+        </ng-template>
       </bb-data-grid>
     </div>
   }
@@ -108,7 +121,7 @@
       What a payment or debit note was applied to has come off both the bill and the payment, so a bill shows what is still open on it.
       A debit note or payment not yet applied to a bill is a negative amount in Current.
       Each vendor's total is what the branch owes them, and the totals add up to the Accounts Payable balance on the date; a posting to
-      Accounts Payable with no contact is listed as "Not tied to a vendor".
+      Accounts Payable with no contact is listed as "Not tied to a vendor". A total opens the Aged Payables Details for that vendor, or for everyone from the last row.
       @if (msmes() > 0) {
         A vendor marked MSME is a micro or small enterprise, whose bills the Sec 43B(h) rule asks to be paid within 45 days; the <a class="link" [routerLink]="msmeLink">MSME ageing report</a> shows that view.
       }

@@ -52,6 +52,8 @@ export * from './lib/delivery-order-track/delivery-order-track.models';
 export * from './lib/delivery-order-track/delivery-order-track.service';
 export * from './lib/aged-payables-summary/aged-payables-summary.models';
 export * from './lib/aged-payables-summary/aged-payables-summary.service';
+export * from './lib/aged-payables-details/aged-payables-details.models';
+export * from './lib/aged-payables-details/aged-payables-details.service';
 export * from './lib/foreign-currency-gain-or-loss/foreign-currency-gain-or-loss.models';
 export * from './lib/foreign-currency-gain-or-loss/foreign-currency-gain-or-loss.service';
 export * from './lib/foreign-currency-gain-or-loss-details/foreign-currency-gain-or-loss-details.models';

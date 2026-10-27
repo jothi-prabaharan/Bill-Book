@@ -12,6 +12,7 @@ import {
   msmeCount,
   vendorChoiceLabel,
 } from './aged-payables-summary.models';
+import { detailQueryParams } from '../aged-receivables-summary/aged-receivables-summary.models';
 import { AgedPayablesSummaryService } from './aged-payables-summary.service';
 
 /** The Aged Payables Summary's calls and the helpers its page uses (TK-233). */
@@ -191,5 +192,28 @@ describe('aged payables summary helpers', () => {
 
   it('AP-15: a vendor reads as its code then its name', () => {
     expect(vendorChoiceLabel({ contactId: 201, contactCode: 'STEELCO', contactName: 'Steelco Supplies' })).toBe('STEELCO — Steelco Supplies');
+  });
+});
+
+describe('the link to the details report', () => {
+  it('AP-16: carries the date, age basis and width the report was run with, and the vendor', () => {
+    expect(detailQueryParams(result([]), 202)).toEqual({ asAtDate: '2026-10-31', ageBy: 'DueDate', bucketDays: 30, contactId: 202 });
+  });
+
+  it('AP-17: the totals row passes no vendor, so the details are for everyone', () => {
+    expect(detailQueryParams({ asAtDate: '2026-10-31', ageBy: 'InvoiceDate', bucketDays: 7 }, null)).toEqual({
+      asAtDate: '2026-10-31',
+      ageBy: 'InvoiceDate',
+      bucketDays: 7,
+    });
+  });
+
+  it('AP-18: each grid row knows its vendor, and the totals and what no vendor claims have none', () => {
+    const rows = agedPayablesRows(
+      result([row({ contactId: 201, total: 10, current: 10 }), row({ contactId: null, contactName: 'Not tied to a vendor', total: 5, bucket4: 5 })]),
+    );
+
+    expect(rows.map((r) => r.contactId)).toEqual([201, null, null]);
+    expect(rows.map((r) => r.kind)).toEqual(['vendor', 'unassigned', 'total']);
   });
 });

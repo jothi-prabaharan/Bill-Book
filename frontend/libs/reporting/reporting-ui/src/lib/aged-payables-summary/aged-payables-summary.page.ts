@@ -14,6 +14,7 @@ import {
   agedPayablesRows,
   agedPayablesSentence,
   bucketOptionLabel,
+  detailQueryParams,
   msmeCount,
   vendorChoiceLabel,
 } from '@bill-book/reporting-core';
@@ -151,6 +152,17 @@ export class AgedPayablesSummaryPage implements OnInit {
   });
 
   protected readonly rowClass = (row: AgedPayablesGridRow): string => (row.kind === 'total' ? 'row--total' : '');
+
+  /** Whether a row's total opens the detail: a vendor's does, and so do the totals; what no vendor claims has no filter to open it on. */
+  protected opensDetail(row: AgedPayablesGridRow): boolean {
+    return row.kind !== 'unassigned';
+  }
+
+  /** The detail report for this row on the date, ageing and width the report was run with. */
+  protected detailQuery(row: AgedPayablesGridRow): Record<string, string | number> {
+    const result = this.result();
+    return result ? detailQueryParams(result, row.contactId) : {};
+  }
 
   ngOnInit(): void {
     if (typeof window !== 'undefined' && window.matchMedia) {

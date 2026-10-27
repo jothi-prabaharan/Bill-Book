@@ -448,12 +448,24 @@ The Aged Payables Summary has its own page at `/reports/aged-payables-summary` (
 - **Age by** counts a bill's age from its **due date** (the default) or its **bill date**. A document that is not a bill, such as an opening balance or a manual journal, counts from the day it was posted.
 - **Column width** is 30 days (the default), 15 or 7. There are always five columns: **Current** (not yet due, or due on the date), then four overdue columns, the last being everything beyond three widths.
 - **Vendor** narrows the report to one vendor. **Show vendors owed nothing** also lists the vendors with nothing open.
-- Each vendor is a row with its code, the five columns and a **Total**, and a **Total** row closes the table. A sentence above says how much is owed and how much of it is overdue. On a phone each vendor is a card.
+- Each vendor is a row with its code, the five columns and a **Total**, and a **Total** row closes the table. A sentence above says how much is owed and how much of it is overdue. A vendor's total opens the **Aged Payables Details** for that vendor on the same date and settings, and the last row's total opens it for everyone. On a phone each vendor is a card.
 - **A debit note, and a payment or advance not yet applied to a bill, are negative amounts in Current**, so a vendor's total is what the branch owes them. A payment or debit note applied to a bill has come off both: the bill shows only what is still open on it, and the payment no longer shows at all. What was applied counts only if it was effective on or before the date and has not been released.
 - The totals add up to the Accounts Payable balance on the date, the same figure as the **Trial Balance**. A posting to Accounts Payable with no contact, such as a manual journal, is its own row, **Not tied to a vendor**, so nothing is left out. A bill in another currency is shown in the branch's currency at the rate it was booked at, and a payment in that currency is taken to the branch's currency at the same rate, so it clears the bill exactly.
 - **A vendor that is a micro or small enterprise is marked MSME.** The mark opens the **MSME ageing report**, the Sec 43B(h) view of the bills that should be paid within 45 days.
 
 The catalog's **Aged Payables Summary**, used for export and scheduled emails, now needs **As at** and refuses a run without it. It gives the same figures, aged by due date in 30-day columns. The menu item had no report behind it before TK-233.
+
+## Aged Payables Details
+
+The Aged Payables Details has its own page at `/reports/aged-payables-details` (TK-234), under **Reports › Purchase Report**. Besides access to reports it needs **purchase.view**. It is the Aged Payables Summary one document at a time: what makes up what the branch owes each vendor on a date.
+
+- **As at** is required. The page opens as at today and runs straight away, or on the date, ageing, column width and vendor the summary linked it with; a missing date is refused under the field. **Age by**, **Column width** and **Vendor** are the summary's.
+- Each vendor has a heading (an MSME is marked, and the mark opens the **MSME ageing report**), then every document still open on the date, oldest first: a **bill**, a **debit note**, a **payment** or a vendor's **receipt** not yet applied, an opening balance or a manual journal. A vendor with more than one document has a **Total** row.
+- A document shows its **Date**, its **Due** date (only a bill has one), the **Days** it is overdue, what it came to (**Original**), what has been applied to it by the date (**Settled**) and what is left (**Outstanding**), and the outstanding amount sits in the one column its age gives. A bill, a debit note and a journal link to their page; a payment or receipt is only in its register.
+- **A debit note, and a payment not yet applied to a bill, are negative amounts in Current.** A document applied in full on or before the date is not listed, and one applied after it is listed with what was open then.
+- **A vendor's total is that vendor's row on the Aged Payables Summary**, in every column, and the **Total** row is the Accounts Payable balance on the date, because both read the same open documents. A posting to Accounts Payable with no contact, such as a manual journal, is listed under **Not tied to a vendor**. On a phone each vendor is a card with its documents inside.
+
+The catalog's **Aged Payables Details**, used for export and scheduled emails, now needs **As at** and refuses a run without it (it used to treat the date as optional and listed every bill at its full total). It lists a row for each open document, with its total and what is left, and a debit note or an unapplied payment shows as negative.
 
 ## Project reports
 
