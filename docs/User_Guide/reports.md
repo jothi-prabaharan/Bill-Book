@@ -660,6 +660,17 @@ The Inventory Item Detail has its own page at `/reports/inventory-item-detail` (
 - **Reconciliation:** The closing quantity and closing value match the Inventory Item Summary (TK-243) closing balance for the same item and period.
 - **Catalog Source:** The catalog's **Inventory Item Detail** report (`item-detail`) enforces required From and To dates and enriches document headers and party details.
 
+## Inventory Item List
+
+The Inventory Item List has its own page at `/reports/inventory-item-list` (TK-245), under **Reports › Inventory Report**. Besides access to reports it needs **inventory.view**. It shows every stocked and non-stocked item as at a chosen date, with its quantity on hand, average cost, FIFO cost layer, total inventory value, open purchase orders (on order), open sales orders (committed), and available quantity.
+
+- **As at** date is required (D-67). The page defaults to today's date.
+- **Filters:** Optional **Category**, **Status** (Active, Inactive, All), **Item Type** (Inventory Item, Non-Inventory Item, Service, All), **Search** (matching item code or name), and **Only items with stock** (when ticked, filters to items with non-zero stock).
+- **Columns:** Code, Name, Category, Type, Unit, Status, On Hand, Average Cost, FIFO Cost, Total Value, On Order, Committed, and Available.
+- **Arithmetic:** On Hand as at the date is derived from stock movements up to the date (not the current live `ItemStock`). Total value matches the closing balance in the Inventory Item Summary (TK-243) at the same date.
+- **Totals:** The totals row at the bottom sums On Hand, Total Value, On Order, Committed, and Available quantities across all matched items. On a phone, each item is presented as a card.
+- **Catalog Source:** The catalog's **Inventory Item List** report (`inventory-item-list`) enforces the required `asOf` date parameter, joins movements up to that date, and supplies explicit numeric decimal types to prevent SQL sum type conflicts.
+
 ## Project reports
 
 Four reports read project accounting, under **Projects** in the list. Running them needs **projects.view** as well as access to reports.

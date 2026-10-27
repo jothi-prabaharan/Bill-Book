@@ -1,0 +1,210 @@
+<header class="page-head">
+  <div>
+    <h1>Inventory Item List</h1>
+    <p class="subtitle text-muted">
+      Every item as at a date: settings, taxes, quantity on hand, average and FIFO cost, value, and open purchase/sales orders.
+    </p>
+  </div>
+</header>
+
+<form class="filters card" [formGroup]="filters" (ngSubmit)="run()" novalidate>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'iil-asof'" label="As at" formControlName="asOfDate" [required]="true"
+                          [error]="err('asOfDate', 'As at date')" />
+  </div>
+
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'iil-category'" label="Category" placeholder="All categories" [options]="categoryOptions()"
+               [loading]="!choicesLoaded()" emptyText="No item categories" formControlName="itemCategoryId"
+               [error]="err('itemCategoryId', 'Category')" />
+  </div>
+
+  <div class="filters__field">
+    <bb-select [id]="'iil-status'" label="Status" [options]="statusOptions()" formControlName="status" />
+  </div>
+
+  <div class="filters__field">
+    <bb-select [id]="'iil-itemtype'" label="Item Type" [options]="itemTypeOptions()" formControlName="itemType" />
+  </div>
+
+  <div class="filters__field filters__field--search">
+    <bb-text-input [id]="'iil-search'" label="Search" placeholder="Search code or name…" formControlName="search" />
+  </div>
+
+  <div class="filters__field filters__field--check">
+    <bb-checkbox text="Only items with stock" formControlName="onlyWithStock" />
+  </div>
+
+  <div class="filters__actions">
+    <button class="btn btn-primary" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Running…' : 'Run report' }}
+    </button>
+  </div>
+</form>
+
+@if (messages().length > 0) {
+  <bb-message-box [messages]="messages()" />
+}
+
+@if (result(); as report) {
+  <div class="summary-bar">
+    <p class="period text-muted">
+      As at {{ report.asOfDate | reportDate }}, in {{ report.baseCurrencyCode }}.
+      Showing {{ items().length }} of {{ report.totalItems }} item{{ report.totalItems === 1 ? '' : 's' }}.
+    </p>
+    @if (report.totals.costPending) {
+      <span class="tag tag-warning">Cost pending on some items</span>
+    }
+  </div>
+
+  @if (report.totalItems === 0) {
+    <p class="empty text-muted">No items match these filters.</p>
+  } @else if (narrow()) {
+    <div class="cards" role="list" aria-label="Inventory item list">
+      @for (item of items(); track item.itemId) {
+        <article class="card entry" role="listitem">
+          <header class="entry__head">
+            <div class="entry__title">
+              <strong>{{ item.itemName }}</strong>
+              <span class="text-muted">{{ item.itemCode }}</span>
+            </div>
+            @if (item.costPending) {
+              <span class="tag tag-warning">Cost pending</span>
+            }
+          </header>
+          <div class="entry__badges">
+            @if (item.categoryName) { <span class="badge">{{ item.categoryName }}</span> }
+            <span class="badge">{{ item.itemType }}</span>
+            <span class="badge" [class.badge-success]="item.status === 'Active'" [class.badge-secondary]="item.status !== 'Active'">
+              {{ item.status }}
+            </span>
+          </div>
+          <div class="entry__body">
+            <div class="entry__stat">
+              <span class="text-muted">On Hand</span>
+              <strong>{{ item.quantityOnHand | number:'1.2-2' }} {{ item.unitCode ?? '' }}</strong>
+            </div>
+            <div class="entry__stat">
+              <span class="text-muted">Avg Cost</span>
+              <bb-report-amount [value]="item.averageCost" [currency]="report.baseCurrencyCode" />
+            </div>
+            <div class="entry__stat">
+              <span class="text-muted">Total Value</span>
+              <bb-report-amount [value]="item.totalValue" [currency]="report.baseCurrencyCode" />
+            </div>
+            <div class="entry__stat">
+              <span class="text-muted">FIFO Cost</span>
+              <bb-report-amount [value]="item.unitCostPriceFifo" [currency]="report.baseCurrencyCode" />
+            </div>
+            <div class="entry__stat">
+              <span class="text-muted">On Order</span>
+              <span>{{ item.quantityOnOrder ? (item.quantityOnOrder | number:'1.2-2') : '—' }}</span>
+            </div>
+            <div class="entry__stat">
+              <span class="text-muted">Committed</span>
+              <span>{{ item.quantityCommitted ? (item.quantityCommitted | number:'1.2-2') : '—' }}</span>
+            </div>
+            <div class="entry__stat">
+              <span class="text-muted">Available</span>
+              <strong>{{ item.balanceQty | number:'1.2-2' }}</strong>
+            </div>
+          </div>
+        </article>
+      }
+    </div>
+  } @else {
+    <div class="table-container card">
+      <bb-data-grid flush [columns]="columns" [data]="items()" [sortable]="false" [showColumnFilters]="false"
+                    [showCount]="false" [paged]="false">
+        <span *bbCellTemplate="'itemCode'; let row">
+          <strong>{{ row.itemCode }}</strong>
+          @if (row.costPending) {
+            <span class="tag tag-warning tag-sm" title="Stock movement waiting to be costed">Cost pending</span>
+          }
+        </span>
+
+        <span *bbCellTemplate="'itemName'; let row">
+          {{ row.itemName }}
+        </span>
+
+        <span *bbCellTemplate="'categoryName'; let row">
+          {{ row.categoryName ?? '—' }}
+        </span>
+
+        <span *bbCellTemplate="'itemType'; let row">
+          {{ row.itemType }}
+        </span>
+
+        <span *bbCellTemplate="'unitCode'; let row">
+          {{ row.unitCode ?? '—' }}
+        </span>
+
+        <span *bbCellTemplate="'status'; let row">
+          <span class="status-pill" [class.status-pill--active]="row.status === 'Active'">
+            {{ row.status }}
+          </span>
+        </span>
+
+        <span *bbCellTemplate="'quantityOnHand'; let row" class="numeric-cell">
+          {{ row.quantityOnHand | number:'1.2-2' }}
+        </span>
+
+        <span *bbCellTemplate="'averageCost'; let row" class="numeric-cell">
+          <bb-report-amount [value]="row.averageCost" [currency]="report.baseCurrencyCode" />
+        </span>
+
+        <span *bbCellTemplate="'unitCostPriceFifo'; let row" class="numeric-cell">
+          <bb-report-amount [value]="row.unitCostPriceFifo" [currency]="report.baseCurrencyCode" />
+        </span>
+
+        <span *bbCellTemplate="'totalValue'; let row" class="numeric-cell font-weight-bold">
+          <bb-report-amount [value]="row.totalValue" [currency]="report.baseCurrencyCode" />
+        </span>
+
+        <span *bbCellTemplate="'quantityOnOrder'; let row" class="numeric-cell">
+          {{ row.quantityOnOrder ? (row.quantityOnOrder | number:'1.2-2') : '—' }}
+        </span>
+
+        <span *bbCellTemplate="'quantityCommitted'; let row" class="numeric-cell">
+          {{ row.quantityCommitted ? (row.quantityCommitted | number:'1.2-2') : '—' }}
+        </span>
+
+        <span *bbCellTemplate="'balanceQty'; let row" class="numeric-cell font-weight-medium">
+          {{ row.balanceQty | number:'1.2-2' }}
+        </span>
+      </bb-data-grid>
+
+      <footer class="totals-row">
+        <div class="totals-label">Total for matched items:</div>
+        <div class="totals-stat">
+          <span class="text-muted">On Hand:</span>
+          <strong>{{ report.totals.totalQuantityOnHand | number:'1.2-2' }}</strong>
+        </div>
+        <div class="totals-stat">
+          <span class="text-muted">Value:</span>
+          <strong><bb-report-amount [value]="report.totals.totalValue" [currency]="report.baseCurrencyCode" /></strong>
+        </div>
+        <div class="totals-stat">
+          <span class="text-muted">On Order:</span>
+          <strong>{{ report.totals.totalQuantityOnOrder | number:'1.2-2' }}</strong>
+        </div>
+        <div class="totals-stat">
+          <span class="text-muted">Committed:</span>
+          <strong>{{ report.totals.totalQuantityCommitted | number:'1.2-2' }}</strong>
+        </div>
+        <div class="totals-stat">
+          <span class="text-muted">Available:</span>
+          <strong>{{ report.totals.totalBalanceQty | number:'1.2-2' }}</strong>
+        </div>
+      </footer>
+    </div>
+  }
+
+  @if (hasMore()) {
+    <div class="pagination-footer">
+      <button class="btn btn-secondary" type="button" [disabled]="loadingMore()" (click)="loadMore()">
+        {{ loadingMore() ? 'Loading more…' : 'Show more items' }}
+      </button>
+    </div>
+  }
+}

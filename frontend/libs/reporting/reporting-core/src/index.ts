@@ -78,3 +78,5 @@ export * from './lib/foreign-currency-gain-or-loss-details/foreign-currency-gain
 export * from './lib/foreign-currency-gain-or-loss-details/foreign-currency-gain-or-loss-details.service';
 export * from './lib/inventory-item-detail/inventory-item-detail-report.models';
 export * from './lib/inventory-item-detail/inventory-item-detail-report.service';
+export * from './lib/inventory-item-list/inventory-item-list-report.models';
+export * from './lib/inventory-item-list/inventory-item-list-report.service';

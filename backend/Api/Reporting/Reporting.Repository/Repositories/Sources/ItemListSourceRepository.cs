@@ -2,6 +2,8 @@ using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Reporting.Entity.Enums;
 using Reporting.Repository;
+using Reporting.Repository.ReadModels;
+using Shared.Kernel.Documents;
 
 namespace Reporting.Repository.Repositories;
 
@@ -22,6 +24,11 @@ public sealed class ItemListSourceRepository : ReportSource<ItemListRow>
 
     public override string RequiredPermission => "inventory.view";
 
+    public override IReadOnlyList<ReportParameterRepository> Parameters =>
+    [
+        new() { Name = "asOf", Label = "As at", DataType = ColumnDataType.Date, IsRequired = true },
+    ];
+
     public override IReadOnlyList<ReportColumn> Columns =>
     [
         ReportColumn.Of<ItemListRow, string>("itemCode", ColumnDataType.Text, r => r.ItemCode),
@@ -32,7 +39,6 @@ public sealed class ItemListSourceRepository : ReportSource<ItemListRow>
         ReportColumn.Of<ItemListRow, string>("costingMethod", ColumnDataType.Enum, r => r.CostingMethod, groupable: true),
         ReportColumn.Of<ItemListRow, string>("status", ColumnDataType.Enum, r => r.Status, groupable: true),
         ReportColumn.Of<ItemListRow, DateOnly?>("date", ColumnDataType.Date, r => r.Date),
-        // Organization is implicit in the branch, but we can add it if needed. 
         ReportColumn.Of<ItemListRow, string>("unitOfMeasurement", ColumnDataType.Text, r => r.UnitOfMeasurement, groupable: true),
         ReportColumn.Of<ItemListRow, string?>("purchaseDescription", ColumnDataType.Text, r => r.PurchaseDescription),
         ReportColumn.Of<ItemListRow, string?>("salesDescription", ColumnDataType.Text, r => r.SalesDescription),
@@ -44,40 +50,56 @@ public sealed class ItemListSourceRepository : ReportSource<ItemListRow>
         ReportColumn.Of<ItemListRow, decimal?>("quantityOnHand", ColumnDataType.Quantity, r => r.QuantityOnHand, AggregateFunction.Sum),
         ReportColumn.Of<ItemListRow, decimal?>("averageCost", ColumnDataType.Money, r => r.AverageCost),
         ReportColumn.Of<ItemListRow, decimal?>("unitCostPrice", ColumnDataType.Money, r => r.UnitCostPrice),
-
-        // Quantity on hand less what is already committed. **Not the same figure
-        // as Quantity On Hand beside it**: a warehouse holding sixty units with
-        // fifty reserved can fill an order for ten, and only this column says so.
         ReportColumn.Of<ItemListRow, decimal?>("balanceQty", ColumnDataType.Quantity, r => r.BalanceQty, AggregateFunction.Sum),
-
-        // What the stock still on the shelf actually cost, from the open cost
-        // layers rather than from the item's list price. It differs from Average
-        // Cost whenever prices have moved, and it is the figure a FIFO item is
-        // valued at — an item costed by weighted average has layers too, so this
-        // is populated either way and the two columns can be compared.
         ReportColumn.Of<ItemListRow, decimal?>("unitCostPriceFifo", ColumnDataType.Money, r => r.UnitCostPriceFifo),
         ReportColumn.Of<ItemListRow, decimal?>("unitSalePrice", ColumnDataType.Money, r => r.UnitSalePrice),
         ReportColumn.Of<ItemListRow, decimal?>("totalValue", ColumnDataType.Money, r => r.TotalValue, AggregateFunction.Sum),
-
-        // Partial - to be filled later by sal/pur
         ReportColumn.Of<ItemListRow, decimal?>("quantityOnOrder", ColumnDataType.Quantity, r => r.QuantityOnOrder, AggregateFunction.Sum),
         ReportColumn.Of<ItemListRow, decimal?>("quantityReceived", ColumnDataType.Quantity, r => r.QuantityReceived, AggregateFunction.Sum),
         ReportColumn.Of<ItemListRow, decimal?>("committedQuotes", ColumnDataType.Quantity, r => r.CommittedQuotes, AggregateFunction.Sum),
         ReportColumn.Of<ItemListRow, decimal?>("committedToDO", ColumnDataType.Quantity, r => r.CommittedToDO, AggregateFunction.Sum),
-
         ReportColumn.Of<ItemListRow, long>("itemId", ColumnDataType.Number, r => r.ItemId, filterable: false),
     ];
 
-    /// <summary>SubAccountReferenceType.Item, in Accounting's enum this project does not reference.</summary>
     private const SubAccountReferenceType ItemReference = SubAccountReferenceType.Item;
 
     protected override IQueryable<ItemListRow> Build(ReportParameters parameters, ReportingDbContext db)
     {
-        DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow);
+        DateOnly asOf = parameters.Date("asOf") ?? throw new ReportQueryException("As at date is required.");
+
+        var stockFigures = db.StockMovements
+            .Where(m => m.MovementDate <= asOf)
+            .GroupBy(m => m.ItemId)
+            .Select(g => new
+            {
+                ItemId = g.Key,
+                QuantityOnHand = g.Sum(m => m.Direction == StockDirection.In ? m.Quantity : -m.Quantity),
+                TotalValue = g.Sum(m => m.CostingStatus == CostingStatus.Costed
+                    ? (m.Direction == StockDirection.In ? (m.TotalCost ?? 0m) : -(m.TotalCost ?? 0m))
+                    : 0m)
+            });
+
+        var poFigures = (from po in db.PurchaseOrders
+                         join pod in db.PurchaseOrderDetails on po.PurchaseOrderId equals pod.PurchaseOrderId
+                         where po.Status == DocumentStatus.Posted && pod.ItemId != null && pod.Quantity > pod.ReceivedQuantity
+                         select new { ItemId = pod.ItemId!.Value, Remaining = pod.Quantity - pod.ReceivedQuantity })
+                        .GroupBy(x => x.ItemId)
+                        .Select(g => new { ItemId = g.Key, QuantityOnOrder = g.Sum(x => x.Remaining) });
+
+        var soFigures = (from so in db.SalesOrders
+                         join sod in db.SalesOrderDetails on so.SalesOrderId equals sod.SalesOrderId
+                         where so.Status == DocumentStatus.Posted && sod.ItemId != null && sod.Quantity > sod.DeliveredQuantity
+                         select new { ItemId = sod.ItemId!.Value, Remaining = sod.Quantity - sod.DeliveredQuantity })
+                        .GroupBy(x => x.ItemId)
+                        .Select(g => new { ItemId = g.Key, QuantityCommitted = g.Sum(x => x.Remaining) });
 
         return from i in db.Items
-               join s in db.ItemStocks on i.ItemId equals s.ItemId into stocks
+               join s in stockFigures on i.ItemId equals s.ItemId into stocks
                from s in stocks.DefaultIfEmpty()
+               join po in poFigures on i.ItemId equals po.ItemId into pos
+               from po in pos.DefaultIfEmpty()
+               join so in soFigures on i.ItemId equals so.ItemId into sos
+               from so in sos.DefaultIfEmpty()
                join c in db.ItemCategories on i.ItemCategoryId equals c.ItemCategoryId into categories
                from c in categories.DefaultIfEmpty()
                join u in db.UnitsOfMeasure on i.InventoryUomId equals u.UomId into uoms
@@ -98,25 +120,20 @@ public sealed class ItemListSourceRepository : ReportSource<ItemListRow>
                    UnitOfMeasurement = u != null ? u.UomName : "Unknown",
                    PurchaseDescription = i.Description,
                    SalesDescription = i.Description,
-                   // The item's own tax group, effective-dated: the row in force
-                   // today, split by whether the item is bought or sold under it.
                    PurchaseTaxRate = i.TaxGroupId == null ? null : db.TaxMasters
                        .Where(tm => tm.TaxGroupId == i.TaxGroupId!.Value && tm.IsPurchase
-                           && tm.EffectiveFrom <= today
-                           && (tm.EffectiveTo == null || tm.EffectiveTo >= today))
+                           && tm.EffectiveFrom <= asOf
+                           && (tm.EffectiveTo == null || tm.EffectiveTo >= asOf))
                        .OrderByDescending(tm => tm.EffectiveFrom)
                        .Select(tm => (decimal?)tm.TotalRate)
                        .FirstOrDefault(),
                    SalesTaxRate = i.TaxGroupId == null ? null : db.TaxMasters
                        .Where(tm => tm.TaxGroupId == i.TaxGroupId!.Value && tm.IsSales
-                           && tm.EffectiveFrom <= today
-                           && (tm.EffectiveTo == null || tm.EffectiveTo >= today))
+                           && tm.EffectiveFrom <= asOf
+                           && (tm.EffectiveTo == null || tm.EffectiveTo >= asOf))
                        .OrderByDescending(tm => tm.EffectiveFrom)
                        .Select(tm => (decimal?)tm.TotalRate)
                        .FirstOrDefault(),
-                   // The item's own three sub-accounts, told apart by which
-                   // control account they were provisioned under — see
-                   // SubAccountService.ProvisionAsync and AccountRead.AccountSystemName.
                    InventoryAccount = db.SubAccounts
                        .Where(sa => sa.ReferenceType == ItemReference && sa.ReferenceId == i.ItemId)
                        .Join(db.Accounts, sa => sa.AccountId, a => a.AccountId, (sa, a) => a)
@@ -136,11 +153,9 @@ public sealed class ItemListSourceRepository : ReportSource<ItemListRow>
                        .Select(a => a.AccountName)
                        .FirstOrDefault(),
                    QuantityOnHand = s != null ? s.QuantityOnHand : 0m,
-                   AverageCost = s != null ? s.WeightedAverageCost : 0m,
+                   AverageCost = (s != null && s.QuantityOnHand != 0m) ? (s.TotalValue / s.QuantityOnHand) : (i.PurchasePrice ?? 0m),
                    UnitCostPrice = i.PurchasePrice,
-                   BalanceQty = s != null ? s.QuantityOnHand - s.QuantityReserved : 0m,
-                   // Oldest layer still holding stock. FIFO issues from that one
-                   // next, so it is the cost the next unit out will carry.
+                   BalanceQty = (s != null ? s.QuantityOnHand : 0m) - (so != null ? so.QuantityCommitted : 0m),
                    UnitCostPriceFifo = db.CostLayers
                        .Where(cl => cl.ItemId == i.ItemId && cl.RemainingQuantity > 0)
                        .OrderBy(cl => cl.ReceivedOn)
@@ -148,11 +163,11 @@ public sealed class ItemListSourceRepository : ReportSource<ItemListRow>
                        .Select(cl => (decimal?)cl.UnitCost)
                        .FirstOrDefault(),
                    UnitSalePrice = i.SalesPrice,
-                   TotalValue = s != null ? (s.QuantityOnHand * s.WeightedAverageCost) : 0m,
-                   QuantityOnOrder = null,
-                   QuantityReceived = null,
-                   CommittedQuotes = null,
-                   CommittedToDO = null
+                   TotalValue = s != null ? s.TotalValue : 0m,
+                   QuantityOnOrder = po != null ? (decimal?)po.QuantityOnOrder : 0m,
+                   QuantityReceived = 0m,
+                   CommittedQuotes = 0m,
+                   CommittedToDO = so != null ? (decimal?)so.QuantityCommitted : 0m
                };
     }
 
@@ -177,24 +192,12 @@ public sealed class ItemListRow
     public decimal? PurchaseTaxRate { get; set; }
     public decimal? SalesTaxRate { get; set; }
     public string? InventoryAccount { get; set; }
-
-    /// <summary>
-    /// The item's Cost of Goods Sold sub-account. There is no separate "Purchase"
-    /// system account under perpetual inventory — a purchase debits Inventory
-    /// directly (CLAUDE.md: "Purchase: Dr Inventory / Cr Accounts Payable") — so
-    /// this is the closest real account to what the column name asks for: where
-    /// this item's cost moves to when it is sold.
-    /// </summary>
     public string? PurchaseAccount { get; set; }
     public string? SalesAccount { get; set; }
     public decimal? QuantityOnHand { get; set; }
     public decimal? AverageCost { get; set; }
     public decimal? UnitCostPrice { get; set; }
-
-    /// <summary>On hand less reserved — what can actually be promised.</summary>
     public decimal? BalanceQty { get; set; }
-
-    /// <summary>The oldest open cost layer's unit cost.</summary>
     public decimal? UnitCostPriceFifo { get; set; }
     public decimal? UnitSalePrice { get; set; }
     public decimal? TotalValue { get; set; }
