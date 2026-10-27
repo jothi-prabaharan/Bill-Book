@@ -151,7 +151,8 @@ public static class ProjectReports
         IQueryable<SpendMoneyRead> spend,
         IQueryable<BillDetailRead> billLines,
         IQueryable<BillRead> bills,
-        IQueryable<ProjectMilestoneRead> milestones)
+        IQueryable<ProjectMilestoneRead> milestones,
+        DateOnly? asOf = null)
     {
         IQueryable<ProjectUnbilledRow> rows =
             from p in projects
@@ -165,10 +166,10 @@ public static class ProjectReports
                 Customer = c != null ? c.DisplayName : "Internal",
                 BillingMethod = p.BillingMethod,
                 UnbilledHours = time
-                    .Where(t => t.ProjectId == p.ProjectId && t.IsBillable && t.BillingStatus == "Unbilled")
+                    .Where(t => t.ProjectId == p.ProjectId && t.IsBillable && t.BillingStatus == "Unbilled" && (asOf == null || t.WorkDate <= asOf))
                     .Sum(t => t.Hours),
                 TimeValue = (from t in time
-                             where t.ProjectId == p.ProjectId && t.IsBillable && t.BillingStatus == "Unbilled"
+                             where t.ProjectId == p.ProjectId && t.IsBillable && t.BillingStatus == "Unbilled" && (asOf == null || t.WorkDate <= asOf)
                              join k in tasks on t.ProjectTaskId equals k.ProjectTaskId
                              join m in members on new { t.ProjectId, t.UserId } equals new { m.ProjectId, m.UserId } into gm
                              from m in gm.DefaultIfEmpty()
@@ -181,11 +182,11 @@ public static class ProjectReports
                                  2)).Sum(),
                 Expenses = (from d in spendLines
                             join s in spend on d.SpendMoneyId equals s.SpendMoneyId
-                            where d.ProjectId == p.ProjectId && d.IsBillable && d.BilledInvoiceId == null && s.Status == MoneyDocumentStatus.Posted
+                            where d.ProjectId == p.ProjectId && d.IsBillable && d.BilledInvoiceId == null && s.Status == MoneyDocumentStatus.Posted && (asOf == null || s.TransactionDate <= asOf)
                             select Math.Round(d.AmountBase * (1m + ((d.MarkupPercent ?? 0m) / 100m)), 2)).Sum()
                     + (from l in billLines
                        join b in bills on l.BillId equals b.BillId
-                       where l.ProjectId == p.ProjectId && l.IsBillable && l.BilledInvoiceId == null && b.Status == DocumentStatus.Posted
+                       where l.ProjectId == p.ProjectId && l.IsBillable && l.BilledInvoiceId == null && b.Status == DocumentStatus.Posted && (asOf == null || b.DocumentDate <= asOf)
                        select Math.Round(Math.Round(l.TaxableAmount * b.ExchangeRate, 2) * (1m + ((l.MarkupPercent ?? 0m) / 100m)), 2)).Sum(),
                 Milestones = milestones
                     .Where(m => m.ProjectId == p.ProjectId && m.InvoiceId == null)
@@ -375,6 +376,11 @@ public sealed class ProjectUnbilledSource : ReportSource<ProjectUnbilledRow>
     public override ReportModule Module => ReportModule.Projects;
     public override string RequiredPermission => "projects.view";
 
+    public override IReadOnlyList<ReportParameterRepository> Parameters =>
+    [
+        new() { Name = "asOf", Label = "As at", DataType = ColumnDataType.Date, IsRequired = true },
+    ];
+
     public override IReadOnlyList<ReportColumn> Columns =>
     [
         ReportColumn.Of<ProjectUnbilledRow, string>("projectCode", ColumnDataType.Text, r => r.ProjectCode),
@@ -400,7 +406,8 @@ public sealed class ProjectUnbilledSource : ReportSource<ProjectUnbilledRow>
             db.SpendMoney,
             db.BillDetails,
             db.Bills,
-            db.ProjectMilestones);
+            db.ProjectMilestones,
+            parameters.Date("asOf"));
 
     protected override LambdaExpression DefaultOrder =>
         (Expression<Func<ProjectUnbilledRow, string>>)(r => r.ProjectCode);

@@ -111,4 +111,7 @@ export * from './lib/project-profitability/project-profitability-report.service'
 export * from './lib/project-budget-vs-actual/project-budget-vs-actual-report.models';
 export * from './lib/project-budget-vs-actual/project-budget-vs-actual-report.service';
 
+export * from './lib/project-unbilled-work/project-unbilled-work-report.models';
+export * from './lib/project-unbilled-work/project-unbilled-work-report.service';
+
 

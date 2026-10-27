@@ -59,4 +59,6 @@ export * from './lib/project-profitability/project-profitability-report.page';
 
 export * from './lib/project-budget-vs-actual/project-budget-vs-actual-report.page';
 
+export * from './lib/project-unbilled-work/project-unbilled-work-report.page';
+
 

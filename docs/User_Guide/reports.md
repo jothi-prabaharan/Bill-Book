@@ -826,6 +826,19 @@ The Project Budget vs Actual report has its own page at `/reports/project-budget
 - **Responsive Layout:** On mobile viewports (< 800px), projects transform into stacked cards showing status badges, metadata, paired budget metrics, and task breakdown cards.
 - **Catalog Source:** The catalog's **Project Budget vs Actual** report (`project-budget-vs-actual`) marks the `asOf` date parameter as required (`IsRequired = true`).
 
+### Project Unbilled Work
+
+The Project Unbilled Work report has its own page at `/reports/project-unbilled-work` (TK-258), under **Reports > Projects**. It requires **reports.view**, **projects.view**, and the branch's business type. It calculates what could be invoiced right now across projects as at a chosen date: billable hours at the project's, task's or user's rate basis, recharge expenses from posted spend-money and vendor bills with their markup %, and uninvoiced milestones.
+
+- **As at** date is required (D-67). The page opens on today.
+- **Filters:** Optional **Customer** and **Project** dropdown selectors.
+- **Summary Metric Cards:** Top metric cards display **Total Projects**, **Unbilled Hours**, **Time Value**, **Recharge Expenses**, **Milestones**, and **Grand Total Unbilled**.
+- **Collapsible Project Cards:** Projects display Project Code, Name, Customer tag, Billing Method badge, To Bill amount pill, and a direct **Create Invoice** action link (`/sales/invoices/new?projectId=...`).
+- **Metrics Strip:** Each project shows its unbilled hours, time value, expenses, milestones, and total value.
+- **Per-Line Detail Grid:** Expanding a project displays every constituent unbilled line: Type pill (Time, Expense, Milestone), Date, Reference (task name, spend transaction, bill number, milestone ID), Description (team member name, line memo, bill description), Quantity/Hours, Unit Rate/Base amount, Markup %, and Billable Amount.
+- **Responsive Layout:** On mobile viewports (< 800px and ~360px), projects and detail lines transform into responsive stacked cards.
+- **Catalog Source:** The catalog's **Project Unbilled Work** report (`project-unbilled-work`) marks the `asOf` date parameter as required (`IsRequired = true`).
+
 ## Salary Increment Report
 
 Every salary revision that takes effect in a period, under **Payroll** in the list, or straight at `/reports/salary-increment`. It needs the Payroll add-on and **payroll.view** (TK-198). Unlike the other reports it has a page of its own, so it has no column chooser, saved views, schedule or export.

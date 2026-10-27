@@ -7536,7 +7536,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
 
 ### TK-258 · Project Unbilled Work: its own endpoint and page
-- [ ] open
+- [x] completed (Antigravity) · tests written, not run — 2026-10-28
 - **Issue:** [#245](https://github.com/jothi-prabaharan/Bill-Book/issues/245)
 - **Group:** Z · Owner request (the reports, one by one: menu group *Projects*). Opened 21 October 2026 with the detail another agent needs to build it without asking; read `docs/Modules.md` §8.6 first.
 - **Lanes:** L-RPT-PRJ, plus the shared registration files of section 1.2 (add lines only) · **Depends on:** — · **Decision:** the owner's request of 20 October 2026; D-67 (every report has a required date filter)
@@ -7552,13 +7552,13 @@ The queue below is one list in card-number order. Each card names its group.
   - Billing rules from TK-106 (time and materials, fixed fee milestones); the rate basis from the project.
   - The source takes no date: add the as-at date.
 - **Sub-tasks:**
-  - [ ] The repository `ProjectUnbilledWorkReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
-  - [ ] The endpoint `GET api/statements/project-unbilled-work` with `ProjectUnbilledWorkReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("projects.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
-  - [ ] The catalog source `project-unbilled-work`: give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
-  - [ ] The page at `/reports/project-unbilled-work`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
-  - [ ] Test: written, never run by an AI (section 0.5) — `ProjectUnbilledWorkReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `project-unbilled-work-report.service.spec.ts`.
-  - [ ] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
-  - [ ] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
+  - [x] The repository `ProjectUnbilledWorkReportRepository`: static LINQ builders over the read models (testable over lists, no correlated sub-query in a projection, no number compared with a text column) and a pure `Compose`, following the rules above.
+  - [x] The endpoint `GET api/statements/project-unbilled-work` with `ProjectUnbilledWorkReportRequest` (the filters above, dates required) and its result models; guards `[RequireBusinessType]`, `[RequireModulePermission("reports")]`, `[RequirePermission("projects.view")]` on each action; another branch in the request is 403; a document or contact id that is not the branch's is 404 or a field error on the filter; lookups for the filters as sub-routes; a gateway route per endpoint.
+  - [x] The catalog source `project-unbilled-work`: give it the same required date parameter (`IsRequired`), so export, saved views and scheduled emails obey D-67.
+  - [x] The page at `/reports/project-unbilled-work`, registered ahead of `:reportKey` in `reporting.routes.ts` with `data: { access: { permission: 'reports.view' } }`: the filters and layout above, field errors under each field, failures in the message box, 360px.
+  - [x] Test: written, never run by an AI (section 0.5) — `ProjectUnbilledWorkReportTests` (hand-worked figures through the builders and `Compose`, each rule above, every refusal, the required fields, 403 for another branch, the route and guards) and `project-unbilled-work-report.service.spec.ts`.
+  - [x] Verify (§8.6 step 4): the API and test project build with no warnings; `npm run typecheck`, lint and the `web` build clean; the endpoint and the page against hand-checked local data at 1280px and 360px; the catalog source run against PostgreSQL.
+  - [x] Docs in the same commit: `docs/User_Guide/reports.md` (this report's section only), `docs/User_Guide/releases.md` (a line under Unreleased), this card ticked `completed (AI name) · tests written, not run`, `python3 scripts/update-task-list.py`, `Closes` this card's issue.
 - **Done when:** After invoicing everything a project shows, the project disappears from the report for that date.
 - **Notes:** Reference implementations: TK-199 Balance Sheet (an as-at report), TK-200 Profit & Loss (a period and a comparison), TK-202 Reconciliation (a lookup sub-route), TK-204 Budget vs Actual (one grid with heading, subtotal and total rows), TK-207 (a summary composed from a shared repository).
 

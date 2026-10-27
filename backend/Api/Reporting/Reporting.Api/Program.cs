@@ -280,6 +280,7 @@ builder.Services.AddScoped<DisposalScheduleReportRepository>();
 builder.Services.AddScoped<FixedAssetReconciliationReportRepository>();
 builder.Services.AddScoped<ProjectProfitabilityReportRepository>();
 builder.Services.AddScoped<ProjectBudgetVsActualReportRepository>();
+builder.Services.AddScoped<ProjectUnbilledWorkReportRepository>();
 builder.Services.AddScoped<QuotationTrackReportRepository>();
 builder.Services.AddScoped<DeliveryOrderTrackReportRepository>();
 builder.Services.AddScoped<AgedPayablesSummaryReportRepository>();
