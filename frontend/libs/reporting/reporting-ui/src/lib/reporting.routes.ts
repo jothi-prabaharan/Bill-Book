@@ -231,6 +231,18 @@ export const reportingRoutes: Routes = [
     data: { access: { permission: 'reports.view', addOns: ['FixedAssets'] } },
   },
   {
+    // The menu links to /reports/disposal-schedule-report (TK-254)
+    path: 'disposal-schedule-report',
+    loadComponent: () =>
+      import('./disposal-schedule/disposal-schedule-report.page').then((m) => m.DisposalScheduleReportPageComponent),
+    data: { access: { permission: 'reports.view', addOns: ['FixedAssets'] } },
+  },
+  {
+    path: 'disposal-schedule',
+    redirectTo: 'disposal-schedule-report',
+    pathMatch: 'full',
+  },
+  {
     // Its own page on its own endpoint (TK-244), at the path the menu links to.
     path: 'inventory-item-detail',
     loadComponent: () => import('./inventory-item-detail/inventory-item-detail-report.page').then((m) => m.InventoryItemDetailPage),

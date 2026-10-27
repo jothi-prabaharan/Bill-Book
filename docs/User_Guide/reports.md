@@ -189,6 +189,18 @@ The Depreciation Schedule has its own page at `/reports/depreciation-schedule` (
 - **Responsive Layout:** On mobile displays (< 800px), grids transform into responsive asset card lists with full roll-forward breakdowns and quick-action summaries.
 - **Catalog Source:** The catalog's **Depreciation Schedule** report (`depreciation-schedule`) marks both From and To parameters as required (`IsRequired = true`) and requires `AddOn.FixedAssets`.
 
+### Disposal Schedule Report
+
+The Disposal Schedule Report has its own page at `/reports/disposal-schedule-report` (TK-254), under **Reports > Fixed Asset**. Besides access to reports and **accounting.view**, it requires the **FixedAssets** add-on alone. It displays assets disposed of in a chosen period: cost, accumulated depreciation, book value, sale proceeds, and the resulting gain or loss on each disposal.
+
+- **From** and **To** dates are both required (D-67). The page opens on the current financial year to date (`rangeForPreset('this-financial-year')` to today). A To date earlier than From date is refused with an inline error under To.
+- **Filters:** Optional **Category** filter and **Search Asset** (matching asset code, name, serial number, or description).
+- **Summary Metric Cards:** Top metric cards display **Total Disposals** (count of assets removed from register), **Total Cost** (original acquisition cost), **Accum Depreciation** (written back on disposal), **Book Value at Disposal**, **Sale Proceeds**, **Gain on Disposal** (proceeds above NBV up to cost), **Capital Gain** (proceeds exceeding original cost), **Loss on Disposal** (book value exceeding proceeds), and **Net Gain / (Loss)** (matching the Gain/Loss on Asset Disposal account's movement on the Profit & Loss).
+- **Category Grouping & Subtotals:** Assets are grouped by category with headers showing the category name, number of disposed assets, and category net result. Category subtotal footers provide breakdowns for Cost, Accum Dep, Book Value, Proceeds, and Net Result.
+- **Structured Disposals Grid:** Each section displays Asset Code, Asset Name with serial number, Purchase Date, Cost, Disposal Date, Accum Dep written off, Book Value, Proceeds, Gain, Loss, and Disposal Notes / Reference (D-20).
+- **Responsive Layout:** On mobile viewports (< 800px), tables transform into stacked disposal cards with metrics grids and reference notes.
+- **Catalog Source:** The catalog's **Disposal Schedule** report (`disposal-schedule`) marks both From and To parameters as required (`IsRequired = true`) and requires `AddOn.FixedAssets`.
+
 ## Budget reports
 
 Three reports compare the branch's budget with what was posted, under **Reports › Financial performance** in the menu. They need the **Budget** add-on.

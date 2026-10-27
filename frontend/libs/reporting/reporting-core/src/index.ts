@@ -98,3 +98,7 @@ export * from './lib/fixed-assets-schedule/fixed-assets-schedule-report.service'
 
 export * from './lib/depreciation-schedule/depreciation-schedule-report.models';
 export * from './lib/depreciation-schedule/depreciation-schedule-report.service';
+
+export * from './lib/disposal-schedule/disposal-schedule-report.models';
+export * from './lib/disposal-schedule/disposal-schedule-report.service';
+

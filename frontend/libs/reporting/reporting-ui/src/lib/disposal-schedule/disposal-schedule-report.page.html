@@ -1,0 +1,342 @@
+<div class="report-container">
+  <header class="report-header">
+    <div class="report-title-group">
+      <h1 class="report-title">Disposal Schedule Report</h1>
+      <p class="report-subtitle">
+        Assets disposed of within the chosen period: cost, accumulated depreciation, net book value, sale proceeds, and the resulting gain or loss.
+      </p>
+    </div>
+  </header>
+
+  <!-- Filter Card -->
+  <section class="filter-card card" aria-label="Report Filters">
+    <form [formGroup]="filters" (ngSubmit)="run()" class="filter-form">
+      <div class="filter-row">
+        <bb-branch-date-input
+          formControlName="fromDate"
+          label="From Date"
+          [required]="true"
+          [error]="err('fromDate', 'From Date')"
+        />
+
+        <bb-branch-date-input
+          formControlName="toDate"
+          label="To Date"
+          [required]="true"
+          [error]="err('toDate', 'To Date')"
+        />
+
+        <bb-select
+          formControlName="categoryId"
+          label="Asset Category"
+          [options]="categoryOptions()"
+          [error]="err('categoryId', 'Category')"
+        />
+
+        <bb-text-input
+          formControlName="search"
+          label="Search Asset"
+          placeholder="Code, name, or serial number"
+          [error]="err('search', 'Search')"
+        />
+      </div>
+
+      <div class="filter-actions">
+        <button
+          type="submit"
+          class="btn-primary"
+          [disabled]="loading()"
+        >
+          @if (loading()) {
+            Loading...
+          } @else {
+            Run Report
+          }
+        </button>
+      </div>
+    </form>
+  </section>
+
+  @if (messages().length > 0) {
+    <bb-message-box [messages]="messages()" />
+  }
+
+  @if (reportData(); as res) {
+    <!-- Grand Summary Cards -->
+    <div class="summary-grid" aria-label="Grand Summary">
+      <div class="summary-card">
+        <span class="summary-label">Total Disposals</span>
+        <span class="summary-value count">{{ res.summary.totalDisposals }}</span>
+        <span class="summary-subtext">Assets removed from register</span>
+      </div>
+
+      <div class="summary-card">
+        <span class="summary-label">Total Cost</span>
+        <span class="summary-value">
+          <bb-report-amount [value]="res.summary.totalCost" />
+        </span>
+        <span class="summary-subtext">Historical acquisition cost</span>
+      </div>
+
+      <div class="summary-card">
+        <span class="summary-label">Accum Depreciation</span>
+        <span class="summary-value">
+          <bb-report-amount [value]="res.summary.totalAccumDep" />
+        </span>
+        <span class="summary-subtext">Written back on disposal</span>
+      </div>
+
+      <div class="summary-card">
+        <span class="summary-label">Book Value at Disposal</span>
+        <span class="summary-value">
+          <bb-report-amount [value]="res.summary.totalNbvAtDisposal" />
+        </span>
+        <span class="summary-subtext">Carrying value on disposal day</span>
+      </div>
+
+      <div class="summary-card">
+        <span class="summary-label">Sale Proceeds</span>
+        <span class="summary-value highlight">
+          <bb-report-amount [value]="res.summary.totalProceeds" />
+        </span>
+        <span class="summary-subtext">Cash or trade-in value</span>
+      </div>
+
+      <div class="summary-card">
+        <span class="summary-label">Gain on Disposal</span>
+        <span class="summary-value success">
+          <bb-report-amount [value]="res.summary.totalGain" />
+        </span>
+        <span class="summary-subtext">Proceeds above NBV up to cost</span>
+      </div>
+
+      @if (res.summary.totalCapitalGain > 0) {
+        <div class="summary-card">
+          <span class="summary-label">Capital Gain</span>
+          <span class="summary-value success">
+            <bb-report-amount [value]="res.summary.totalCapitalGain" />
+          </span>
+          <span class="summary-subtext">Proceeds exceeding original cost</span>
+        </div>
+      }
+
+      <div class="summary-card">
+        <span class="summary-label">Loss on Disposal</span>
+        <span class="summary-value danger">
+          <bb-report-amount [value]="res.summary.totalLoss" />
+        </span>
+        <span class="summary-subtext">Book value exceeding proceeds</span>
+      </div>
+
+      <div class="summary-card accent">
+        <span class="summary-label">Net Gain / (Loss)</span>
+        <span class="summary-value">
+          <bb-report-amount [value]="res.summary.netGainLoss" />
+        </span>
+        <span class="summary-subtext">Matches P&amp;L Disposal Gain/Loss</span>
+      </div>
+    </div>
+
+    @if (res.categories.length === 0) {
+      <div class="empty-state-card">
+        <div class="empty-icon">📁</div>
+        <h3>No Disposals in Period</h3>
+        <p>No fixed assets were disposed of between {{ res.fromDate | reportDate }} and {{ res.toDate | reportDate }}.</p>
+      </div>
+    } @else {
+      @if (narrow()) {
+        <!-- Mobile Card View (< 800px) -->
+        <div class="mobile-categories-list">
+          @for (cat of res.categories; track cat.categoryId) {
+            <div class="mobile-category-card">
+              <div class="cat-card-header">
+                <div class="cat-card-title">
+                  <h2>{{ cat.categoryName }}</h2>
+                  <span class="cat-count">{{ cat.assetCount }} disposed</span>
+                </div>
+                <div class="cat-nbv-pill">
+                  <span class="pill-label">Net Gain/Loss:</span>
+                  <bb-report-amount [value]="cat.netGainLoss" />
+                </div>
+              </div>
+
+              <div class="mobile-items-list">
+                @for (item of cat.disposals; track item.fixedAssetId) {
+                  <div class="mobile-disposal-card">
+                    <div class="disposal-top">
+                      <span class="code font-mono">{{ item.assetCode }}</span>
+                      <span class="date">{{ item.disposalDate | reportDate }}</span>
+                    </div>
+                    <div class="name font-medium">{{ item.assetName }}</div>
+                    @if (item.serialNumber) {
+                      <div class="serial text-muted">S/N: {{ item.serialNumber }}</div>
+                    }
+
+                    <div class="metrics-grid">
+                      <div class="metric-row">
+                        <span class="lbl">Cost:</span>
+                        <bb-report-amount [value]="item.cost" />
+                      </div>
+                      <div class="metric-row">
+                        <span class="lbl">Accum Dep:</span>
+                        <bb-report-amount [value]="item.accumDep" />
+                      </div>
+                      <div class="metric-row">
+                        <span class="lbl">Book Value:</span>
+                        <bb-report-amount [value]="item.nbvAtDisposal" />
+                      </div>
+                      <div class="metric-row">
+                        <span class="lbl font-medium">Proceeds:</span>
+                        <bb-report-amount [value]="item.saleProceeds" />
+                      </div>
+                      @if (item.gainOnDisposal > 0) {
+                        <div class="metric-row success font-medium">
+                          <span class="lbl">Gain:</span>
+                          <bb-report-amount [value]="item.gainOnDisposal" />
+                        </div>
+                      }
+                      @if (item.capitalGain > 0) {
+                        <div class="metric-row success font-medium">
+                          <span class="lbl">Capital Gain:</span>
+                          <bb-report-amount [value]="item.capitalGain" />
+                        </div>
+                      }
+                      @if (item.lossOnDisposal > 0) {
+                        <div class="metric-row danger font-medium">
+                          <span class="lbl">Loss:</span>
+                          <bb-report-amount [value]="item.lossOnDisposal" />
+                        </div>
+                      }
+                    </div>
+
+                    @if (item.reference) {
+                      <div class="reference-note text-muted">
+                        <span class="ref-label">Ref:</span> {{ item.reference }}
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+
+              <div class="cat-card-subtotal">
+                <span class="subtotal-label">Subtotal · {{ cat.categoryName }}:</span>
+                <div class="subtotal-chips">
+                  <span>Cost: <bb-report-amount [value]="cat.totalCost" /></span>
+                  <span>Proceeds: <bb-report-amount [value]="cat.totalProceeds" /></span>
+                  <span>Net: <bb-report-amount [value]="cat.netGainLoss" /></span>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <!-- Desktop Category Sections with bb-data-grid -->
+        <div class="category-sections">
+          @for (cat of res.categories; track cat.categoryId) {
+            <section class="category-section card">
+              <header class="category-header">
+                <div class="cat-title-block">
+                  <h2 class="cat-name">📂 {{ cat.categoryName }}</h2>
+                  <span class="cat-count">{{ cat.assetCount }} asset(s) disposed</span>
+                </div>
+                <div class="cat-net-badge">
+                  <span class="badge-label">Category Net Gain / (Loss)</span>
+                  <span class="badge-amount"><bb-report-amount [value]="cat.netGainLoss" /></span>
+                </div>
+              </header>
+
+              <div class="grid-container">
+                <bb-data-grid flush [columns]="columns" [data]="cat.disposals" [ariaLabel]="cat.categoryName + ' table'">
+                  <ng-template bbCellTemplate="assetCode" let-item>
+                    <span class="font-mono font-medium code-text">{{ item.assetCode }}</span>
+                  </ng-template>
+
+                  <ng-template bbCellTemplate="assetName" let-item>
+                    <div class="name-desc">
+                      <span class="font-medium name-text">{{ item.assetName }}</span>
+                      @if (item.serialNumber) {
+                        <span class="serial-text text-muted">S/N: {{ item.serialNumber }}</span>
+                      }
+                    </div>
+                  </ng-template>
+
+                  <ng-template bbCellTemplate="purchaseDate" let-item>
+                    <span class="date-text">{{ item.purchaseDate | reportDate }}</span>
+                  </ng-template>
+
+                  <ng-template bbCellTemplate="cost" let-item>
+                    <bb-report-amount [value]="item.cost" />
+                  </ng-template>
+
+                  <ng-template bbCellTemplate="disposalDate" let-item>
+                    <span class="date-text font-medium">{{ item.disposalDate | reportDate }}</span>
+                  </ng-template>
+
+                  <ng-template bbCellTemplate="accumDep" let-item>
+                    <bb-report-amount [value]="item.accumDep" />
+                  </ng-template>
+
+                  <ng-template bbCellTemplate="nbvAtDisposal" let-item>
+                    <bb-report-amount [value]="item.nbvAtDisposal" />
+                  </ng-template>
+
+                  <ng-template bbCellTemplate="saleProceeds" let-item>
+                    <bb-report-amount [value]="item.saleProceeds" class="font-medium" />
+                  </ng-template>
+
+                  <ng-template bbCellTemplate="gainOnDisposal" let-item>
+                    @if (item.gainOnDisposal > 0) {
+                      <span class="gain-badge"><bb-report-amount [value]="item.gainOnDisposal" /></span>
+                    } @else {
+                      <span class="text-muted">—</span>
+                    }
+                  </ng-template>
+
+                  <ng-template bbCellTemplate="lossOnDisposal" let-item>
+                    @if (item.lossOnDisposal > 0) {
+                      <span class="loss-badge"><bb-report-amount [value]="item.lossOnDisposal" /></span>
+                    } @else {
+                      <span class="text-muted">—</span>
+                    }
+                  </ng-template>
+
+                  <ng-template bbCellTemplate="reference" let-item>
+                    <span class="reference-cell text-muted">{{ item.reference || '—' }}</span>
+                  </ng-template>
+                </bb-data-grid>
+              </div>
+
+              <footer class="category-subtotal-footer">
+                <div class="subtotal-title">
+                  SUBTOTAL · {{ cat.categoryName | uppercase }}:
+                </div>
+                <div class="subtotal-pills">
+                  <div class="pill">
+                    <span class="pill-label">Cost:</span>
+                    <bb-report-amount [value]="cat.totalCost" />
+                  </div>
+                  <div class="pill">
+                    <span class="pill-label">Accum Dep:</span>
+                    <bb-report-amount [value]="cat.totalAccumDep" />
+                  </div>
+                  <div class="pill">
+                    <span class="pill-label">Book Value:</span>
+                    <bb-report-amount [value]="cat.totalNbvAtDisposal" />
+                  </div>
+                  <div class="pill highlight">
+                    <span class="pill-label">Proceeds:</span>
+                    <bb-report-amount [value]="cat.totalProceeds" />
+                  </div>
+                  <div class="pill accent">
+                    <span class="pill-label">Net Result:</span>
+                    <bb-report-amount [value]="cat.netGainLoss" />
+                  </div>
+                </div>
+              </footer>
+            </section>
+          }
+        </div>
+      }
+    }
+  }
+</div>

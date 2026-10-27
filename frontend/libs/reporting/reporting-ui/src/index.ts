@@ -50,3 +50,6 @@ export * from './lib/warehouse-tracking-status/warehouse-tracking-status-report.
 export * from './lib/fixed-assets-schedule/fixed-assets-schedule-report.page';
 
 export * from './lib/depreciation-schedule/depreciation-schedule-report.page';
+
+export * from './lib/disposal-schedule/disposal-schedule-report.page';
+
