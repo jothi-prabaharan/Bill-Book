@@ -106,6 +106,7 @@ public class ReportingDbContext : TenantDbContext
     public DbSet<DeliveryChallanDetailRead> DeliveryChallanDetails => Set<DeliveryChallanDetailRead>();
     public DbSet<InvoiceDetailRead> InvoiceDetails => Set<InvoiceDetailRead>();
     public DbSet<PurchaseOrderRead> PurchaseOrders => Set<PurchaseOrderRead>();
+    public DbSet<PurchaseOrderDetailRead> PurchaseOrderDetails => Set<PurchaseOrderDetailRead>();
     public DbSet<GoodsReceiptRead> GoodsReceipts => Set<GoodsReceiptRead>();
     public DbSet<BillDetailRead> BillDetails => Set<BillDetailRead>();
     public DbSet<BillDetailTaxRead> BillDetailTaxes => Set<BillDetailTaxRead>();
@@ -369,6 +370,7 @@ public class ReportingDbContext : TenantDbContext
         MapRead<DeliveryChallanDetailRead>(modelBuilder, "DeliveryChallanDetails", "sal", e => e.DeliveryChallanDetailId);
         MapRead<InvoiceDetailRead>(modelBuilder, "InvoiceDetails", "sal", e => e.InvoiceDetailId);
         MapRead<PurchaseOrderRead>(modelBuilder, "PurchaseOrders", "pur", e => e.PurchaseOrderId);
+        MapRead<PurchaseOrderDetailRead>(modelBuilder, "PurchaseOrderDetails", "pur", e => e.PurchaseOrderDetailId);
         MapRead<GoodsReceiptRead>(modelBuilder, "GoodsReceipts", "pur", e => e.GoodsReceiptId);
         MapRead<BillDetailRead>(modelBuilder, "BillDetails", "pur", e => e.BillDetailId);
         MapRead<BillDetailTaxRead>(modelBuilder, "BillDetailTaxes", "pur", e => e.BillDetailTaxId);

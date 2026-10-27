@@ -32,5 +32,6 @@ export * from './lib/payable-invoice-detail/payable-invoice-detail.page';
 export * from './lib/bills-track/bills-track.page';
 export * from './lib/bill-dn-payment/bill-dn-payment.page';
 export * from './lib/purchase-analysis/purchase-analysis.page';
+export * from './lib/purchase-order-track/purchase-order-track.page';
 export * from './lib/foreign-currency-gain-or-loss/foreign-currency-gain-or-loss.page';
 export * from './lib/foreign-currency-gain-or-loss-details/foreign-currency-gain-or-loss-details.page';

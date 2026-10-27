@@ -1,0 +1,160 @@
+<header class="page-head">
+  <div>
+    <h1>Purchase Order Track Report</h1>
+    <p class="subtitle text-muted">
+      Each purchase order raised in a period and how far it has got: what was ordered, received and billed of every line, and what is still to receive or bill.
+      Values are before tax in the branch's base currency, at the order's own price.
+    </p>
+  </div>
+</header>
+
+<form class="filters card" [formGroup]="filters" (ngSubmit)="run()" novalidate>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'pot-from'" label="From" formControlName="fromDate" [required]="true"
+                          [error]="err('fromDate', 'From date')" />
+  </div>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'pot-to'" label="To" formControlName="toDate" [required]="true"
+                          [error]="err('toDate', 'To date')" />
+  </div>
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'pot-vendor'" label="Vendor" placeholder="All vendors" [options]="vendorOptions()"
+               [loading]="!choicesLoaded()" emptyText="No vendors" formControlName="contactId"
+               [error]="err('contactId', 'Vendor')" />
+  </div>
+  <div class="filters__field filters__field--check">
+    <bb-checkbox text="Outstanding only" formControlName="outstandingOnly" />
+  </div>
+  <div class="filters__actions">
+    <button class="btn btn-primary" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Running…' : 'Run report' }}
+    </button>
+  </div>
+</form>
+
+@if (result()) {
+  <bb-status-tabs [tabs]="tabs()" [value]="progress()" label="Order progress" (valueChange)="chooseProgress($event)" />
+}
+
+@if (messages().length > 0) {
+  <bb-message-box [messages]="messages()" />
+}
+
+@if (result(); as report) {
+  <p class="period text-muted">
+    {{ report.fromDate | reportDate }} to {{ report.toDate | reportDate }}. Quantities are in each line's own unit; values are in {{ report.baseCurrencyCode }}.
+  </p>
+
+  @if (report.totalOrders === 0) {
+    <p class="empty text-muted">No orders match these filters.</p>
+  } @else if (narrow()) {
+    <div class="cards" role="list" aria-label="Purchase order track">
+      @for (card of cards(); track card[0].key) {
+        <article class="card entry" role="listitem">
+          @for (row of card; track row.key) {
+            @switch (row.kind) {
+              @case ('order') {
+                <header class="entry__head">
+                  @if (row.link) { <a class="link" [routerLink]="row.link"><strong>{{ row.name }}</strong></a> }
+                  @if (row.progress) { <span [class]="'tag ' + progressTag(row.progress)">{{ progressLabel(row.progress) }}</span> }
+                </header>
+                <p class="entry__who">{{ row.contactName }}</p>
+                <p class="entry__dates text-muted">
+                  {{ row.date | reportDate }}
+                  @if (row.expectedDate) { · expected {{ row.expectedDate | reportDate }} }
+                  @if (row.currency) { · {{ row.currency }} }
+                </p>
+                @if (row.billsRaised > 0) {
+                  <p class="entry__dates text-muted">{{ row.billsRaised }} {{ row.billsRaised === 1 ? 'bill' : 'bills' }} raised, <bb-report-amount [value]="row.billTotal" /></p>
+                }
+              }
+              @case ('line') {
+                <section class="doc">
+                  <div class="doc__head">
+                    <strong>{{ row.name }}</strong>
+                    @if (row.code) { <span class="text-muted">{{ row.code }}</span> }
+                  </div>
+                  <dl class="figures">
+                    <div class="figures__row"><dt>Ordered</dt><dd>{{ row.ordered }} {{ row.unitCode }}</dd></div>
+                    <div class="figures__row"><dt>Received</dt><dd>{{ row.received }}</dd></div>
+                    <div class="figures__row"><dt>Billed</dt><dd>{{ row.billed }}</dd></div>
+                    <div class="figures__row figures__row--balance"><dt>To receive</dt><dd>{{ row.toReceive }}</dd></div>
+                    <div class="figures__row figures__row--balance"><dt>To bill</dt><dd>{{ row.toBill }}</dd></div>
+                  </dl>
+                </section>
+              }
+              @case ('subtotal') {
+                <dl class="figures figures--subtotal">
+                  <div class="figures__row"><dt>Order value</dt><dd><bb-report-amount [value]="row.orderedValue" /></dd></div>
+                  <div class="figures__row"><dt>To receive</dt><dd><bb-report-amount [value]="row.toReceiveValue" /></dd></div>
+                  <div class="figures__row figures__row--balance"><dt>To bill</dt><dd><bb-report-amount [value]="row.toBillValue" /></dd></div>
+                </dl>
+              }
+              @case ('total') {
+                <header class="entry__head"><strong>{{ row.name }}</strong></header>
+                <dl class="figures">
+                  <div class="figures__row"><dt>Value</dt><dd><bb-report-amount [value]="row.orderedValue" /></dd></div>
+                  <div class="figures__row"><dt>To receive</dt><dd><bb-report-amount [value]="row.toReceiveValue" /></dd></div>
+                  <div class="figures__row figures__row--balance"><dt>To bill</dt><dd><bb-report-amount [value]="row.toBillValue" /></dd></div>
+                </dl>
+              }
+            }
+          }
+        </article>
+      }
+    </div>
+  } @else {
+    <div class="matrix">
+      <bb-data-grid flush [columns]="columns" [data]="rows()" [rowClass]="rowClass" [sortable]="false"
+                    [showColumnFilters]="false" [showCount]="false" [paged]="false" label="Purchase order track">
+        <ng-template bbCellTemplate="item" let-row>
+          @switch (row.kind) {
+            @case ('order') {
+              <span class="order">
+                @if (row.link) { <a class="link" [routerLink]="row.link"><strong>{{ row.name }}</strong></a> }
+                @if (row.progress) { <span [class]="'tag ' + progressTag(row.progress)">{{ progressLabel(row.progress) }}</span> }
+                <span class="order__meta text-muted">
+                  <span>{{ row.date | reportDate }}</span>
+                  @if (row.expectedDate) { <span>expected {{ row.expectedDate | reportDate }}</span> }
+                  <span class="order__who">{{ row.contactName }}</span>
+                  @if (row.currency) { <span>{{ row.currency }}</span> }
+                  @if (row.billsRaised > 0) { <span>{{ row.billsRaised }} {{ row.billsRaised === 1 ? 'bill' : 'bills' }} raised, <bb-report-amount [value]="row.billTotal" /></span> }
+                </span>
+              </span>
+            }
+            @case ('line') {
+              <span class="item">
+                {{ row.name }}
+                @if (row.code) { <span class="item__code text-muted">{{ row.code }}</span> }
+              </span>
+            }
+            @default { <strong class="label">{{ row.name }}</strong> }
+          }
+        </ng-template>
+        <ng-template bbCellTemplate="ordered" let-row>@if (row.ordered !== null) { <span class="qty">{{ row.ordered }} <small class="text-muted">{{ row.unitCode }}</small></span> }</ng-template>
+        <ng-template bbCellTemplate="received" let-row>@if (row.received !== null) { {{ row.received }} }</ng-template>
+        <ng-template bbCellTemplate="billed" let-row>@if (row.billed !== null) { {{ row.billed }} }</ng-template>
+        <ng-template bbCellTemplate="toReceive" let-row>@if (row.toReceive !== null) { <strong>{{ row.toReceive }}</strong> }</ng-template>
+        <ng-template bbCellTemplate="toBill" let-row>@if (row.toBill !== null) { <strong>{{ row.toBill }}</strong> }</ng-template>
+        <ng-template bbCellTemplate="orderedValue" let-row>@if (row.orderedValue !== null) { <bb-report-amount [value]="row.orderedValue" /> }</ng-template>
+        <ng-template bbCellTemplate="toReceiveValue" let-row>@if (row.toReceiveValue !== null) { <bb-report-amount [value]="row.toReceiveValue" /> }</ng-template>
+        <ng-template bbCellTemplate="toBillValue" let-row>@if (row.toBillValue !== null) { <strong><bb-report-amount [value]="row.toBillValue" /></strong> }</ng-template>
+      </bb-data-grid>
+    </div>
+
+    @if (more()) {
+      <div class="more">
+        <button class="btn" type="button" (click)="loadMore()" [disabled]="busy()">Show more orders</button>
+        <span class="more__count text-muted">{{ report.orders.length }} of {{ report.totalOrders }} shown</span>
+      </div>
+    }
+  }
+
+  @if (report.totalOrders > 0) {
+    <p class="notes text-muted">
+      An order is listed by its order date. Received is the lines' own running figure, advanced by each posted goods receipt against the order, and counts only what was accepted. Billed is added up from the posted bills that name the order's lines, directly or through a goods receipt; a draft or voided bill bills nothing. To receive is ordered less received and to bill is ordered less billed, on every line.
+      An order is received when every line is, and billed when every line is billed in full; closed short means it was closed with a line not received. Values are before tax at the order's price per unit, so a price the vendor changed on the bill shows in the bills raised, not here.
+      A voided or cancelled order is listed only under Cancelled. The total at the foot is of every order the filters match, not only those shown.
+    </p>
+  }
+}

@@ -538,6 +538,20 @@ The Purchase Analysis has its own page at `/reports/purchase-analysis` (TK-239),
 
 The catalog's **Purchase Analysis**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It has a row for each item bought, with the units and the gross value in the branch's currency less debit notes; a line with no item and a fixed asset are left out.
 
+## Purchase Order Track Report
+
+The Purchase Order Track Report has its own page at `/reports/purchase-order-track-report` (TK-240), under **Reports › Purchase Report**. Besides access to reports it needs **purchase.view**. It follows each purchase order from the order to the receipt and the bill.
+
+- **From** and **To** are both required, and are the **order date**. The page opens on the financial year to date and runs straight away. A **To** before **From** is refused under **To**. **Vendor** narrows it, and **Outstanding only** keeps the orders with something still to receive or to bill.
+- **Progress tabs** count the orders at each stage, whichever tab is open: **Open** (nothing received), **Partly received**, **Received** (every line received in full, not every line billed), **Billed** (every line billed in full), **Closed short** (closed with something never received, and not every line billed) and **Cancelled** (voided or withdrawn). **All** is every progress except Cancelled, which is listed only under its own tab. Progress counts every line: one line that has not arrived, or not been billed, keeps the order from being received, or billed.
+- Each order has a heading with its number (a link), progress, date, the date the vendor is expected to deliver, the vendor and, when bills have been raised against it, how many and what they came to. Under it, a row for each **line** with the item, **Ordered**, **Received**, **Billed**, **To receive** (ordered less received) and **To bill** (ordered less billed), in the line's own unit, and the line's **Value**, the value **to receive** and the value **to bill**. An **Order value** row closes it.
+- **Values are before tax in the branch's currency, at the order's own price per unit**, so the outstanding values are the ordered value less what was received or billed and add up exactly. If the vendor billed a different price, that shows in what the bills came to, not in the billed value.
+- **Received** is the line's running figure, which each posted goods receipt against the order advances by what it **accepted**; goods rejected at the door never arrived. **Billed** is added up from posted bills whose lines name the order's line, directly or through a goods receipt. A draft or voided bill bills nothing, a bill with no order behind it counts toward no order, and a debit note is not taken off.
+- The **Total** at the foot and the sentence above the list are of every order the filters match, not only those loaded.
+- The list loads 25 orders at a time with **Show more orders**. On a phone each order is a card with its lines inside.
+
+The catalog's **Purchase Order Track**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It lists the orders of the period but cancelled ones; its **Fulfilment status** column is the order's progress, and its total is in the branch's currency.
+
 ## Project reports
 
 Four reports read project accounting, under **Projects** in the list. Running them needs **projects.view** as well as access to reports.
