@@ -41,3 +41,4 @@ export * from './lib/foreign-currency-gain-or-loss-details/foreign-currency-gain
 export * from './lib/inventory-item-detail/inventory-item-detail-report.page';
 export * from './lib/inventory-item-list/inventory-item-list-report.page';
 export * from './lib/inventory-aging/inventory-aging-report.page';
+export * from './lib/batch-tracking-status/batch-tracking-status-report.page';

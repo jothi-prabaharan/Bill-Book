@@ -1,0 +1,208 @@
+<header class="page-head">
+  <div>
+    <h1>Batch Tracking Status Report</h1>
+    <p class="subtitle text-muted">
+      Every batch as at a date: item, manufacture and expiry dates, received and available quantities, and warehouse.
+    </p>
+  </div>
+</header>
+
+<form class="filters card" [formGroup]="filters" (ngSubmit)="run()" novalidate>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'bts-asof'" label="As at" formControlName="asOfDate" [required]="true"
+                          [error]="err('asOfDate', 'As at date')" />
+  </div>
+
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'bts-item'" label="Item" placeholder="All items" [options]="itemOptions()"
+               [loading]="!choicesLoaded()" emptyText="No batch items" formControlName="itemId" />
+  </div>
+
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'bts-warehouse'" label="Warehouse" placeholder="All warehouses" [options]="warehouseOptions()"
+               [loading]="!choicesLoaded()" emptyText="No warehouses" formControlName="warehouseId" />
+  </div>
+
+  <div class="filters__field">
+    <bb-select [id]="'bts-expiry'" label="Expiry Window" [options]="expiryWindowOptions" formControlName="expiringWithinDays" />
+  </div>
+
+  <div class="filters__field filters__field--search">
+    <bb-text-input [id]="'bts-search'" label="Search" placeholder="Search batch, code or name…" formControlName="search" />
+  </div>
+
+  <div class="filters__field filters__field--check">
+    <bb-checkbox text="With stock only" formControlName="withStockOnly" />
+  </div>
+
+  <div class="filters__field filters__field--check">
+    <bb-checkbox text="Expired only" formControlName="expiredOnly" />
+  </div>
+
+  <div class="filters__actions">
+    <button class="btn btn-primary" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Running…' : 'Run report' }}
+    </button>
+  </div>
+</form>
+
+@if (messages().length > 0) {
+  <bb-message-box [messages]="messages()" />
+}
+
+@if (result(); as report) {
+  <div class="summary-bar">
+    <p class="period text-muted">
+      As at {{ report.asOfDate | reportDate }}.
+      Showing {{ items().length }} of {{ report.totalItems }} batch{{ report.totalItems === 1 ? '' : 'es' }}.
+    </p>
+  </div>
+
+  <!-- Summary Metric Cards -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <span class="metric-label">Total Received Quantity</span>
+      <span class="metric-value">{{ report.totals.totalReceivedQuantity | number:'1.2-2' }}</span>
+    </div>
+    <div class="metric-card">
+      <span class="metric-label">Total Available Quantity</span>
+      <span class="metric-value font-bold">{{ report.totals.totalAvailableQuantity | number:'1.2-2' }}</span>
+    </div>
+    <div class="metric-card" [class.metric-card--warning]="report.totals.nearExpiryBatchCount > 0">
+      <span class="metric-label">Near Expiry Batches</span>
+      <span class="metric-value">{{ report.totals.nearExpiryBatchCount }}</span>
+      <span class="metric-sub text-muted">Within 30 days</span>
+    </div>
+    <div class="metric-card" [class.metric-card--danger]="report.totals.expiredBatchCount > 0">
+      <span class="metric-label">Expired Batches</span>
+      <span class="metric-value">{{ report.totals.expiredBatchCount }}</span>
+      <span class="metric-sub text-muted">Past expiry date</span>
+    </div>
+  </div>
+
+  @if (report.totalItems === 0) {
+    <p class="empty text-muted">No batches match these filters.</p>
+  } @else if (narrow()) {
+    <div class="cards" role="list" aria-label="Batch tracking status report">
+      @for (item of items(); track item.itemBatchId) {
+        <article class="card entry" role="listitem">
+          <header class="entry__head">
+            <div class="entry__title">
+              <strong class="font-mono">{{ item.batchNumber }}</strong>
+              <span>{{ item.itemName }} ({{ item.itemCode }})</span>
+            </div>
+            @if (item.isExpired) {
+              <span class="badge badge-danger">Expired</span>
+            } @else if (item.isNearExpiry) {
+              <span class="badge badge-warning">Expiring in {{ item.daysToExpiry }}d</span>
+            }
+          </header>
+          <div class="entry__badges">
+            @if (item.categoryName) { <span class="badge">{{ item.categoryName }}</span> }
+            <span class="badge">{{ item.warehouseName }}</span>
+            <span class="badge">{{ item.costingMethod }}</span>
+          </div>
+
+          <div class="entry__body">
+            <div class="entry__stat">
+              <span class="text-muted">Mfg Date</span>
+              <span>{{ (item.manufactureDate | reportDate) || '—' }}</span>
+            </div>
+            <div class="entry__stat">
+              <span class="text-muted">Expiry Date</span>
+              <span [class.text-danger]="item.isExpired" [class.text-warning]="item.isNearExpiry">
+                {{ (item.expiryDate | reportDate) || '—' }}
+              </span>
+            </div>
+            <div class="entry__stat">
+              <span class="text-muted">Received Qty</span>
+              <span>{{ item.receivedQuantity | number:'1.2-2' }}</span>
+            </div>
+            <div class="entry__stat">
+              <span class="text-muted">Available Qty</span>
+              <strong>{{ item.availableQuantity | number:'1.2-2' }}</strong>
+            </div>
+          </div>
+        </article>
+      }
+    </div>
+  } @else {
+    <div class="table-container">
+      <bb-data-grid flush [columns]="columns" [data]="items()" [ariaLabel]="'Batch tracking status table'">
+        <ng-template bbCellTemplate="batchNumber" let-item>
+          <span class="font-mono font-bold">{{ item.batchNumber }}</span>
+        </ng-template>
+
+        <ng-template bbCellTemplate="itemCode" let-item>
+          <span class="font-mono text-muted">{{ item.itemCode }}</span>
+        </ng-template>
+
+        <ng-template bbCellTemplate="itemName" let-item>
+          <span>{{ item.itemName }}</span>
+        </ng-template>
+
+        <ng-template bbCellTemplate="categoryName" let-item>
+          <span class="text-muted">{{ item.categoryName ?? '—' }}</span>
+        </ng-template>
+
+        <ng-template bbCellTemplate="warehouseName" let-item>
+          <span>{{ item.warehouseName }}</span>
+        </ng-template>
+
+        <ng-template bbCellTemplate="manufactureDate" let-item>
+          <span class="text-muted">{{ (item.manufactureDate | reportDate) || '—' }}</span>
+        </ng-template>
+
+        <ng-template bbCellTemplate="expiryDate" let-item>
+          <div class="expiry-cell">
+            <span [class.text-danger]="item.isExpired" [class.text-warning]="item.isNearExpiry">
+              {{ (item.expiryDate | reportDate) || '—' }}
+            </span>
+            @if (item.isExpired) {
+              <span class="tag tag-danger">Expired</span>
+            } @else if (item.isNearExpiry) {
+              <span class="tag tag-warning">{{ item.daysToExpiry }}d</span>
+            }
+          </div>
+        </ng-template>
+
+        <ng-template bbCellTemplate="receivedQuantity" let-item>
+          <span class="numeric-cell">{{ item.receivedQuantity | number:'1.2-2' }}</span>
+        </ng-template>
+
+        <ng-template bbCellTemplate="availableQuantity" let-item>
+          <span class="numeric-cell font-bold">{{ item.availableQuantity | number:'1.2-2' }}</span>
+        </ng-template>
+
+        <ng-template bbCellTemplate="mrp" let-item>
+          @if (item.mrp !== null) {
+            <bb-report-amount class="numeric-cell" [value]="item.mrp" />
+          } @else {
+            <span class="numeric-cell text-muted">—</span>
+          }
+        </ng-template>
+      </bb-data-grid>
+
+      <!-- Totals Footer Row -->
+      <div class="totals-row">
+        <span class="totals-label">Totals across matched batches:</span>
+        <div class="totals-stat">
+          <span class="text-muted">Total Received:</span>
+          <span>{{ report.totals.totalReceivedQuantity | number:'1.2-2' }}</span>
+        </div>
+        <div class="totals-stat">
+          <span class="text-muted">Total Available:</span>
+          <strong>{{ report.totals.totalAvailableQuantity | number:'1.2-2' }}</strong>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (hasMore()) {
+    <div class="pagination-footer">
+      <button class="btn btn-secondary" type="button" [disabled]="loadingMore()" (click)="loadMore()">
+        {{ loadingMore() ? 'Loading more…' : 'Load more batches' }}
+      </button>
+    </div>
+  }
+}

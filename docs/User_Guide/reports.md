@@ -682,6 +682,17 @@ The Inventory Aging Report has its own page at `/reports/inventory-aging-report`
 - **Arithmetic & FIFO Consistency:** Ages directly from remaining quantities of inbound cost layers (`CostLayer`), ensuring true FIFO-correct aging even for weighted-average items. The total inventory valuation at the as-at date matches the Inventory Item List (TK-245) and Inventory Item Summary (TK-243) at the same date.
 - **Catalog Source:** The catalog's **Inventory Aging Report** (`inventory-aging`) marks the `asOf` date parameter as required (`IsRequired = true`).
 
+## Batch Tracking Status Report
+
+The Batch Tracking Status Report has its own page at `/reports/batch-tracking-status-report` (TK-247), under **Reports › Inventory Report**. Besides access to reports it needs **inventory.view**. It shows every batch created on or before a chosen as-at date, with its item details, manufacture and expiry dates, received and available quantities, and warehouse location.
+
+- **As at** date is required (D-67). The page defaults to today's date.
+- **Filters:** Optional **Item**, **Warehouse**, **Expiry Window** (30 days, 60 days, 90 days, 180 days, or Expired), **Search** (matching batch number, item code, or item name), **With stock only** (defaults checked, hides exhausted batches), and **Expired only**.
+- **Summary Metrics:** At the top of the report, metric cards display **Total Received Quantity**, **Total Available Quantity**, **Near Expiry Batches** (expiring within 30 days, marked with warning highlighting), and **Expired Batches** (past expiry date, marked with danger highlighting).
+- **Columns & Badges:** Batch No, Item Code, Item Name, Category, Warehouse, Mfg Date, Expiry Date (with dynamic warning/expired tags and days to expiry), Received Quantity, Available Quantity, and MRP in branch currency.
+- **Arithmetic:** Available quantity is calculated from cumulative movements up to the as-at date. Matches the closing balance of batches in the Batch Tracking Detail Report (TK-248).
+- **Catalog Source:** The catalog's **Batch Tracking Status** report (`batch-tracking-status`) marks the `asOf` date parameter as required (`IsRequired = true`), pre-groups movements to avoid correlated subquery limitations, and lists batches in First-Expired-First-Out (FEFO) order.
+
 ## Project reports
 
 Four reports read project accounting, under **Projects** in the list. Running them needs **projects.view** as well as access to reports.

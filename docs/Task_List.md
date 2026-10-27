@@ -6,7 +6,7 @@ rewrites and stages it whenever the details file changes. **Never edit it by han
 status, edit the card's first line in the details file; the card there holds the rules, lanes,
 where to start, sub-tasks and notes.
 
-**Summary:** 233 completed, 1 working, 23 open, and 2 blocked (259 cards).
+**Summary:** 234 completed, 0 working, 23 open, and 2 blocked (259 cards).
 
 | Card | Title | Group | Status | Completed by | Completed at | Tests | Issue | Note |
 | :--- | :--- | :--- | :---: | :--- | :--- | :--- | :---: | :--- |
@@ -253,7 +253,7 @@ where to start, sub-tasks and notes.
 | [TK-244](./Task_Details.md#tk-244--inventory-item-detail-its-own-endpoint-and-page) | Inventory Item Detail: its own endpoint and page | Z | ✅ completed | Antigravity | 2026-10-28 | written, not run | [#231](https://github.com/jothi-prabaharan/Bill-Book/issues/231) | — |
 | [TK-245](./Task_Details.md#tk-245--inventory-item-list-its-own-endpoint-and-page) | Inventory Item List: its own endpoint and page | Z | ✅ completed | Antigravity | 2026-10-28 | written, not run | [#232](https://github.com/jothi-prabaharan/Bill-Book/issues/232) | — |
 | [TK-246](./Task_Details.md#tk-246--inventory-aging-report-its-own-endpoint-and-page) | Inventory Aging Report: its own endpoint and page | Z | ✅ completed | Antigravity | 2026-10-28 | written, not run | [#233](https://github.com/jothi-prabaharan/Bill-Book/issues/233) | tests written, not run |
-| [TK-247](./Task_Details.md#tk-247--batch-tracking-status-report-its-own-endpoint-and-page) | Batch Tracking Status Report: its own endpoint and page | Z | 🔶 working | Antigravity (working) | since 2026-10-28 | — | [#234](https://github.com/jothi-prabaharan/Bill-Book/issues/234) | — |
+| [TK-247](./Task_Details.md#tk-247--batch-tracking-status-report-its-own-endpoint-and-page) | Batch Tracking Status Report: its own endpoint and page | Z | ✅ completed | Antigravity | 2026-10-28 | written, not run | [#234](https://github.com/jothi-prabaharan/Bill-Book/issues/234) | tests written, not run |
 | [TK-248](./Task_Details.md#tk-248--batch-tracking-detail-report-its-own-endpoint-and-page) | Batch Tracking Detail Report: its own endpoint and page | Z | 🟪 open | — | — | — | [#235](https://github.com/jothi-prabaharan/Bill-Book/issues/235) | — |
 | [TK-249](./Task_Details.md#tk-249--serial-tracking-status-report-its-own-endpoint-and-page) | Serial Tracking Status Report: its own endpoint and page | Z | 🟪 open | — | — | — | [#236](https://github.com/jothi-prabaharan/Bill-Book/issues/236) | — |
 | [TK-250](./Task_Details.md#tk-250--serial-tracking-detail-report-its-own-endpoint-and-page) | Serial Tracking Detail Report: its own endpoint and page | Z | 🟪 open | — | — | — | [#237](https://github.com/jothi-prabaharan/Bill-Book/issues/237) | — |

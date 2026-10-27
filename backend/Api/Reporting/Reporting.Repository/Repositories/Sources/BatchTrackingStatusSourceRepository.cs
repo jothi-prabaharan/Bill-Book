@@ -15,6 +15,11 @@ public sealed class BatchTrackingStatusSourceRepository : ReportSource<BatchTrac
 
     public override string RequiredPermission => "inventory.view";
 
+    public override IReadOnlyList<ReportParameterRepository> Parameters =>
+    [
+        new() { Name = "asOf", Label = "As Of", DataType = ColumnDataType.Date, IsRequired = true },
+    ];
+
     public override IReadOnlyList<ReportColumn> Columns =>
     [
         ReportColumn.Of<BatchTrackingStatusRow, string>("batchNo", ColumnDataType.Text, r => r.BatchNo),
@@ -33,20 +38,25 @@ public sealed class BatchTrackingStatusSourceRepository : ReportSource<BatchTrac
 
     protected override IQueryable<BatchTrackingStatusRow> Build(ReportParameters parameters, ReportingDbContext db)
     {
-        return from b in db.ItemBatches
+        DateOnly asOf = parameters.Date("asOf") ?? DateOnly.FromDateTime(DateTime.UtcNow);
+
+        var batchMoves = db.StockMovements
+            .Where(m => m.ItemBatchId != null && m.MovementDate <= asOf)
+            .GroupBy(m => new { ItemBatchId = m.ItemBatchId!.Value, m.WarehouseId })
+            .Select(g => new
+            {
+                g.Key.ItemBatchId,
+                g.Key.WarehouseId,
+                BatchQuantity = g.Where(x => x.Direction == StockDirection.In).Sum(x => x.Quantity),
+                AvailableQuantity = g.Sum(x => x.Direction == StockDirection.In ? x.Quantity : -x.Quantity)
+            });
+
+        return from m in batchMoves
+               join b in db.ItemBatches on m.ItemBatchId equals b.ItemBatchId
                join i in db.Items on b.ItemId equals i.ItemId
                join c in db.ItemCategories on i.ItemCategoryId equals c.ItemCategoryId into categories
                from c in categories.DefaultIfEmpty()
-               // Group movements by batch and warehouse to get quantities per warehouse
-               let moves = db.StockMovements.Where(m => m.ItemBatchId == b.ItemBatchId)
-               // Instead of a complex cross apply, we can just flatten or group.
-               // Actually, a batch could be in multiple warehouses, but Reporting.md says:
-               // "Batch No, Item Code... Warehouse". It expects one row per Batch per Warehouse.
-               // EF Core grouping on multiple keys translates well:
-               from g in db.StockMovements
-                    .Where(m => m.ItemBatchId == b.ItemBatchId)
-                    .GroupBy(m => m.WarehouseId)
-               join w in db.Warehouses on g.Key equals w.WarehouseId into warehouses
+               join w in db.Warehouses on m.WarehouseId equals w.WarehouseId into warehouses
                from w in warehouses.DefaultIfEmpty()
                select new BatchTrackingStatusRow
                {
@@ -58,8 +68,8 @@ public sealed class BatchTrackingStatusSourceRepository : ReportSource<BatchTrac
                    ProductCategory = c != null ? c.CategoryName : null,
                    ManufacturedDate = b.ManufactureDate,
                    ExpiryDate = b.ExpiryDate,
-                   BatchQuantity = g.Where(x => x.Direction == StockDirection.In).Sum(x => x.Quantity),
-                   AvailableQuantity = g.Sum(x => x.Direction == StockDirection.In ? x.Quantity : -x.Quantity),
+                   BatchQuantity = m.BatchQuantity,
+                   AvailableQuantity = m.AvailableQuantity,
                    CostingMethod = i.CostingType.ToString(),
                    Warehouse = w != null ? w.WarehouseName : "Unknown"
                };

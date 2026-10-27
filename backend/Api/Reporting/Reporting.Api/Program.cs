@@ -269,6 +269,7 @@ builder.Services.AddScoped<InventoryItemSummaryReportRepository>();
 builder.Services.AddScoped<InventoryItemDetailReportRepository>();
 builder.Services.AddScoped<InventoryItemListReportRepository>();
 builder.Services.AddScoped<InventoryAgingReportRepository>();
+builder.Services.AddScoped<BatchTrackingStatusReportRepository>();
 builder.Services.AddScoped<QuotationTrackReportRepository>();
 builder.Services.AddScoped<DeliveryOrderTrackReportRepository>();
 builder.Services.AddScoped<AgedPayablesSummaryReportRepository>();
