@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
-using Microsoft.EntityFrameworkCore;
 using Reporting.Entity.Enums;
+using Reporting.Entity.Models;
 using Reporting.Repository;
 
 namespace Reporting.Repository.Repositories;
@@ -16,6 +16,13 @@ public class BillsTrackRow
     public decimal AmountDue { get; set; }
 }
 
+/// <summary>
+/// The Bills Track Report for export, saved views and scheduled emails (TK-237). One row for each
+/// bill dated in the period but a voided one, from the builders the page uses
+/// (<see cref="BillsTrackReportRepository.Entries"/>): where it stands, its total in base currency and
+/// what is still owed to the vendor on the <c>to</c> date. A draft is listed with nothing owed.
+/// <b>Both dates are required</b> (D-67).
+/// </summary>
 public sealed class BillsTrackSourceRepository : ReportSource<BillsTrackRow>
 {
     public override string ReportKey => "bills-track";
@@ -25,8 +32,8 @@ public sealed class BillsTrackSourceRepository : ReportSource<BillsTrackRow>
 
     public override IReadOnlyList<ReportParameterRepository> Parameters =>
     [
-        new() { Name = "from", Label = "From", DataType = ColumnDataType.Date },
-        new() { Name = "to", Label = "To", DataType = ColumnDataType.Date },
+        new() { Name = "from", Label = "From", DataType = ColumnDataType.Date, IsRequired = true },
+        new() { Name = "to", Label = "To", DataType = ColumnDataType.Date, IsRequired = true },
     ];
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -42,25 +49,32 @@ public sealed class BillsTrackSourceRepository : ReportSource<BillsTrackRow>
 
     protected override IQueryable<BillsTrackRow> Build(ReportParameters parameters, ReportingDbContext db)
     {
-        DateOnly? start = parameters.Date("from");
-        DateOnly? end = parameters.Date("to");
+        DateOnly start = parameters.Date("from") ?? throw new ReportQueryException("From date is required.");
+        DateOnly end = parameters.Date("to") ?? throw new ReportQueryException("To date is required.");
 
-        return from b in db.Bills
-               where (start == null || b.DocumentDate >= start) &&
-                     (end == null || b.DocumentDate <= end)
-               join c in db.Contacts on b.ContactId equals c.ContactId
+        if (end < start)
+        {
+            throw new ReportQueryException("To date cannot be before the from date.");
+        }
+
+        var request = new BillsTrackReportRequest { FromDate = start, ToDate = end };
+        IQueryable<BillTrackEntry> entries = BillsTrackReportRepository.WithStatus(
+            BillsTrackReportRepository.Entries(db.Bills, db.TransactionRatios, request, start, end), null);
+
+        return from e in entries
+               join c in db.Contacts on e.ContactId equals c.ContactId
                select new BillsTrackRow
                {
-                   BillId = b.BillId,
-                   DocumentNo = b.DocumentNo,
-                   DocumentDate = b.DocumentDate,
+                   BillId = e.DocumentId,
+                   DocumentNo = e.DocumentNo,
+                   DocumentDate = e.DocumentDate,
                    ContactName = c.DisplayName,
-                   Status = b.Status.ToString(),
-                   TotalAmount = b.TotalAmount,
-                   AmountDue = b.TotalAmount
+                   Status = e.Status.ToString(),
+                   TotalAmount = e.Total,
+                   AmountDue = e.Due,
                };
     }
 
     protected override LambdaExpression DefaultOrder =>
-        (Expression<Func<BillsTrackRow, DateOnly>>)(r => r.DocumentDate);
+        (Expression<Func<BillsTrackRow, long>>)(r => r.BillId);
 }

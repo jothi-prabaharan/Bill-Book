@@ -473,6 +473,8 @@ public class ReportingDbContext : TenantDbContext
         modelBuilder.Entity<GoodsReceiptDetailRead>().Property(e => e.TaxTreatment).HasConversion<string>().HasMaxLength(10);
         modelBuilder.Entity<InvoiceDetailTaxRead>().Property(e => e.TaxComponent).HasConversion<string>().HasMaxLength(6);
         modelBuilder.Entity<BillDetailTaxRead>().Property(e => e.TaxComponent).HasConversion<string>().HasMaxLength(6);
+        modelBuilder.Entity<BillRead>().Property(e => e.ApprovalStatus).HasConversion<string>().HasMaxLength(12);
+        modelBuilder.Entity<BillRead>().Property(e => e.CurrentStepLabel).HasMaxLength(50);
 
         // HRMS (hrm)
         MapRead<EmployeeRecordRead>(modelBuilder, "Employees", "hrm", e => e.EmployeeId);

@@ -42,6 +42,15 @@ public class BillRead : OrgScopedEntity
     public decimal TdsAmount { get; set; }
     public Shared.Kernel.Documents.DocumentStatus Status { get; set; }
 
+    /// <summary>When it was posted; null while it is a draft or ready to post (TK-237).</summary>
+    public DateTimeOffset? PostedAt { get; set; }
+
+    /// <summary>Where it stands in an approval chain; null when no workflow was involved (TK-237).</summary>
+    public Shared.Kernel.Approvals.ApprovalStatus? ApprovalStatus { get; set; }
+
+    /// <summary>The level an in-approval bill waits on, as the workflow labels it (TK-237).</summary>
+    public string? CurrentStepLabel { get; set; }
+
     /// <summary>The record's custom field values (TK-111/TK-112), read by the custom report datasets (TK-113).</summary>
     public System.Text.Json.JsonDocument? CustomFields { get; set; }
 }

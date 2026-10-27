@@ -13196,6 +13196,10 @@ namespace Reporting.Repository.Migrations.Tenant
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("BillId"));
 
+                    b.Property<string>("ApprovalStatus")
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)");
+
                     b.Property<decimal>("CessAmount")
                         .HasColumnType("numeric");
 
@@ -13214,6 +13218,10 @@ namespace Reporting.Repository.Migrations.Tenant
                     b.Property<string>("CurrencyCode")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<string>("CurrentStepLabel")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<JsonDocument>("CustomFields")
                         .HasColumnType("jsonb");
@@ -13248,6 +13256,9 @@ namespace Reporting.Repository.Migrations.Tenant
 
                     b.Property<Guid>("OrgId")
                         .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("PostedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<decimal>("SgstAmount")
                         .HasColumnType("numeric");

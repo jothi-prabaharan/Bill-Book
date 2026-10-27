@@ -496,6 +496,21 @@ The Payable Invoice Detail has its own page at `/reports/payable-invoice-detail`
 
 The catalog's **Payable Invoice Detail**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It has a row for each line of each posted bill of the period, with the line total in the branch's currency; voided bills and drafts are not listed.
 
+## Bills Track Report
+
+The Bills Track Report has its own page at `/reports/bills-track-report` (TK-237), under **Reports › Purchase Report**. Besides access to reports it needs **purchase.view**. It follows each vendor bill through its life: where it is stuck or standing, the dates of its steps and what is still owed to the vendor.
+
+- **From** and **To** are both required, and are the **bill date**. The page opens on the financial year to date and runs straight away. A **To** before **From** is refused under **To**. **Vendor** narrows it.
+- **Status tabs** count the bills at each step, whichever tab is open: **Draft**, **Ready to post**, **Awaiting payment**, **Partly paid**, **Overdue**, **Paid** and **Void**. **All** is every status except Void, which is listed only under its own tab. Drafts and bills ready to post are listed, because that is where a bill gets stuck; they are not in the books, so they have no due date and nothing is owed on them.
+- Each bill is a row with its number (a link), its date and the vendor's own bill number, the vendor, its status, the day it was **Posted** (in your own time), its **Due date** (with how many days late when it is overdue), the **Last payment**, the **Total** and what is **Due**. A **Reverse charge** bill says so.
+- **Approval** is shown under the status for a bill that went through an approval workflow: **Approved**, **Rejected**, or **In approval** with the level it waits on. A bill that was never sent through a workflow shows nothing. An approved bill is still a draft or ready to post until it is posted.
+- **Paid and due are as at the To date**, so a report for a past period reads the same when it is run again. The last payment is the latest payment, or debit note or advance applied to the bill, on or before that date; one that was released, or takes effect after the To date, does not count.
+- **What is due is what is owed to the vendor, which is not always the total.** TDS withheld is not paid to the vendor, and on a reverse-charge bill the tax is the branch's own to pay, so where that differs from the total the row shows **owed** under it. Due is the same figure as on the Payable Invoice Summary for the same bill.
+- The **Total of posted** row and the sentence above the list add up the posted bills that still stand, of every bill the filters match and not only those loaded; drafts, bills ready to post and voided bills are not in it. A bill in another currency shows its total in the branch's currency, and its own total under it.
+- The list loads 25 bills at a time with **Show more bills**. On a phone each bill is a card.
+
+The catalog's **Bills Track**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It lists each bill of the period but a voided one, with where it stands, its total in the branch's currency and what is still owed on the **To** date; a draft shows nothing owed.
+
 ## Project reports
 
 Four reports read project accounting, under **Projects** in the list. Running them needs **projects.view** as well as access to reports.
