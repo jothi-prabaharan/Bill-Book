@@ -66,6 +66,8 @@ export * from './lib/purchase-analysis/purchase-analysis.models';
 export * from './lib/purchase-analysis/purchase-analysis.service';
 export * from './lib/purchase-order-track/purchase-order-track.models';
 export * from './lib/purchase-order-track/purchase-order-track.service';
+export * from './lib/purchase-receive-order-details/purchase-receive-order-details.models';
+export * from './lib/purchase-receive-order-details/purchase-receive-order-details.service';
 export * from './lib/foreign-currency-gain-or-loss/foreign-currency-gain-or-loss.models';
 export * from './lib/foreign-currency-gain-or-loss/foreign-currency-gain-or-loss.service';
 export * from './lib/foreign-currency-gain-or-loss-details/foreign-currency-gain-or-loss-details.models';

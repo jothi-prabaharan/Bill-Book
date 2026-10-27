@@ -1321,7 +1321,11 @@ public sealed class ReportCatalogSeeder
                 new("contactName", "Contact Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
                 new("itemCode", "Item Code", ColumnDataType.Text, IsDefault: true),
                 new("quantity", "Quantity", ColumnDataType.Number, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("acceptedQuantity", "Accepted Quantity", ColumnDataType.Number, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("rejectedQuantity", "Rejected Quantity", ColumnDataType.Number, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("value", "Value", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
                 new("goodsReceiptId", "Goods Receipt", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+                new("goodsReceiptDetailId", "Goods Receipt Line", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
             ],
         },
 

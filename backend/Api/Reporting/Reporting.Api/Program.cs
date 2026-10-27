@@ -263,6 +263,7 @@ builder.Services.AddScoped<SalesAnalysisReportRepository>();
 builder.Services.AddScoped<SalesAnalysisDetailReportRepository>();
 builder.Services.AddScoped<SalesOrderTrackReportRepository>();
 builder.Services.AddScoped<PurchaseOrderTrackReportRepository>();
+builder.Services.AddScoped<PurchaseReceiveOrderDetailsReportRepository>();
 builder.Services.AddScoped<QuotationTrackReportRepository>();
 builder.Services.AddScoped<DeliveryOrderTrackReportRepository>();
 builder.Services.AddScoped<AgedPayablesSummaryReportRepository>();

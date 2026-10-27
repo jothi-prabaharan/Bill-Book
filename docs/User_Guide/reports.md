@@ -552,6 +552,20 @@ The Purchase Order Track Report has its own page at `/reports/purchase-order-tra
 
 The catalog's **Purchase Order Track**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It lists the orders of the period but cancelled ones; its **Fulfilment status** column is the order's progress, and its total is in the branch's currency.
 
+## Purchase Receive Order Details
+
+The Purchase Receive Order Details has its own page at `/reports/purchase-receive-order-details` (TK-241), under **Reports › Purchase Report**. Besides access to reports it needs **purchase.view**. It lists every goods receipt line of a period: what arrived, from whom, against which purchase order, into which warehouse and at what cost.
+
+- **From** and **To** are both required, and are the **receipt date**. The page opens on the financial year to date and runs straight away. A **To** before **From** is refused under **To**. **Vendor**, **Item**, **Warehouse** and **Purchase order** narrow it; the purchase order list offers the newest orders a receipt was raised against.
+- Only **posted** receipts are listed: a draft has received nothing, and a posted receipt cannot be voided. **Item** and **Warehouse** narrow the lines as well as the receipts, so only a receipt with such a line is listed, and only those lines; the page says so, and each receipt's value is then of the lines shown.
+- Each receipt has a heading with its number (a link), date, vendor, the purchase order it was raised against (a link), the vendor's own delivery note, and its currency when it is not the branch's. Under it, a row for each **line** with the item, the **warehouse** it went into, **Delivered**, **Rejected**, **Accepted**, **Billed**, the **Unit cost** and the **Value**. A line with a batch shows its batch number and expiry, one with serial numbers lists them (the first fifty, with how many more), and a rejected line shows why. A **Receipt value** row closes it.
+- **Accepted** is what went into stock: it is the quantity of the stock-in movement the receipt made, so each receipt's accepted quantities equal its stock movements. **Rejected** goods were refused at the door and are not owed for. **Billed** is what posted bills naming the line add up to; a draft or voided bill bills nothing.
+- **Unit cost** is the line's value before tax over what was **delivered**, so rejecting goods does not raise the cost of the rest. **Value** is that cost times what was accepted, rounded to two places, which is what the receipt debits to **Inventory** and credits to Goods Received Not Invoiced.
+- A receipt in another currency shows its lines and value in that currency with the value in the branch's currency under it. The **Total** at the foot and the sentence above the list are in the branch's currency and are of every receipt the filters match, not only those loaded.
+- The list loads 25 receipts at a time with **Show more receipts**. On a phone each receipt is a card with its lines inside.
+
+The catalog's **Purchase Receive Order Details**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It has a row for each receipt line, with the quantity delivered, accepted and rejected and the value of the accepted goods in the branch's currency. Four columns are new (accepted quantity, rejected quantity, value and the line), so a branch set up earlier gets them when its report catalog is seeded again.
+
 ## Project reports
 
 Four reports read project accounting, under **Projects** in the list. Running them needs **projects.view** as well as access to reports.

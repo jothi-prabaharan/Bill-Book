@@ -1,0 +1,215 @@
+<header class="page-head">
+  <div>
+    <h1>Purchase Receive Order Details</h1>
+    <p class="subtitle text-muted">
+      Every goods receipt dated in a period, line by line: what arrived, from whom, against which purchase order, into which warehouse and at what cost, with what was
+      rejected and what has been billed. Lines are in the receipt's own currency; the total of the whole report is in the branch's base currency.
+    </p>
+  </div>
+</header>
+
+<form class="filters card" [formGroup]="filters" (ngSubmit)="run()" novalidate>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'rod-from'" label="From" formControlName="fromDate" [required]="true"
+                          [error]="err('fromDate', 'From date')" />
+  </div>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'rod-to'" label="To" formControlName="toDate" [required]="true"
+                          [error]="err('toDate', 'To date')" />
+  </div>
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'rod-vendor'" label="Vendor" placeholder="All vendors" [options]="vendorOptions()"
+               [loading]="!choicesLoaded()" emptyText="No vendors" formControlName="contactId"
+               [error]="err('contactId', 'Vendor')" />
+  </div>
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'rod-item'" label="Item" placeholder="All items" [options]="itemOptions()"
+               [loading]="!choicesLoaded()" emptyText="No items" formControlName="itemId"
+               [error]="err('itemId', 'Item')" />
+  </div>
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'rod-warehouse'" label="Warehouse" placeholder="All warehouses" [options]="warehouseOptions()"
+               [loading]="!choicesLoaded()" emptyText="No warehouses" formControlName="warehouseId"
+               [error]="err('warehouseId', 'Warehouse')" />
+  </div>
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'rod-order'" label="Purchase order" placeholder="All purchase orders" [options]="orderOptions()"
+               [loading]="!choicesLoaded()" emptyText="No purchase orders" formControlName="purchaseOrderId"
+               [error]="err('purchaseOrderId', 'Purchase order')" />
+  </div>
+  <div class="filters__actions">
+    <button class="btn btn-primary" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Running…' : 'Run report' }}
+    </button>
+  </div>
+</form>
+
+@if (messages().length > 0) {
+  <bb-message-box [messages]="messages()" />
+}
+
+@if (result(); as report) {
+  <p class="period text-muted">
+    {{ report.fromDate | reportDate }} to {{ report.toDate | reportDate }}. Lines are in each receipt's own currency; the total is in {{ report.baseCurrencyCode }}.
+  </p>
+
+  @if (report.linesFiltered) {
+    <p class="narrowed">
+      Only the lines for the chosen item or warehouse are shown, so a receipt's value below is of those lines and not of the whole receipt.
+    </p>
+  }
+
+  @if (report.totalReceipts === 0) {
+    <p class="empty text-muted">No goods receipts match these filters.</p>
+  } @else if (narrow()) {
+    <div class="cards" role="list" aria-label="Purchase receive order details">
+      @for (group of groups(); track group[0].key) {
+        <article class="card entry" role="listitem">
+          @for (row of group; track row.key) {
+            @switch (row.kind) {
+              @case ('heading') {
+                <header class="entry__head">
+                  @if (row.link) { <a class="link" [routerLink]="row.link"><strong>{{ row.name }}</strong></a> } @else { <strong>{{ row.name }}</strong> }
+                  @if (row.orderNo) {
+                    @if (row.orderLink) { <a class="link" [routerLink]="row.orderLink">{{ row.orderNo }}</a> } @else { <span>{{ row.orderNo }}</span> }
+                  }
+                </header>
+                <p class="entry__who">{{ row.contactName }} <span class="text-muted">{{ row.contactCode }}</span></p>
+                <p class="entry__dates text-muted">
+                  {{ row.date | reportDate }}
+                  @if (row.vendorDeliveryNoteNo) {
+                    · delivery note {{ row.vendorDeliveryNoteNo }}@if (row.vendorDeliveryNoteDate) { of {{ row.vendorDeliveryNoteDate | reportDate }} }
+                  }
+                  @if (row.currency) { · {{ row.currency }} }
+                </p>
+              }
+              @case ('line') {
+                <section class="doc">
+                  <div class="doc__head">
+                    <strong>{{ row.name }}</strong>
+                    @if (row.code) { <span class="text-muted">{{ row.code }}</span> }
+                  </div>
+                  @if (row.warehouse) { <p class="doc__note text-muted">Into {{ row.warehouse }}</p> }
+                  @if (row.batchNumber) {
+                    <p class="doc__note text-muted">Batch {{ row.batchNumber }}@if (row.batchExpiryDate) { · expires {{ row.batchExpiryDate | reportDate }} }</p>
+                  }
+                  @if (row.serials.length > 0) {
+                    <p class="doc__note text-muted">Serials {{ row.serials.join(', ') }}@if (notListed(row) > 0) { and {{ notListed(row) }} more }</p>
+                  }
+                  @if (row.rejectionReason) { <p class="doc__note text-muted">Rejected: {{ row.rejectionReason }}</p> }
+                  <dl class="figures">
+                    <div class="figures__row"><dt>Delivered</dt><dd>{{ quantity(row.delivered) }} @if (row.unitCode) { {{ row.unitCode }} }</dd></div>
+                    @if (row.rejected) { <div class="figures__row"><dt>Rejected</dt><dd>{{ quantity(row.rejected) }}</dd></div> }
+                    <div class="figures__row"><dt>Accepted</dt><dd>{{ quantity(row.accepted) }}</dd></div>
+                    <div class="figures__row"><dt>Billed</dt><dd>{{ quantity(row.billed) }}</dd></div>
+                    <div class="figures__row"><dt>Unit cost</dt><dd>{{ unitPrice(row.unitCost) }}</dd></div>
+                    <div class="figures__row figures__row--balance">
+                      <dt>Value</dt>
+                      <dd>
+                        <bb-report-amount [value]="row.value" [currency]="row.currency" />
+                        @if (row.valueBase !== null) { <small class="own"><bb-report-amount [value]="row.valueBase" /></small> }
+                      </dd>
+                    </div>
+                  </dl>
+                </section>
+              }
+              @case ('subtotal') {
+                <dl class="figures figures--subtotal">
+                  <div class="figures__row figures__row--balance">
+                    <dt>{{ row.name }}</dt>
+                    <dd>
+                      <bb-report-amount [value]="row.value" [currency]="row.currency" />
+                      @if (row.valueBase !== null) { <small class="own"><bb-report-amount [value]="row.valueBase" /></small> }
+                    </dd>
+                  </div>
+                </dl>
+              }
+              @case ('total') {
+                <header class="entry__head"><strong>{{ row.name }}</strong></header>
+                <dl class="figures">
+                  <div class="figures__row figures__row--balance"><dt>Value</dt><dd><bb-report-amount [value]="row.value" /></dd></div>
+                </dl>
+              }
+            }
+          }
+        </article>
+      }
+    </div>
+  } @else {
+    <div class="matrix">
+      <bb-data-grid flush [columns]="columns" [data]="rows()" [rowClass]="rowClass" [sortable]="false"
+                    [showColumnFilters]="false" [showCount]="false" [paged]="false" label="Purchase receive order details">
+        <ng-template bbCellTemplate="item" let-row>
+          @switch (row.kind) {
+            @case ('heading') {
+              <span class="receipt">
+                @if (row.link) { <a class="link" [routerLink]="row.link"><strong>{{ row.name }}</strong></a> } @else { <strong>{{ row.name }}</strong> }
+                <span class="receipt__meta text-muted">
+                  <span>{{ row.date | reportDate }}</span>
+                  <span class="receipt__who">{{ row.contactName }}@if (row.contactCode) { ({{ row.contactCode }}) }</span>
+                  @if (row.orderNo) {
+                    <span>order @if (row.orderLink) { <a class="link" [routerLink]="row.orderLink">{{ row.orderNo }}</a> } @else { {{ row.orderNo }} }</span>
+                  }
+                  @if (row.vendorDeliveryNoteNo) {
+                    <span>delivery note {{ row.vendorDeliveryNoteNo }}@if (row.vendorDeliveryNoteDate) { of {{ row.vendorDeliveryNoteDate | reportDate }} }</span>
+                  }
+                  @if (row.currency) { <span>{{ row.currency }}</span> }
+                </span>
+              </span>
+            }
+            @case ('line') {
+              <span class="item">
+                <span>
+                  {{ row.name }}
+                  @if (row.code) { <span class="item__code text-muted">{{ row.code }}</span> }
+                </span>
+                @if (row.batchNumber) {
+                  <span class="item__note text-muted">Batch {{ row.batchNumber }}@if (row.batchExpiryDate) { · expires {{ row.batchExpiryDate | reportDate }} }</span>
+                }
+                @if (row.serials.length > 0) {
+                  <span class="item__note text-muted">Serials {{ row.serials.join(', ') }}@if (notListed(row) > 0) { and {{ notListed(row) }} more }</span>
+                }
+                @if (row.rejectionReason) { <span class="item__note text-muted">Rejected: {{ row.rejectionReason }}</span> }
+              </span>
+            }
+            @default { <strong class="label">{{ row.name }}</strong> }
+          }
+        </ng-template>
+        <ng-template bbCellTemplate="warehouse" let-row>@if (row.kind === 'line' && row.warehouse) { {{ row.warehouse }} }</ng-template>
+        <ng-template bbCellTemplate="delivered" let-row>
+          @if (row.kind === 'line') { <span class="qty">{{ quantity(row.delivered) }} @if (row.unitCode) { <small class="text-muted">{{ row.unitCode }}</small> }</span> }
+        </ng-template>
+        <ng-template bbCellTemplate="rejected" let-row>@if (row.kind === 'line' && row.rejected) { <span class="qty">{{ quantity(row.rejected) }}</span> }</ng-template>
+        <ng-template bbCellTemplate="accepted" let-row>@if (row.kind === 'line') { <strong class="qty">{{ quantity(row.accepted) }}</strong> }</ng-template>
+        <ng-template bbCellTemplate="billed" let-row>@if (row.kind === 'line') { <span class="qty">{{ quantity(row.billed) }}</span> }</ng-template>
+        <ng-template bbCellTemplate="unitCost" let-row>@if (row.kind === 'line') { <span class="price">{{ unitPrice(row.unitCost) }}</span> }</ng-template>
+        <ng-template bbCellTemplate="value" let-row>
+          @if (row.value !== null) {
+            <span class="amount">
+              @if (row.kind === 'line') { <bb-report-amount [value]="row.value" [currency]="row.currency" /> }
+              @else { <strong><bb-report-amount [value]="row.value" [currency]="row.currency" /></strong> }
+              @if (row.valueBase !== null) { <small class="own"><bb-report-amount [value]="row.valueBase" /></small> }
+            </span>
+          }
+        </ng-template>
+      </bb-data-grid>
+    </div>
+
+    @if (more()) {
+      <div class="more">
+        <button class="btn" type="button" (click)="loadMore()" [disabled]="busy()">Show more receipts</button>
+        <span class="more__count text-muted">{{ report.receipts.length }} of {{ report.totalReceipts }} shown</span>
+      </div>
+    }
+  }
+
+  @if (report.totalReceipts > 0) {
+    <p class="notes text-muted">
+      A receipt is listed by its receipt date, and only a posted one: a draft has received nothing. Delivered is what the vendor brought, rejected what was refused at the door
+      and accepted what went into stock, which is the quantity of the stock-in movement the receipt made. A unit costs the line's value before tax over what was delivered, so rejecting
+      goods does not raise the cost of the rest; the value is that cost times what was accepted, which is what the receipt debits to Inventory. Billed is what posted bills naming the
+      line add up to. Choosing an item or warehouse lists only receipts with such a line, and only those lines. The total at the foot is in {{ report.baseCurrencyCode }} and is of every
+      receipt the filters match, not only those shown.
+    </p>
+  }
+}
