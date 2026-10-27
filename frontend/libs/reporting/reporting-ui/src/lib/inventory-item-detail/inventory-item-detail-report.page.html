@@ -1,0 +1,235 @@
+<header class="page-head">
+  <div>
+    <h1>Inventory Item Detail</h1>
+    <p class="subtitle text-muted">
+      Stock card for each stocked item: opening balance, all stock movements in the period with document number,
+      source, contact, quantity in/out, unit cost, value, unit sale price, margin, running quantity and value, and closing balance.
+    </p>
+  </div>
+</header>
+
+<form class="filters card" [formGroup]="filters" (ngSubmit)="run()" novalidate>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'iid-from'" label="From" formControlName="fromDate" [required]="true"
+                          [error]="err('fromDate', 'From date')" />
+  </div>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'iid-to'" label="To" formControlName="toDate" [required]="true"
+                          [error]="err('toDate', 'To date')" />
+  </div>
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'iid-category'" label="Item category" placeholder="All categories" [options]="categoryOptions()"
+               [loading]="!choicesLoaded()" emptyText="No item categories" formControlName="itemCategoryId"
+               [error]="err('itemCategoryId', 'Item category')" />
+  </div>
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'iid-item'" label="Item" placeholder="All items" [options]="itemOptions()"
+               [loading]="!choicesLoaded()" emptyText="No items" formControlName="itemId"
+               [error]="err('itemId', 'Item')" />
+  </div>
+  <div class="filters__field">
+    <bb-select [id]="'iid-warehouse'" label="Warehouse" placeholder="All warehouses" [options]="warehouseOptions()"
+               [loading]="!choicesLoaded()" emptyText="No warehouses" formControlName="warehouseId"
+               [error]="err('warehouseId', 'Warehouse')" />
+  </div>
+  <div class="filters__field">
+    <bb-select [id]="'iid-source'" label="Source" placeholder="All sources" [options]="sourceOptions"
+               emptyText="No sources" formControlName="source"
+               [error]="err('source', 'Source')" />
+  </div>
+  <div class="filters__actions">
+    <button class="btn btn-primary" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Running…' : 'Run report' }}
+    </button>
+  </div>
+</form>
+
+@if (messages().length > 0) {
+  <bb-message-box [messages]="messages()" />
+}
+
+@if (result(); as report) {
+  <p class="period text-muted">
+    {{ report.fromDate | reportDate }} to {{ report.toDate | reportDate }}, in {{ report.baseCurrencyCode }}.
+  </p>
+
+  @if (report.totalItems === 0) {
+    <p class="empty text-muted">No stock movements found matching these filters.</p>
+  } @else if (narrow()) {
+    <div class="cards" role="list" aria-label="Inventory item detail cards">
+      @for (item of report.items; track item.itemId) {
+        <article class="card item-card" role="listitem">
+          <header class="item-card__head">
+            <div>
+              <strong class="item-card__name">{{ item.itemName }}</strong>
+              <span class="item-card__sub text-muted">
+                {{ item.itemCode }} · {{ item.unitCode ?? 'No unit' }} · {{ costingLabel(item.costingType) }}
+                @if (item.categoryName) { · {{ item.categoryName }} }
+              </span>
+            </div>
+            @if (item.costPending) {
+              <span class="tag tag-warning">Cost pending</span>
+            }
+          </header>
+
+          <div class="item-card__summary">
+            <div class="summary-col">
+              <span class="text-muted">Opening:</span>
+              <span>{{ quantity(item.openingQuantity) }} (<strong><bb-report-amount [value]="item.openingValue" /></strong>)</span>
+            </div>
+            <div class="summary-col">
+              <span class="text-muted">Closing:</span>
+              <span>{{ quantity(item.closingQuantity) }} (<strong><bb-report-amount [value]="item.closingValue" /></strong>)</span>
+            </div>
+          </div>
+
+          <div class="item-card__movements">
+            @for (m of item.movements; track m.stockMovementId) {
+              <div class="mov-entry">
+                <div class="mov-entry__top">
+                  <span>{{ m.date | reportDate }}</span>
+                  <span class="badge" [class.badge--in]="m.direction === 'In'" [class.badge--out]="m.direction === 'Out'">
+                    {{ m.source }}
+                  </span>
+                </div>
+                @if (m.documentNo || m.contactName) {
+                  <div class="mov-entry__doc text-muted">
+                    {{ m.documentNo ?? '—' }} @if (m.contactName) { · {{ m.contactName }} }
+                  </div>
+                }
+                <div class="mov-entry__figures">
+                  <div>
+                    Qty: <strong>{{ m.quantitySigned > 0 ? '+' : '' }}{{ quantity(m.quantitySigned) }}</strong>
+                    @if (m.unitCost !== null) {
+                      <small class="text-muted">@ <bb-report-amount [value]="m.unitCost" /></small>
+                    }
+                  </div>
+                  <div>
+                    Val: @if (m.value !== null) { <strong><bb-report-amount [value]="m.value" /></strong> } @else { <span class="text-muted">Pending</span> }
+                  </div>
+                </div>
+                <div class="mov-entry__running text-muted">
+                  Bal: {{ quantity(m.runningQuantity) }} {{ item.unitCode }} (<bb-report-amount [value]="m.runningValue" />)
+                </div>
+              </div>
+            } @empty {
+              <p class="text-muted no-moves">No movements in this period.</p>
+            }
+          </div>
+        </article>
+      }
+    </div>
+  } @else {
+    <div class="items-list">
+      @for (block of blocks(); track block.item.itemId) {
+        <section class="card item-section">
+          <header class="item-section__head">
+            <div class="item-section__title">
+              <strong>{{ block.item.itemName }}</strong>
+              <span class="item-section__meta text-muted">
+                {{ block.item.itemCode }} · {{ block.item.unitCode ?? 'No unit' }} · {{ costingLabel(block.item.costingType) }}
+                @if (block.item.categoryName) { · {{ block.item.categoryName }} }
+              </span>
+            </div>
+            @if (block.item.costPending) {
+              <span class="tag tag-warning" title="A movement has not been costed yet, so values are pending.">Cost pending</span>
+            }
+          </header>
+
+          <div class="matrix">
+            <bb-data-grid flush [columns]="columns" [data]="block.rows" [rowClass]="rowClass" [sortable]="false"
+                          [showColumnFilters]="false" [showCount]="false" [paged]="false"
+                          [label]="'Stock movements for ' + block.item.itemName">
+              <ng-template bbCellTemplate="date" let-row>{{ row.date | reportDate }}</ng-template>
+              <ng-template bbCellTemplate="documentNo" let-row>{{ row.documentNo ?? '—' }}</ng-template>
+              <ng-template bbCellTemplate="source" let-row>
+                @if (row.kind === 'movement') {
+                  <span class="source-tag">{{ row.source }}</span>
+                } @else {
+                  <em>{{ row.source }}</em>
+                }
+              </ng-template>
+              <ng-template bbCellTemplate="contactName" let-row>{{ row.contactName ?? '—' }}</ng-template>
+              <ng-template bbCellTemplate="warehouseName" let-row>{{ row.warehouseName ?? '—' }}</ng-template>
+              <ng-template bbCellTemplate="quantityIn" let-row>
+                @if (row.quantityIn !== null) { <span class="text-success">{{ quantity(row.quantityIn) }}</span> } @else { — }
+              </ng-template>
+              <ng-template bbCellTemplate="quantityOut" let-row>
+                @if (row.quantityOut !== null) { <span class="text-danger">{{ quantity(row.quantityOut) }}</span> } @else { — }
+              </ng-template>
+              <ng-template bbCellTemplate="unitCost" let-row>
+                @if (row.unitCost !== null) { <bb-report-amount [value]="row.unitCost" /> } @else { — }
+              </ng-template>
+              <ng-template bbCellTemplate="value" let-row>
+                @if (row.value !== null) {
+                  <bb-report-amount [value]="row.value" />
+                } @else {
+                  <span class="text-muted" title="Cost pending">Pending</span>
+                }
+              </ng-template>
+              <ng-template bbCellTemplate="unitSalePrice" let-row>
+                @if (row.unitSalePrice !== null) { <bb-report-amount [value]="row.unitSalePrice" /> } @else { — }
+              </ng-template>
+              <ng-template bbCellTemplate="margin" let-row>
+                @if (row.margin !== null) {
+                  <span class="margin-cell">
+                    <bb-report-amount [value]="row.margin" />
+                    @if (row.marginPercent !== null) { <small class="text-muted">({{ row.marginPercent }}%)</small> }
+                  </span>
+                } @else {
+                  —
+                }
+              </ng-template>
+              <ng-template bbCellTemplate="runningQuantity" let-row>
+                <span class="font-semibold">{{ quantity(row.runningQuantity) }}</span>
+              </ng-template>
+              <ng-template bbCellTemplate="runningValue" let-row>
+                <span class="font-semibold"><bb-report-amount [value]="row.runningValue" /></span>
+              </ng-template>
+            </bb-data-grid>
+          </div>
+        </section>
+      }
+    </div>
+
+    <section class="card totals-card">
+      <header class="totals-card__head">
+        <strong>Report Totals (All Filtered Items)</strong>
+        @if (report.totals.costPending) {
+          <span class="tag tag-warning">Cost pending</span>
+        }
+      </header>
+      <div class="totals-grid">
+        <div class="total-item">
+          <span class="text-muted">Total Opening Value:</span>
+          <strong><bb-report-amount [value]="report.totals.openingValue" /></strong>
+        </div>
+        <div class="total-item">
+          <span class="text-muted">Total In Value:</span>
+          <strong class="text-success"><bb-report-amount [value]="report.totals.inValue" /></strong>
+        </div>
+        <div class="total-item">
+          <span class="text-muted">Total Out Value:</span>
+          <strong class="text-danger"><bb-report-amount [value]="report.totals.outValue" /></strong>
+        </div>
+        <div class="total-item">
+          <span class="text-muted">Total Closing Value:</span>
+          <strong><bb-report-amount [value]="report.totals.closingValue" /></strong>
+        </div>
+      </div>
+    </section>
+
+    @if (more()) {
+      <div class="more">
+        <button class="btn" type="button" (click)="loadMore()" [disabled]="busy()">Show more items</button>
+        <span class="more__count text-muted">{{ report.items.length }} of {{ report.totalItems }} items shown</span>
+      </div>
+    }
+  }
+
+  <p class="notes text-muted">
+    Every stock movement of an item in the period, with quantity, cost, value, running quantity and the margin on each sale.
+    Opening is stock before the From date; closing is stock at the To date.
+    Closing quantity and value equal Inventory Item Summary for the same period.
+  </p>
+}

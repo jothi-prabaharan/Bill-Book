@@ -642,6 +642,24 @@ The Inventory Item Summary has its own page at `/reports/inventory-item-summary`
 
 The catalog's **Inventory Item Summary**, used for export and scheduled emails, now works (it failed before) and needs both **From** and **To**, refusing a run without them. It has a row for each item that had stock at the start or moved in the period, with the same figures as the page and the accounts the item's sub-accounts are under.
 
+## Inventory Item Detail
+
+The Inventory Item Detail has its own page at `/reports/inventory-item-detail` (TK-244), under **Reports › Inventory Report**. Besides access to reports it needs **inventory.view**. It serves as the full stock card for stocked items, showing chronologically every movement that occurred during the chosen period.
+
+- **From** and **To** are both required (D-67). The page opens on the current financial year to date and runs automatically. A **To** date earlier than **From** is refused with inline validation.
+- **Filters:** Optional **Item**, **Item category**, **Warehouse**, and **Source** (Goods Receipt, Invoice, Sales Return, Purchase Return, Stock Adjustment, Transfer). Choosing an item category filters the item picker to items in that category.
+- **Item Cards & Movements:** Each item is grouped with its item code, unit of measure, costing method, and category. The item ledger begins with an **Opening Balance** row (quantity and value prior to the From date), followed chronologically by each stock movement:
+  - **Date** and **Document** number with direct source links where available.
+  - **Source** document type and party/contact name.
+  - **Warehouse** where the stock entered or departed.
+  - **Qty In** or **Qty Out** and the transaction's **Unit Cost**.
+  - **Value** of the movement (signed: incoming positive, outgoing negative).
+  - **Sale Price** and **Margin** (both value and percentage) for customer sales and returns.
+  - **Running Quantity** and **Running Value** updated movement-by-movement.
+  - **Closing Balance** row showing period net changes and final closing quantity and value.
+- **Reconciliation:** The closing quantity and closing value match the Inventory Item Summary (TK-243) closing balance for the same item and period.
+- **Catalog Source:** The catalog's **Inventory Item Detail** report (`item-detail`) enforces required From and To dates and enriches document headers and party details.
+
 ## Project reports
 
 Four reports read project accounting, under **Projects** in the list. Running them needs **projects.view** as well as access to reports.

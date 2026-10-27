@@ -17,8 +17,8 @@ public sealed class ItemDetailSourceRepository : ReportSource<ItemDetailRow>
 
     public override IReadOnlyList<ReportParameterRepository> Parameters =>
     [
-        new() { Name = "from", Label = "From", DataType = ColumnDataType.Date },
-        new() { Name = "to", Label = "To", DataType = ColumnDataType.Date },
+        new() { Name = "from", Label = "From", DataType = ColumnDataType.Date, IsRequired = true },
+        new() { Name = "to", Label = "To", DataType = ColumnDataType.Date, IsRequired = true },
     ];
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -55,22 +55,24 @@ public sealed class ItemDetailSourceRepository : ReportSource<ItemDetailRow>
     /// <summary>SubAccountReferenceType.Item, in Accounting's enum this project does not reference.</summary>
     private const SubAccountReferenceType ItemReference = SubAccountReferenceType.Item;
 
+    private static IQueryable<ItemAccountName> AccountNames(ReportingDbContext db, string systemName) =>
+        from sub in db.SubAccounts
+        join a in db.Accounts on sub.AccountId equals a.AccountId
+        where sub.ReferenceType == ItemReference && a.AccountSystemName == systemName
+        select new ItemAccountName { ItemId = sub.ReferenceId, Name = a.AccountName };
+
     protected override IQueryable<ItemDetailRow> Build(ReportParameters parameters, ReportingDbContext db)
     {
-        DateOnly? start = parameters.Date("from");
-        DateOnly? end = parameters.Date("to");
+        DateOnly start = parameters.Date("from") ?? throw new ReportQueryException("From date is required.");
+        DateOnly end = parameters.Date("to") ?? throw new ReportQueryException("To date is required.");
 
-        IQueryable<Repository.ReadModels.StockMovementRead> movements = db.StockMovements;
-
-        if (start is DateOnly from)
+        if (end < start)
         {
-            movements = movements.Where(m => m.MovementDate >= from);
+            throw new ReportQueryException("To date cannot be before the from date.");
         }
 
-        if (end is DateOnly to)
-        {
-            movements = movements.Where(m => m.MovementDate <= to);
-        }
+        IQueryable<Repository.ReadModels.StockMovementRead> movements = db.StockMovements
+            .Where(m => m.MovementDate >= start && m.MovementDate <= end);
 
         return from m in movements
                join i in db.Items on m.ItemId equals i.ItemId
@@ -78,6 +80,12 @@ public sealed class ItemDetailSourceRepository : ReportSource<ItemDetailRow>
                from c in categories.DefaultIfEmpty()
                join u in db.UnitsOfMeasure on i.InventoryUomId equals u.UomId into uoms
                from u in uoms.DefaultIfEmpty()
+               join ia in AccountNames(db, "Inventory") on i.ItemId equals ia.ItemId into inventory
+               from ia in inventory.DefaultIfEmpty()
+               join pa in AccountNames(db, "Cost of Goods Sold") on i.ItemId equals pa.ItemId into purchase
+               from pa in purchase.DefaultIfEmpty()
+               join sa in AccountNames(db, "Sales Revenue") on i.ItemId equals sa.ItemId into sold
+               from sa in sold.DefaultIfEmpty()
                let sign = m.Direction == StockDirection.In ? 1m : -1m
                select new ItemDetailRow
                {
@@ -92,12 +100,8 @@ public sealed class ItemDetailSourceRepository : ReportSource<ItemDetailRow>
                    ContactName = null,
                    CostingMethod = i.CostingType.ToString(),
                    UnitOfMeasurement = u != null ? u.UomName : "Unknown",
-                   TransactionNo = m.SourceId != null ? m.SourceType + "-" + m.SourceId : null,
-                   // Built the same way TransactionNo two lines above is — the
-                   // movement carries no separate reference field, and every
-                   // other source in this product uses the source document's own
-                   // type-and-id as both.
-                   Reference = m.SourceId != null ? m.SourceType + "-" + m.SourceId : null,
+                   TransactionNo = m.SourceId != null ? m.SourceType + "-" + m.SourceId.ToString() : null,
+                   Reference = m.SourceId != null ? m.SourceType + "-" + m.SourceId.ToString() : null,
                    Source = m.MovementType.ToString(),
                    QoHMovement = m.Quantity * sign,
                    ValueMovement = (m.TotalCost ?? 0m) * sign,
@@ -105,30 +109,9 @@ public sealed class ItemDetailSourceRepository : ReportSource<ItemDetailRow>
                    UnitSalePrice = null,
                    Margin = null,
                    ProfitPerItem = null,
-                   InventoryAccount = db.SubAccounts
-                       .Where(sa => sa.ReferenceType == ItemReference && sa.ReferenceId == i.ItemId)
-                       .Join(db.Accounts, sa => sa.AccountId, a => a.AccountId, (sa, a) => a)
-                       .Where(a => a.AccountSystemName == "Inventory")
-                       .Select(a => a.AccountName)
-                       .FirstOrDefault(),
-                   // Cost of Goods Sold — see ItemListSourceRepository for why "Purchase
-                   // Account" resolves to this one; there is no separate system
-                   // account for a purchase under perpetual inventory.
-                   PurchaseAccount = db.SubAccounts
-                       .Where(sa => sa.ReferenceType == ItemReference && sa.ReferenceId == i.ItemId)
-                       .Join(db.Accounts, sa => sa.AccountId, a => a.AccountId, (sa, a) => a)
-                       .Where(a => a.AccountSystemName == "Cost of Goods Sold")
-                       .Select(a => a.AccountName)
-                       .FirstOrDefault(),
-                   SalesAccount = db.SubAccounts
-                       .Where(sa => sa.ReferenceType == ItemReference && sa.ReferenceId == i.ItemId)
-                       .Join(db.Accounts, sa => sa.AccountId, a => a.AccountId, (sa, a) => a)
-                       .Where(a => a.AccountSystemName == "Sales Revenue")
-                       .Select(a => a.AccountName)
-                       .FirstOrDefault(),
-                   // No per-item Adjustment account exists — a stock adjustment
-                   // posts to the item's own Inventory sub-account plus an
-                   // org-level adjustment account, not a fourth per-item one.
+                   InventoryAccount = ia != null ? ia.Name : null,
+                   PurchaseAccount = pa != null ? pa.Name : null,
+                   SalesAccount = sa != null ? sa.Name : null,
                    AdjustmentAccount = null
                };
     }
