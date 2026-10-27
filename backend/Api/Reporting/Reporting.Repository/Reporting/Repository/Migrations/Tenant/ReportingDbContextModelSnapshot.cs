@@ -20246,6 +20246,9 @@ namespace Reporting.Repository.Migrations.Tenant
                     b.Property<decimal>("ExchangeRate")
                         .HasColumnType("numeric");
 
+                    b.Property<bool>("IsTdsChallan")
+                        .HasColumnType("boolean");
+
                     b.Property<long?>("MappingTransactionId")
                         .HasColumnType("bigint");
 
@@ -20285,6 +20288,9 @@ namespace Reporting.Repository.Migrations.Tenant
                         .IsRequired()
                         .HasMaxLength(12)
                         .HasColumnType("character varying(12)");
+
+                    b.Property<decimal>("TdsAmount")
+                        .HasColumnType("numeric");
 
                     b.Property<DateOnly>("TransactionDate")
                         .HasColumnType("date");

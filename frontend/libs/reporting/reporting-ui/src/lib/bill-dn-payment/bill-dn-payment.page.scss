@@ -1,0 +1,265 @@
+/* The Bill/DN Payment Report (TK-238): the filters, the vendors who paid most, then each payment with its documents. */
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.page-head h1 {
+  font-size: 1.3rem;
+  margin: 0.2rem 0 0;
+}
+
+.subtitle,
+.period,
+.empty,
+.notes {
+  margin: 0;
+}
+
+.notes {
+  font-size: 12px;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--space-2) var(--space-3);
+  align-items: start;
+  padding: var(--space-3);
+}
+
+.filters__field {
+  min-width: 0;
+}
+
+/* The button sits level with the inputs, below their labels. */
+.filters__actions {
+  align-self: end;
+  padding-bottom: var(--space-1);
+}
+
+.matrix {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.matrix bb-data-grid {
+  min-width: 52rem;
+}
+
+.vendor {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 400;
+}
+
+.vendor__code,
+.document__date {
+  font-size: 12px;
+}
+
+/* The payment's own row is a group row, whose small capitals are for a section name: its vendor and
+   amount are put back to the size of the rows beneath. */
+.vendor > span:first-child,
+.amount {
+  font-size: 13px;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* A payment's heading: its number, then its date, bank account and method. The group row's small
+   capitals are for a section name, so the details are put back to a normal weight and case. */
+.payment {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px var(--space-3);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.payment strong {
+  font-size: 13px;
+}
+
+.payment__meta {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-3);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.payment__meta > span {
+  white-space: nowrap;
+}
+
+/* A document a payment settled sits in from the payment, with its own date after it. */
+.document {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding-left: var(--space-3);
+}
+
+.unallocated,
+.label {
+  padding-left: var(--space-3);
+}
+
+/* A document in another currency shows its own total under the base one, smaller. */
+.amount {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.own {
+  display: block;
+  font-size: 11px;
+  color: var(--color-text-subtle);
+}
+
+.more {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.more__count {
+  font-size: 12px;
+}
+
+/* Phone: one card for each bill. */
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.entry {
+  padding: var(--space-2) var(--space-3);
+}
+
+.entry--total {
+  background: var(--color-surface-muted);
+  border-top: 2px solid var(--color-divider);
+}
+
+.entry__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px var(--space-2);
+  font-size: 13px;
+}
+
+.entry__who,
+.entry__dates {
+  margin: 2px 0 0;
+  font-size: 12px;
+}
+
+.figures {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: var(--space-1) 0 0;
+  font-size: 13px;
+}
+
+.figures__row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+
+.figures dt {
+  color: var(--color-text-muted);
+}
+
+.figures dd {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-variant-numeric: tabular-nums;
+}
+
+.figures__row--balance {
+  padding-top: var(--space-1);
+  border-top: 1px solid var(--color-divider);
+  font-weight: 600;
+}
+
+.figures__row--balance dt {
+  color: inherit;
+}
+
+/* Above the payments: the vendors who paid most. */
+.by-vendor {
+  padding: var(--space-3);
+}
+
+.by-vendor h2 {
+  margin: 0 0 var(--space-2);
+  font-size: 0.95rem;
+}
+
+.by-vendor__list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  font-size: 13px;
+}
+
+.by-vendor__row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-3);
+  align-items: baseline;
+}
+
+.by-vendor__row dt .text-muted {
+  margin-left: var(--space-2);
+  font-size: 12px;
+}
+
+.by-vendor__row dd {
+  margin: 0;
+}
+
+.entry__how {
+  margin: 2px 0 0;
+  font-size: 12px;
+}
+
+.figures--muted {
+  color: var(--color-text-muted);
+}
+
+.doc {
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-divider);
+}
+
+.doc__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px var(--space-2);
+  font-size: 13px;
+}

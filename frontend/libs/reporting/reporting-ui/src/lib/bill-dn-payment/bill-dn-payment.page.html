@@ -1,0 +1,195 @@
+<header class="page-head">
+  <div>
+    <h1>Bill/DN Payment Report</h1>
+    <p class="subtitle text-muted">
+      What was paid to vendors in a period: the payments posted in it, with the bills each one settled and what it did not settle. A payment is in its own
+      currency; the total paid and the vendors' totals are in the branch's base currency.
+    </p>
+  </div>
+</header>
+
+<form class="filters card" [formGroup]="filters" (ngSubmit)="run()" novalidate>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'bdp-from'" label="From" formControlName="fromDate" [required]="true"
+                          [error]="err('fromDate', 'From date')" />
+  </div>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'bdp-to'" label="To" formControlName="toDate" [required]="true"
+                          [error]="err('toDate', 'To date')" />
+  </div>
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'bdp-vendor'" label="Vendor" placeholder="All vendors" [options]="vendorOptions()"
+               [loading]="!choicesLoaded()" emptyText="No vendors" formControlName="contactId"
+               [error]="err('contactId', 'Vendor')" />
+  </div>
+  <div class="filters__field">
+    <bb-select [id]="'bdp-bank'" label="Bank account" placeholder="All accounts" [options]="bankAccountOptions()"
+               [loading]="!choicesLoaded()" emptyText="No bank accounts" formControlName="bankAccountId"
+               [error]="err('bankAccountId', 'Bank account')" />
+  </div>
+  <div class="filters__field">
+    <bb-select [id]="'bdp-method'" label="Payment method" placeholder="All methods" [options]="methodOptions"
+               formControlName="paymentMethod" [error]="err('paymentMethod', 'Payment method')" />
+  </div>
+  <div class="filters__actions">
+    <button class="btn btn-primary" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Running…' : 'Run report' }}
+    </button>
+  </div>
+</form>
+
+@if (messages().length > 0) {
+  <bb-message-box [messages]="messages()" />
+}
+
+@if (result(); as report) {
+  <p class="period text-muted">
+    {{ report.fromDate | reportDate }} to {{ report.toDate | reportDate }}. Payments are in their own currency; the totals are in {{ report.baseCurrencyCode }}.
+  </p>
+
+  @if (report.totalPayments === 0) {
+    <p class="empty text-muted">No payments match these filters.</p>
+  } @else {
+    @if (report.topVendors.length > 1 || report.otherVendors > 0) {
+      <section class="card by-vendor" aria-label="Paid by vendor">
+        <h2>Paid by vendor</h2>
+        <dl class="by-vendor__list">
+          @for (c of report.topVendors; track c.contactId) {
+            <div class="by-vendor__row">
+              <dt>{{ c.contactName }} <span class="text-muted">{{ c.payments }} {{ c.payments === 1 ? 'payment' : 'payments' }}</span></dt>
+              <dd><bb-report-amount [value]="c.paid" /></dd>
+            </div>
+          }
+          @if (report.otherVendors > 0) {
+            <div class="by-vendor__row">
+              <dt>{{ report.otherVendors }} other {{ report.otherVendors === 1 ? 'vendor' : 'vendors' }}</dt>
+              <dd><bb-report-amount [value]="report.otherVendorsPaid" /></dd>
+            </div>
+          }
+        </dl>
+      </section>
+    }
+
+    @if (narrow()) {
+      <div class="cards" role="list" aria-label="Payments">
+        @for (group of groups(); track group[0].key) {
+          <article class="card entry" role="listitem">
+            @for (row of group; track row.key) {
+              @switch (row.kind) {
+                @case ('payment') {
+                  <header class="entry__head">
+                    @if (row.link) { <a class="link" [routerLink]="row.link"><strong>{{ row.name }}</strong></a> } @else { <strong>{{ row.name }}</strong> }
+                    <span class="text-muted">{{ row.date | reportDate }}</span>
+                  </header>
+                  <p class="entry__who">{{ row.contactName }} <span class="text-muted">{{ row.contactCode }}</span></p>
+                  <p class="entry__how text-muted">{{ row.bankAccountName }} · {{ row.method }}</p>
+                  <dl class="figures">
+                    <div class="figures__row figures__row--balance">
+                      <dt>Paid @if (row.currency) { <span class="text-muted">({{ row.currency }})</span> }</dt>
+                      <dd>
+                        <bb-report-amount [value]="row.amount" [currency]="row.currency" />
+                        @if (row.amountBase !== null) { <small class="own"><bb-report-amount [value]="row.amountBase" /></small> }
+                      </dd>
+                    </div>
+                    @if (row.tds !== null) {
+                      <div class="figures__row"><dt>TDS withheld</dt><dd><bb-report-amount [value]="row.tds" [currency]="row.currency" /></dd></div>
+                    }
+                  </dl>
+                }
+                @case ('document') {
+                  <div class="doc">
+                    <div class="doc__head">
+                      @if (row.link) { <a class="link" [routerLink]="row.link">{{ row.name }}</a> } @else { <strong>{{ row.name }}</strong> }
+                      @if (row.date) { <span class="text-muted">{{ row.date | reportDate }}</span> }
+                      @if (row.vendorBillNo) { <span class="text-muted">{{ row.vendorBillNo }}</span> }
+                    </div>
+                    <dl class="figures">
+                      <div class="figures__row">
+                        <dt>Settled @if (row.settledOn) { {{ row.settledOn | reportDate }} }</dt>
+                        <dd><bb-report-amount [value]="row.amount" [currency]="row.currency" /></dd>
+                      </div>
+                    </dl>
+                  </div>
+                }
+                @case ('unallocated') {
+                  <dl class="figures figures--muted">
+                    <div class="figures__row"><dt>{{ row.name }}</dt><dd><bb-report-amount [value]="row.amount" [currency]="row.currency" /></dd></div>
+                  </dl>
+                }
+                @case ('total') {
+                  <header class="entry__head"><strong>{{ row.name }}</strong></header>
+                  <dl class="figures">
+                    <div class="figures__row figures__row--balance"><dt>In {{ report.baseCurrencyCode }}</dt><dd><bb-report-amount [value]="row.amount" /></dd></div>
+                  </dl>
+                }
+              }
+            }
+          </article>
+        }
+      </div>
+    } @else {
+      <div class="matrix">
+        <bb-data-grid flush [columns]="columns" [data]="rows()" [rowClass]="rowClass" [sortable]="false"
+                      [showColumnFilters]="false" [showCount]="false" [paged]="false" label="Payments">
+          <ng-template bbCellTemplate="item" let-row>
+            @switch (row.kind) {
+              @case ('payment') {
+                <span class="payment">
+                  @if (row.link) { <a class="link" [routerLink]="row.link"><strong>{{ row.name }}</strong></a> }
+                  <span class="payment__meta text-muted">
+                    <span>{{ row.date | reportDate }}</span>
+                    <span>{{ row.bankAccountName }}</span>
+                    <span>{{ row.method }}</span>
+                  </span>
+                </span>
+              }
+              @case ('document') {
+                <span class="document">
+                  @if (row.link) { <a class="link" [routerLink]="row.link">{{ row.name }}</a> } @else { <span>{{ row.name }}</span> }
+                  @if (row.date) { <span class="document__date text-muted">{{ row.date | reportDate }}</span> }
+                  @if (row.vendorBillNo) { <span class="document__date text-muted">{{ row.vendorBillNo }}</span> }
+                </span>
+              }
+              @case ('unallocated') { <span class="unallocated text-muted">{{ row.name }}</span> }
+              @default { <strong class="label">{{ row.name }}</strong> }
+            }
+          </ng-template>
+          <ng-template bbCellTemplate="vendor" let-row>
+            @if (row.kind === 'payment') {
+              <span class="vendor">
+                <span>{{ row.contactName }}</span>
+                @if (row.contactCode) { <span class="vendor__code text-muted">{{ row.contactCode }}</span> }
+              </span>
+            }
+          </ng-template>
+          <ng-template bbCellTemplate="settledOn" let-row>@if (row.settledOn) { {{ row.settledOn | reportDate }} }</ng-template>
+          <ng-template bbCellTemplate="amount" let-row>
+            <span class="amount">
+              @if (row.kind === 'payment' || row.kind === 'total') {
+                <strong><bb-report-amount [value]="row.amount" [currency]="row.currency" /></strong>
+              } @else {
+                <bb-report-amount [value]="row.amount" [currency]="row.currency" />
+              }
+              @if (row.amountBase !== null) { <small class="own"><bb-report-amount [value]="row.amountBase" /></small> }
+              @if (row.tds !== null) { <small class="own">TDS <bb-report-amount [value]="row.tds" [currency]="row.currency" /></small> }
+            </span>
+          </ng-template>
+        </bb-data-grid>
+      </div>
+
+      @if (more()) {
+        <div class="more">
+          <button class="btn" type="button" (click)="loadMore()" [disabled]="busy()">Show more payments</button>
+          <span class="more__count text-muted">{{ report.payments.length }} of {{ report.totalPayments }} shown</span>
+        </div>
+      }
+    }
+
+    <p class="notes text-muted">
+      A payment is listed by its payment date; a draft was never paid, a voided payment was taken back and a TDS challan pays the government rather than a vendor, so none of those is listed.
+      The documents under a payment are the bills its lines settled, with the vendor's own bill number. A payment can settle more than left the bank, because the lines also settle any TDS withheld from the vendor,
+      and anything it did not settle, such as an advance, is shown on its own line.
+      A payment in another currency shows its amounts in that currency, with the amount in {{ report.baseCurrencyCode }} beneath. The total paid is of every payment the filters match, not only those shown.
+    </p>
+  }
+}

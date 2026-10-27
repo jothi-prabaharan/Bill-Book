@@ -1,13 +1,12 @@
 using System.Linq.Expressions;
-using Microsoft.EntityFrameworkCore;
 using Reporting.Entity.Enums;
 using Reporting.Repository;
-using Reporting.Repository.ReadModels;
 
 namespace Reporting.Repository.Repositories;
 
 public class BillDnPaymentRow
 {
+    public long TransactionRatioId { get; set; }
     public long SpendMoneyId { get; set; }
     public string SpendMoneyNo { get; set; } = null!;
     public DateOnly PaymentDate { get; set; }
@@ -16,12 +15,25 @@ public class BillDnPaymentRow
     public decimal Amount { get; set; }
 }
 
+/// <summary>
+/// The Bill/DN Payment Report for export, saved views and scheduled emails (TK-238). One row for
+/// each bill a posted payment dated in the period settled, read from the settlements that name the
+/// payment as their target, as the page reads them; the amount is what was settled, in the branch's
+/// base currency. A TDS challan, which pays the government, is not a vendor payment and is not listed.
+/// <b>Both dates are required</b> (D-67).
+/// </summary>
 public sealed class BillDnPaymentSourceRepository : ReportSource<BillDnPaymentRow>
 {
     public override string ReportKey => "bill-dn-payment";
     public override string Title => "Bill / DN Payment";
     public override ReportModule Module => ReportModule.Purchase;
     public override string RequiredPermission => "purchase.view";
+
+    public override IReadOnlyList<ReportParameterRepository> Parameters =>
+    [
+        new() { Name = "from", Label = "From", DataType = ColumnDataType.Date, IsRequired = true },
+        new() { Name = "to", Label = "To", DataType = ColumnDataType.Date, IsRequired = true },
+    ];
 
     public override IReadOnlyList<ReportColumn> Columns =>
     [
@@ -35,23 +47,34 @@ public sealed class BillDnPaymentSourceRepository : ReportSource<BillDnPaymentRo
 
     protected override IQueryable<BillDnPaymentRow> Build(ReportParameters parameters, ReportingDbContext db)
     {
-        return from sm in db.Set<SpendMoneyRead>()
-               join smd in db.Set<SpendMoneyDetailRead>() on sm.SpendMoneyId equals smd.SpendMoneyId
-               where smd.MappingTransactionTypeCode == "BIL" && smd.MappingTransactionId != null
-               join b in db.Bills on smd.MappingTransactionId equals b.BillId
-               join c in db.Contacts on sm.ContactId equals c.ContactId into gc
-               from c in gc.DefaultIfEmpty()
+        DateOnly start = parameters.Date("from") ?? throw new ReportQueryException("From date is required.");
+        DateOnly end = parameters.Date("to") ?? throw new ReportQueryException("To date is required.");
+
+        if (end < start)
+        {
+            throw new ReportQueryException("To date cannot be before the from date.");
+        }
+
+        var request = new Reporting.Entity.Models.BillDnPaymentReportRequest { FromDate = start, ToDate = end };
+
+        return from t in db.TransactionRatios
+               join sm in BillDnPaymentReportRepository.Payments(db.SpendMoney, request, start, end)
+                   on t.TargetTransactionId equals sm.SpendMoneyId
+               join c in db.Contacts on sm.ContactId equals c.ContactId
+               join b in db.Bills on t.SourceTransactionId equals b.BillId
+               where !t.IsVoided && t.TargetTransactionTypeCode == "SPM" && t.SourceTransactionTypeCode == "BIL"
                select new BillDnPaymentRow
                {
+                   TransactionRatioId = t.TransactionRatioId,
                    SpendMoneyId = sm.SpendMoneyId,
-                   SpendMoneyNo = sm.TransactionNo ?? "",
+                   SpendMoneyNo = sm.TransactionNo ?? string.Empty,
                    PaymentDate = sm.TransactionDate,
-                   ContactName = c != null ? c.DisplayName : "Unknown",
+                   ContactName = c.DisplayName,
                    DocumentNo = b.DocumentNo,
-                   Amount = smd.Amount
+                   Amount = sm.ExchangeRate > 0m && sm.ExchangeRate != 1m ? Math.Round(t.Amount / sm.ExchangeRate, 2) : t.Amount,
                };
     }
 
     protected override LambdaExpression DefaultOrder =>
-        (Expression<Func<BillDnPaymentRow, DateOnly>>)(r => r.PaymentDate);
+        (Expression<Func<BillDnPaymentRow, long>>)(r => r.TransactionRatioId);
 }

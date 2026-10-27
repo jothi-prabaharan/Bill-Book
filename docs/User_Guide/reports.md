@@ -511,6 +511,19 @@ The Bills Track Report has its own page at `/reports/bills-track-report` (TK-237
 
 The catalog's **Bills Track**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It lists each bill of the period but a voided one, with where it stands, its total in the branch's currency and what is still owed on the **To** date; a draft shows nothing owed.
 
+## Bill/DN Payment Report
+
+The Bill/DN Payment Report has its own page at `/reports/bill-dn-payment-report` (TK-238), under **Reports › Purchase Report**. Besides access to reports it needs **purchase.view**. It shows what was paid to vendors in a period and which bills each payment settled.
+
+- **From** and **To** are both required, and are the **payment date**. The page opens on the financial year to date and runs straight away. A **To** before **From** is refused under **To**. **Vendor**, **Bank account** and **Payment method** narrow it.
+- Each posted **Spend money** payment is a heading with its number (a link), date, the bank account it left, how it was paid (with the cheque or transaction reference), the vendor and the amount, and under it the **bills it settled** with each bill's number (a link), date, the vendor's own bill number, the day the settlement took effect and the amount settled. A payment that settled something that is not a bill, such as an opening balance, lists it by its own code and number.
+- **What a payment did not settle** is its own line, **Not settled against a document**: an advance paid before the bill exists, or more than the bill came to. A payment from which **TDS was withheld** shows the TDS under its amount; the TDS is settled along with what left the bank, so a payment of 4,500 with 500 withheld that settles a 5,000 balance has nothing left over. For every payment, what it settled and what it did not make up the amount and the TDS.
+- A payment is in its own currency: a dollar payment shows its amounts in dollars, with its amount in the branch's currency under it. **Total paid**, at the foot, and **Paid by vendor**, above the list (the ten paid most, and the rest as one line), are in the branch's currency, of every payment the filters match and not only those loaded.
+- A **draft** was never paid, a **voided** payment was taken back, and a **TDS challan**, which deposits deducted TDS with the government, is not a payment to a vendor: none of those is listed. A debit note applied to a bill is not a payment either, so it is not listed here. The total paid equals the posted Spend money to vendors for the same period.
+- The list loads 25 payments at a time with **Show more payments**. On a phone each payment is a card with the bills it settled.
+
+The catalog's **Bill / DN Payment**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It has a row for each bill a posted payment of the period settled, with the amount settled in the branch's currency.
+
 ## Project reports
 
 Four reports read project accounting, under **Projects** in the list. Running them needs **projects.view** as well as access to reports.

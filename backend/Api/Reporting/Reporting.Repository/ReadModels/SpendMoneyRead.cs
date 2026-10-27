@@ -19,6 +19,11 @@ public class SpendMoneyRead : OrgScopedEntity
     public string? ReferenceNo { get; set; }
     public DateOnly? ReferenceDate { get; set; }
     public string? Memo { get; set; }
+    /// <summary>TDS withheld from the vendor on the advance lines, in the payment's currency; the lines settle this and the amount together (TK-238).</summary>
+    public decimal TdsAmount { get; set; }
+
+    /// <summary>A payment of deducted TDS to the government rather than to a vendor (TK-238).</summary>
+    public bool IsTdsChallan { get; set; }
     public string? MappingTransactionTypeCode { get; set; }
     public long? MappingTransactionId { get; set; }
     public MoneyDocumentStatus Status { get; set; }

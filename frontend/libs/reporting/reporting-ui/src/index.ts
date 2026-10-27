@@ -30,5 +30,6 @@ export * from './lib/aged-payables-details/aged-payables-details.page';
 export * from './lib/payable-invoice-summary/payable-invoice-summary.page';
 export * from './lib/payable-invoice-detail/payable-invoice-detail.page';
 export * from './lib/bills-track/bills-track.page';
+export * from './lib/bill-dn-payment/bill-dn-payment.page';
 export * from './lib/foreign-currency-gain-or-loss/foreign-currency-gain-or-loss.page';
 export * from './lib/foreign-currency-gain-or-loss-details/foreign-currency-gain-or-loss-details.page';
