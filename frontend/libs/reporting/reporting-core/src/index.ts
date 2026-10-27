@@ -80,3 +80,5 @@ export * from './lib/inventory-item-detail/inventory-item-detail-report.models';
 export * from './lib/inventory-item-detail/inventory-item-detail-report.service';
 export * from './lib/inventory-item-list/inventory-item-list-report.models';
 export * from './lib/inventory-item-list/inventory-item-list-report.service';
+export * from './lib/inventory-aging/inventory-aging-report.models';
+export * from './lib/inventory-aging/inventory-aging-report.service';

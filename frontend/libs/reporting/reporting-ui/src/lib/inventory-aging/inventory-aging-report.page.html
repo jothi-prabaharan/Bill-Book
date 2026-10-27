@@ -1,0 +1,274 @@
+<header class="page-head">
+  <div>
+    <h1>Inventory Aging Report</h1>
+    <p class="subtitle text-muted">
+      Ages stock on hand into 0-30, 31-60, 61-90, 91-180, and 180+ day buckets from cost layer receipts.
+    </p>
+  </div>
+</header>
+
+<form class="filters card" [formGroup]="filters" (ngSubmit)="run()" novalidate>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'ia-asof'" label="As at" formControlName="asOfDate" [required]="true"
+                          [error]="err('asOfDate', 'As at date')" />
+  </div>
+
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'ia-category'" label="Category" placeholder="All categories" [options]="categoryOptions()"
+               [loading]="!choicesLoaded()" emptyText="No item categories" formControlName="itemCategoryId" />
+  </div>
+
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'ia-warehouse'" label="Warehouse" placeholder="All warehouses" [options]="warehouseOptions()"
+               [loading]="!choicesLoaded()" emptyText="No warehouses" formControlName="warehouseId" />
+  </div>
+
+  <div class="filters__field">
+    <bb-select [id]="'ia-viewmode'" label="Display Metric" [options]="viewModeOptions" formControlName="viewMode" />
+  </div>
+
+  <div class="filters__field filters__field--search">
+    <bb-text-input [id]="'ia-search'" label="Search" placeholder="Search code or name…" formControlName="search" />
+  </div>
+
+  <div class="filters__field filters__field--check">
+    <bb-checkbox text="Only items with stock" formControlName="onlyWithStock" />
+  </div>
+
+  <div class="filters__actions">
+    <button class="btn btn-primary" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Running…' : 'Run report' }}
+    </button>
+  </div>
+</form>
+
+@if (messages().length > 0) {
+  <bb-message-box [messages]="messages()" />
+}
+
+@if (result(); as report) {
+  <div class="summary-bar">
+    <p class="period text-muted">
+      As at {{ report.asOfDate | reportDate }}, in {{ report.baseCurrencyCode }}.
+      Showing {{ items().length }} of {{ report.totalItems }} item{{ report.totalItems === 1 ? '' : 's' }}.
+    </p>
+  </div>
+
+  <!-- Summary Metric Cards -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <span class="metric-label">Total Stock</span>
+      <span class="metric-value">{{ report.totals.totalQuantity | number:'1.2-2' }}</span>
+      <span class="metric-sub"><bb-report-amount [value]="report.totals.totalValue" [currency]="report.baseCurrencyCode" /></span>
+    </div>
+    <div class="metric-card">
+      <span class="metric-label">0–30 Days</span>
+      <span class="metric-value">{{ report.totals.bucket0To30.quantity | number:'1.2-2' }}</span>
+      <span class="metric-sub"><bb-report-amount [value]="report.totals.bucket0To30.value" [currency]="report.baseCurrencyCode" /></span>
+    </div>
+    <div class="metric-card">
+      <span class="metric-label">31–60 Days</span>
+      <span class="metric-value">{{ report.totals.bucket31To60.quantity | number:'1.2-2' }}</span>
+      <span class="metric-sub"><bb-report-amount [value]="report.totals.bucket31To60.value" [currency]="report.baseCurrencyCode" /></span>
+    </div>
+    <div class="metric-card">
+      <span class="metric-label">61–90 Days</span>
+      <span class="metric-value">{{ report.totals.bucket61To90.quantity | number:'1.2-2' }}</span>
+      <span class="metric-sub"><bb-report-amount [value]="report.totals.bucket61To90.value" [currency]="report.baseCurrencyCode" /></span>
+    </div>
+    <div class="metric-card">
+      <span class="metric-label">91–180 Days</span>
+      <span class="metric-value">{{ report.totals.bucket91To180.quantity | number:'1.2-2' }}</span>
+      <span class="metric-sub"><bb-report-amount [value]="report.totals.bucket91To180.value" [currency]="report.baseCurrencyCode" /></span>
+    </div>
+    <div class="metric-card metric-card--warning">
+      <span class="metric-label">180+ Days</span>
+      <span class="metric-value">{{ report.totals.bucketOver180.quantity | number:'1.2-2' }}</span>
+      <span class="metric-sub"><bb-report-amount [value]="report.totals.bucketOver180.value" [currency]="report.baseCurrencyCode" /></span>
+    </div>
+  </div>
+
+  @if (report.totalItems === 0) {
+    <p class="empty text-muted">No items match these filters.</p>
+  } @else if (narrow()) {
+    <div class="cards" role="list" aria-label="Inventory aging report">
+      @for (item of items(); track item.itemId) {
+        <article class="card entry" role="listitem">
+          <header class="entry__head">
+            <div class="entry__title">
+              <strong>{{ item.itemName }}</strong>
+              <span class="text-muted">{{ item.itemCode }}</span>
+            </div>
+          </header>
+          <div class="entry__badges">
+            @if (item.categoryName) { <span class="badge">{{ item.categoryName }}</span> }
+            @if (item.unitCode) { <span class="badge">{{ item.unitCode }}</span> }
+            <span class="badge">{{ item.costingType }}</span>
+          </div>
+
+          <div class="entry__body">
+            <div class="entry__stat">
+              <span class="text-muted">Total Stock</span>
+              <strong>{{ item.totalQuantity | number:'1.2-2' }}</strong>
+              <bb-report-amount [value]="item.totalValue" [currency]="report.baseCurrencyCode" />
+            </div>
+            <div class="entry__stat">
+              <span class="text-muted">0–30 Days</span>
+              <span>{{ item.bucket0To30.quantity | number:'1.2-2' }}</span>
+              <bb-report-amount [value]="item.bucket0To30.value" [currency]="report.baseCurrencyCode" />
+            </div>
+            <div class="entry__stat">
+              <span class="text-muted">31–60 Days</span>
+              <span>{{ item.bucket31To60.quantity | number:'1.2-2' }}</span>
+              <bb-report-amount [value]="item.bucket31To60.value" [currency]="report.baseCurrencyCode" />
+            </div>
+            <div class="entry__stat">
+              <span class="text-muted">61–90 Days</span>
+              <span>{{ item.bucket61To90.quantity | number:'1.2-2' }}</span>
+              <bb-report-amount [value]="item.bucket61To90.value" [currency]="report.baseCurrencyCode" />
+            </div>
+            <div class="entry__stat">
+              <span class="text-muted">91–180 Days</span>
+              <span>{{ item.bucket91To180.quantity | number:'1.2-2' }}</span>
+              <bb-report-amount [value]="item.bucket91To180.value" [currency]="report.baseCurrencyCode" />
+            </div>
+            <div class="entry__stat">
+              <span class="text-muted">180+ Days</span>
+              <span>{{ item.bucketOver180.quantity | number:'1.2-2' }}</span>
+              <bb-report-amount [value]="item.bucketOver180.value" [currency]="report.baseCurrencyCode" />
+            </div>
+          </div>
+        </article>
+      }
+    </div>
+  } @else {
+    <div class="table-container">
+      <bb-data-grid flush [columns]="columns()" [data]="items()" [ariaLabel]="'Inventory aging report table'">
+        <ng-template bbCellTemplate="itemCode" let-item>
+          <span class="font-mono font-bold">{{ item.itemCode }}</span>
+        </ng-template>
+
+        <ng-template bbCellTemplate="itemName" let-item>
+          <span>{{ item.itemName }}</span>
+        </ng-template>
+
+        <ng-template bbCellTemplate="categoryName" let-item>
+          <span class="text-muted">{{ item.categoryName ?? '—' }}</span>
+        </ng-template>
+
+        <ng-template bbCellTemplate="unitCode" let-item>
+          <span class="text-muted">{{ item.unitCode ?? '—' }}</span>
+        </ng-template>
+
+        <ng-template bbCellTemplate="total" let-item>
+          @if (viewMode() === 'value') {
+            <bb-report-amount class="numeric-cell" [value]="item.totalValue" [currency]="report.baseCurrencyCode" />
+          } @else {
+            <span class="numeric-cell">{{ item.totalQuantity | number:'1.2-2' }}</span>
+          }
+        </ng-template>
+
+        <ng-template bbCellTemplate="bucket0To30" let-item>
+          @if (viewMode() === 'value') {
+            <bb-report-amount class="numeric-cell" [value]="item.bucket0To30.value" [currency]="report.baseCurrencyCode" />
+          } @else {
+            <span class="numeric-cell">{{ item.bucket0To30.quantity | number:'1.2-2' }}</span>
+          }
+        </ng-template>
+
+        <ng-template bbCellTemplate="bucket31To60" let-item>
+          @if (viewMode() === 'value') {
+            <bb-report-amount class="numeric-cell" [value]="item.bucket31To60.value" [currency]="report.baseCurrencyCode" />
+          } @else {
+            <span class="numeric-cell">{{ item.bucket31To60.quantity | number:'1.2-2' }}</span>
+          }
+        </ng-template>
+
+        <ng-template bbCellTemplate="bucket61To90" let-item>
+          @if (viewMode() === 'value') {
+            <bb-report-amount class="numeric-cell" [value]="item.bucket61To90.value" [currency]="report.baseCurrencyCode" />
+          } @else {
+            <span class="numeric-cell">{{ item.bucket61To90.quantity | number:'1.2-2' }}</span>
+          }
+        </ng-template>
+
+        <ng-template bbCellTemplate="bucket91To180" let-item>
+          @if (viewMode() === 'value') {
+            <bb-report-amount class="numeric-cell" [value]="item.bucket91To180.value" [currency]="report.baseCurrencyCode" />
+          } @else {
+            <span class="numeric-cell">{{ item.bucket91To180.quantity | number:'1.2-2' }}</span>
+          }
+        </ng-template>
+
+        <ng-template bbCellTemplate="bucketOver180" let-item>
+          @if (viewMode() === 'value') {
+            <bb-report-amount class="numeric-cell" [value]="item.bucketOver180.value" [currency]="report.baseCurrencyCode" />
+          } @else {
+            <span class="numeric-cell">{{ item.bucketOver180.quantity | number:'1.2-2' }}</span>
+          }
+        </ng-template>
+      </bb-data-grid>
+
+      <!-- Totals Footer Row -->
+      <div class="totals-row">
+        <span class="totals-label">Totals:</span>
+        <div class="totals-stat">
+          <span class="text-muted">Total:</span>
+          @if (viewMode() === 'value') {
+            <bb-report-amount [value]="report.totals.totalValue" [currency]="report.baseCurrencyCode" />
+          } @else {
+            <span>{{ report.totals.totalQuantity | number:'1.2-2' }}</span>
+          }
+        </div>
+        <div class="totals-stat">
+          <span class="text-muted">0–30:</span>
+          @if (viewMode() === 'value') {
+            <bb-report-amount [value]="report.totals.bucket0To30.value" [currency]="report.baseCurrencyCode" />
+          } @else {
+            <span>{{ report.totals.bucket0To30.quantity | number:'1.2-2' }}</span>
+          }
+        </div>
+        <div class="totals-stat">
+          <span class="text-muted">31–60:</span>
+          @if (viewMode() === 'value') {
+            <bb-report-amount [value]="report.totals.bucket31To60.value" [currency]="report.baseCurrencyCode" />
+          } @else {
+            <span>{{ report.totals.bucket31To60.quantity | number:'1.2-2' }}</span>
+          }
+        </div>
+        <div class="totals-stat">
+          <span class="text-muted">61–90:</span>
+          @if (viewMode() === 'value') {
+            <bb-report-amount [value]="report.totals.bucket61To90.value" [currency]="report.baseCurrencyCode" />
+          } @else {
+            <span>{{ report.totals.bucket61To90.quantity | number:'1.2-2' }}</span>
+          }
+        </div>
+        <div class="totals-stat">
+          <span class="text-muted">91–180:</span>
+          @if (viewMode() === 'value') {
+            <bb-report-amount [value]="report.totals.bucket91To180.value" [currency]="report.baseCurrencyCode" />
+          } @else {
+            <span>{{ report.totals.bucket91To180.quantity | number:'1.2-2' }}</span>
+          }
+        </div>
+        <div class="totals-stat">
+          <span class="text-muted">180+:</span>
+          @if (viewMode() === 'value') {
+            <bb-report-amount [value]="report.totals.bucketOver180.value" [currency]="report.baseCurrencyCode" />
+          } @else {
+            <span>{{ report.totals.bucketOver180.quantity | number:'1.2-2' }}</span>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (hasMore()) {
+    <div class="pagination-footer">
+      <button class="btn btn-secondary" type="button" [disabled]="loadingMore()" (click)="loadMore()">
+        {{ loadingMore() ? 'Loading more…' : 'Load more items' }}
+      </button>
+    </div>
+  }
+}

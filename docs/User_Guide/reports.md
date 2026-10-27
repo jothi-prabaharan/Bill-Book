@@ -671,6 +671,17 @@ The Inventory Item List has its own page at `/reports/inventory-item-list` (TK-2
 - **Totals:** The totals row at the bottom sums On Hand, Total Value, On Order, Committed, and Available quantities across all matched items. On a phone, each item is presented as a card.
 - **Catalog Source:** The catalog's **Inventory Item List** report (`inventory-item-list`) enforces the required `asOf` date parameter, joins movements up to that date, and supplies explicit numeric decimal types to prevent SQL sum type conflicts.
 
+## Inventory Aging Report
+
+The Inventory Aging Report has its own page at `/reports/inventory-aging-report` (TK-246), under **Reports › Inventory Report**. Besides access to reports it needs **inventory.view**. It ages inventory held on hand into 0–30, 31–60, 61–90, 91–180, and 180+ day buckets from cost layer receipt dates up to a chosen as-at date.
+
+- **As at** date is required (D-67). The page defaults to today's date.
+- **Filters:** Optional **Category**, **Warehouse**, **Search** (item code or name), and **Only items with stock** (when ticked, filters to items with remaining stock).
+- **Display Metric Toggle:** Allows switching instantly between **Valuation (Amount)** and **Stock Quantity** to evaluate inventory value or physical units.
+- **Summary Metrics:** At the top of the report, metric cards display Total Stock and each of the 5 aging buckets with both units and valuation in the branch currency.
+- **Arithmetic & FIFO Consistency:** Ages directly from remaining quantities of inbound cost layers (`CostLayer`), ensuring true FIFO-correct aging even for weighted-average items. The total inventory valuation at the as-at date matches the Inventory Item List (TK-245) and Inventory Item Summary (TK-243) at the same date.
+- **Catalog Source:** The catalog's **Inventory Aging Report** (`inventory-aging`) marks the `asOf` date parameter as required (`IsRequired = true`).
+
 ## Project reports
 
 Four reports read project accounting, under **Projects** in the list. Running them needs **projects.view** as well as access to reports.

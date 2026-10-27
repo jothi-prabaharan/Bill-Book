@@ -154,6 +154,16 @@ export const reportingRoutes: Routes = [
     data: { access: { permission: 'reports.view' } },
   },
   {
+    path: 'inventory-aging-report',
+    loadComponent: () => import('./inventory-aging/inventory-aging-report.page').then((m) => m.InventoryAgingReportPageComponent),
+    data: { access: { permission: 'reports.view' } },
+  },
+  {
+    path: 'inventory-aging',
+    redirectTo: 'inventory-aging-report',
+    pathMatch: 'full',
+  },
+  {
     // Its own page on its own endpoint (TK-244), at the path the menu links to.
     path: 'inventory-item-detail',
     loadComponent: () => import('./inventory-item-detail/inventory-item-detail-report.page').then((m) => m.InventoryItemDetailPage),

@@ -40,3 +40,4 @@ export * from './lib/foreign-currency-gain-or-loss/foreign-currency-gain-or-loss
 export * from './lib/foreign-currency-gain-or-loss-details/foreign-currency-gain-or-loss-details.page';
 export * from './lib/inventory-item-detail/inventory-item-detail-report.page';
 export * from './lib/inventory-item-list/inventory-item-list-report.page';
+export * from './lib/inventory-aging/inventory-aging-report.page';
