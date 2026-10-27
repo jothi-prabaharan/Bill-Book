@@ -839,6 +839,18 @@ The Project Unbilled Work report has its own page at `/reports/project-unbilled-
 - **Responsive Layout:** On mobile viewports (< 800px and ~360px), projects and detail lines transform into responsive stacked cards.
 - **Catalog Source:** The catalog's **Project Unbilled Work** report (`project-unbilled-work`) marks the `asOf` date parameter as required (`IsRequired = true`).
 
+### Project Time by User
+
+The Project Time by User report has its own page at `/reports/project-time-by-user` (TK-259), under **Reports > Projects**. It requires **reports.view**, **projects.view**, and the branch's business type. It breaks down all time logged in a period by team member or project, tracking billable, billed, and non-billable hours alongside staff utilisation percentages.
+
+- **From** and **To** dates are both required (D-67). The page opens on the current financial year to date (`rangeForPreset('this-financial-year')` to today). A To date earlier than From date is refused with an inline error under To.
+- **Filters:** **Group by** (Team Member or Project), optional **Team Member** filter, and optional **Project** filter.
+- **Summary Metric Cards:** Top metric cards display **Team Members**, **Projects**, **Total Hours**, **Billable Hours**, **Billed Hours**, **Non-Billable Hours**, and **Overall Utilisation %**.
+- **Collapsible Section Cards:** Grouped by user (or project) with headers indicating group total hours and group utilisation percentage badge. A metrics strip under the header highlights total, billable, billed, non-billable hours, and utilisation.
+- **Detailed Time Entries Grid:** Displays Project / Task, Total Hours, Billable Hours, Billed Hours, Non-Billable Hours, and Utilisation % pill tags (high: >= 75%, mid: 50-74%, low: < 50%).
+- **Responsive Layout:** On mobile viewports (< 800px and ~360px), grids collapse into structured time-entry cards with metadata strips.
+- **Catalog Source:** The catalog's **Project Time by User** report (`project-time-by-user`) marks both `from` and `to` date parameters as required (`IsRequired = true`).
+
 ## Salary Increment Report
 
 Every salary revision that takes effect in a period, under **Payroll** in the list, or straight at `/reports/salary-increment`. It needs the Payroll add-on and **payroll.view** (TK-198). Unlike the other reports it has a page of its own, so it has no column chooser, saved views, schedule or export.

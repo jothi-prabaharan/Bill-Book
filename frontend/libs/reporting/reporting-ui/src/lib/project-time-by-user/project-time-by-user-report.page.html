@@ -1,0 +1,285 @@
+<div class="report-container">
+  <header class="report-header">
+    <div class="header-titles">
+      <h1 class="report-title">Project Time by User</h1>
+      <p class="report-subtitle">
+        Hours logged in the period by person, project and task: billable, billed, and non-billable with staff utilisation.
+      </p>
+    </div>
+  </header>
+
+  <form [formGroup]="filters" (ngSubmit)="run()" class="filters-card">
+    <div class="filters-grid">
+      <div class="filter-item">
+        <bb-branch-date-input
+          [id]="'ptu-from'"
+          label="From"
+          formControlName="fromDate"
+          [required]="true"
+          [error]="err('fromDate', 'From date')"
+        />
+      </div>
+
+      <div class="filter-item">
+        <bb-branch-date-input
+          [id]="'ptu-to'"
+          label="To"
+          formControlName="toDate"
+          [required]="true"
+          [error]="err('toDate', 'To date')"
+        />
+      </div>
+
+      <div class="filter-item">
+        <bb-select
+          [id]="'ptu-groupby'"
+          label="Group by"
+          [options]="groupByOptions"
+          formControlName="groupBy"
+        />
+      </div>
+
+      <div class="filter-item">
+        <bb-select
+          [id]="'ptu-user'"
+          label="Team Member"
+          placeholder="All team members"
+          [options]="userOptions()"
+          formControlName="userId"
+        />
+      </div>
+
+      <div class="filter-item">
+        <bb-select
+          [id]="'ptu-project'"
+          label="Project"
+          placeholder="All projects"
+          [options]="projectOptions()"
+          formControlName="projectId"
+        />
+      </div>
+    </div>
+
+    <div class="filters-actions">
+      <button type="submit" class="btn btn-primary" [disabled]="loading()">
+        {{ loading() ? 'Loading...' : 'Update Report' }}
+      </button>
+      <button type="button" class="btn btn-secondary" (click)="resetFilters()" [disabled]="loading()">
+        Reset
+      </button>
+    </div>
+  </form>
+
+  @if (failure()) {
+    <bb-message-box [messages]="messages()" />
+  }
+
+  @if (reportData(); as data) {
+    <section class="summary-cards">
+      <div class="metric-card">
+        <span class="metric-label">Team Members</span>
+        <span class="metric-value">{{ data.summary.totalUsers }}</span>
+      </div>
+
+      <div class="metric-card">
+        <span class="metric-label">Projects</span>
+        <span class="metric-value">{{ data.summary.totalProjects }}</span>
+      </div>
+
+      <div class="metric-card">
+        <span class="metric-label">Total Hours</span>
+        <span class="metric-value">{{ data.summary.totalHours | number:'1.1-2' }}h</span>
+      </div>
+
+      <div class="metric-card metric-positive">
+        <span class="metric-label">Billable Hours</span>
+        <span class="metric-value">{{ data.summary.totalBillableHours | number:'1.1-2' }}h</span>
+      </div>
+
+      <div class="metric-card">
+        <span class="metric-label">Billed Hours</span>
+        <span class="metric-value">{{ data.summary.totalBilledHours | number:'1.1-2' }}h</span>
+      </div>
+
+      <div class="metric-card">
+        <span class="metric-label">Non-Billable</span>
+        <span class="metric-value">{{ data.summary.totalNonBillableHours | number:'1.1-2' }}h</span>
+      </div>
+
+      <div class="metric-card metric-primary">
+        <span class="metric-label">Overall Utilisation</span>
+        <span class="metric-value">
+          {{ data.summary.overallUtilisationPercent !== null ? (data.summary.overallUtilisationPercent | number:'1.1-2') + '%' : '—' }}
+        </span>
+      </div>
+    </section>
+
+    <div class="groups-list">
+      @for (group of data.groups; track group.groupKey) {
+        <article class="time-group-card">
+          <header class="group-card-header">
+            <div class="group-identity">
+              <button
+                type="button"
+                class="expand-toggle-btn"
+                (click)="toggleExpand(group.groupKey)"
+                [attr.aria-expanded]="isExpanded(group.groupKey)"
+                title="Toggle Task Time Breakdown"
+              >
+                {{ isExpanded(group.groupKey) ? '▼' : '▶' }}
+              </button>
+              <h2 class="group-name">{{ group.groupName }}</h2>
+              @if (group.groupSubtext) {
+                <span class="subtext-tag">{{ group.groupSubtext }}</span>
+              }
+            </div>
+
+            <div class="header-badges">
+              <div class="hours-pill">
+                <span class="pill-label">Total:</span>
+                <span>{{ group.totalHours | number:'1.1-2' }}h</span>
+              </div>
+              <div
+                class="utilisation-pill"
+                [class]="getUtilisationClass(group.totalUtilisationPercent)"
+              >
+                Utilisation: {{ group.totalUtilisationPercent !== null ? (group.totalUtilisationPercent | number:'1.1-2') + '%' : '—' }}
+              </div>
+            </div>
+          </header>
+
+          <div class="group-metrics-strip">
+            <div class="kpi-item">
+              <span class="kpi-label">Total Hours</span>
+              <span class="kpi-value">{{ group.totalHours | number:'1.1-2' }}h</span>
+            </div>
+
+            <div class="kpi-item kpi-billable">
+              <span class="kpi-label">Billable</span>
+              <span class="kpi-value">{{ group.totalBillableHours | number:'1.1-2' }}h</span>
+            </div>
+
+            <div class="kpi-item">
+              <span class="kpi-label">Billed</span>
+              <span class="kpi-value">{{ group.totalBilledHours | number:'1.1-2' }}h</span>
+            </div>
+
+            <div class="kpi-item">
+              <span class="kpi-label">Non-Billable</span>
+              <span class="kpi-value">{{ group.totalNonBillableHours | number:'1.1-2' }}h</span>
+            </div>
+
+            <div class="kpi-item kpi-util">
+              <span class="kpi-label">Utilisation</span>
+              <span class="kpi-value">
+                {{ group.totalUtilisationPercent !== null ? (group.totalUtilisationPercent | number:'1.1-2') + '%' : '—' }}
+              </span>
+            </div>
+          </div>
+
+          @if (isExpanded(group.groupKey)) {
+            <div class="group-items-section">
+              <div class="section-title-row">
+                <h3 class="items-heading">Task Time Entries</h3>
+                <span class="items-count-pill">{{ group.items.length }} task{{ group.items.length === 1 ? '' : 's' }}</span>
+              </div>
+
+              @if (group.items.length > 0) {
+                @if (!narrow()) {
+                  <bb-data-grid
+                    flush
+                    [data]="group.items"
+                    [columns]="itemColumns"
+                    [ariaLabel]="group.groupName + ' tasks'"
+                  >
+                    <ng-template bbCellTemplate="identity" let-row>
+                      @if (data.groupBy === 'user') {
+                        <div class="task-identity-cell">
+                          <span class="project-code-tag">{{ row.projectCode }}</span>
+                          <span class="project-name-text">{{ row.projectName }}</span>
+                          <span class="arrow-sep">›</span>
+                          <span class="task-name-text">{{ row.taskName }}</span>
+                        </div>
+                      } @else {
+                        <div class="task-identity-cell">
+                          <span class="user-name-text">{{ row.userName }}</span>
+                          <span class="arrow-sep">›</span>
+                          <span class="task-name-text">{{ row.taskName }}</span>
+                        </div>
+                      }
+                    </ng-template>
+
+                    <ng-template bbCellTemplate="hours" let-row>
+                      <span class="hours-cell font-bold">{{ row.hours | number:'1.1-2' }}h</span>
+                    </ng-template>
+
+                    <ng-template bbCellTemplate="billableHours" let-row>
+                      <span class="hours-cell text-billable">{{ row.billableHours | number:'1.1-2' }}h</span>
+                    </ng-template>
+
+                    <ng-template bbCellTemplate="billedHours" let-row>
+                      <span class="hours-cell">{{ row.billedHours | number:'1.1-2' }}h</span>
+                    </ng-template>
+
+                    <ng-template bbCellTemplate="nonBillableHours" let-row>
+                      <span class="hours-cell text-muted">{{ row.nonBillableHours | number:'1.1-2' }}h</span>
+                    </ng-template>
+
+                    <ng-template bbCellTemplate="utilisationPercent" let-row>
+                      <span
+                        class="util-tag"
+                        [class]="getUtilisationClass(row.utilisationPercent)"
+                      >
+                        {{ row.utilisationPercent !== null ? (row.utilisationPercent | number:'1.1-2') + '%' : '—' }}
+                      </span>
+                    </ng-template>
+                  </bb-data-grid>
+                } @else {
+                  <div class="mobile-items-list">
+                    @for (item of group.items; track item.projectCode + '/' + item.taskName + '/' + item.userId) {
+                      <div class="mobile-item-card">
+                        <div class="mobile-item-header">
+                          @if (data.groupBy === 'user') {
+                            <div class="mobile-item-title">
+                              <span class="project-code-tag">{{ item.projectCode }}</span>
+                              <span class="task-bold">{{ item.taskName }}</span>
+                            </div>
+                          } @else {
+                            <div class="mobile-item-title">
+                              <span class="user-bold">{{ item.userName }}</span>
+                              <span class="arrow-sep">›</span>
+                              <span>{{ item.taskName }}</span>
+                            </div>
+                          }
+                          <span class="mobile-item-hours">{{ item.hours | number:'1.1-2' }}h</span>
+                        </div>
+
+                        <div class="mobile-item-meta">
+                          <div><span>Billable:</span> <strong>{{ item.billableHours | number:'1.1-2' }}h</strong></div>
+                          <div><span>Billed:</span> {{ item.billedHours | number:'1.1-2' }}h</div>
+                          <div><span>Non-Billable:</span> {{ item.nonBillableHours | number:'1.1-2' }}h</div>
+                          <div>
+                            <span>Utilisation:</span>
+                            <strong [class.text-billable]="isHighUtilisation(item.utilisationPercent)">
+                              {{ item.utilisationPercent !== null ? (item.utilisationPercent | number:'1.1-2') + '%' : '—' }}
+                            </strong>
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              } @else {
+                <p class="no-items-message">No time logged for this group in the selected period.</p>
+              }
+            </div>
+          }
+        </article>
+      } @empty {
+        <div class="empty-state">
+          <p>No logged time found for the selected period.</p>
+        </div>
+      }
+    </div>
+  }
+</div>

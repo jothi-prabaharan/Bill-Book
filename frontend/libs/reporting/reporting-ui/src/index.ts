@@ -61,4 +61,6 @@ export * from './lib/project-budget-vs-actual/project-budget-vs-actual-report.pa
 
 export * from './lib/project-unbilled-work/project-unbilled-work-report.page';
 
+export * from './lib/project-time-by-user/project-time-by-user-report.page';
+
 

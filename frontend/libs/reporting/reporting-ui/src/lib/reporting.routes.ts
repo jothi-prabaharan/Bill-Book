@@ -267,6 +267,12 @@ export const reportingRoutes: Routes = [
     data: { access: { permission: 'reports.view' } },
   },
   {
+    path: 'project-time-by-user',
+    loadComponent: () =>
+      import('./project-time-by-user/project-time-by-user-report.page').then((m) => m.ProjectTimeByUserReportPageComponent),
+    data: { access: { permission: 'reports.view' } },
+  },
+  {
     // Its own page on its own endpoint (TK-244), at the path the menu links to.
     path: 'inventory-item-detail',
     loadComponent: () => import('./inventory-item-detail/inventory-item-detail-report.page').then((m) => m.InventoryItemDetailPage),

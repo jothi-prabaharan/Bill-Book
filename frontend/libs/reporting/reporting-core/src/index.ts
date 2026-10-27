@@ -114,4 +114,7 @@ export * from './lib/project-budget-vs-actual/project-budget-vs-actual-report.se
 export * from './lib/project-unbilled-work/project-unbilled-work-report.models';
 export * from './lib/project-unbilled-work/project-unbilled-work-report.service';
 
+export * from './lib/project-time-by-user/project-time-by-user-report.models';
+export * from './lib/project-time-by-user/project-time-by-user-report.service';
+
 
