@@ -6,7 +6,7 @@ rewrites and stages it whenever the details file changes. **Never edit it by han
 status, edit the card's first line in the details file; the card there holds the rules, lanes,
 where to start, sub-tasks and notes.
 
-**Summary:** 225 completed, 0 working, 32 open, and 2 blocked (259 cards).
+**Summary:** 225 completed, 1 working, 31 open, and 2 blocked (259 cards).
 
 | Card | Title | Group | Status | Completed by | Completed at | Tests | Issue | Note |
 | :--- | :--- | :--- | :---: | :--- | :--- | :--- | :---: | :--- |
@@ -245,7 +245,7 @@ where to start, sub-tasks and notes.
 | [TK-236](./Task_Details.md#tk-236--payable-invoice-detail-its-own-endpoint-and-page) | Payable Invoice Detail: its own endpoint and page | Z | ✅ completed | Claude Sonnet 5.5 | 2026-10-27 | written, not run | [#223](https://github.com/jothi-prabaharan/Bill-Book/issues/223) | — |
 | [TK-237](./Task_Details.md#tk-237--bills-track-report-its-own-endpoint-and-page) | Bills Track Report: its own endpoint and page | Z | ✅ completed | Claude Sonnet 5.5 | 2026-10-27 | written, not run | [#224](https://github.com/jothi-prabaharan/Bill-Book/issues/224) | — |
 | [TK-238](./Task_Details.md#tk-238--billdn-payment-report-its-own-endpoint-and-page) | Bill/DN Payment Report: its own endpoint and page | Z | ✅ completed | Claude Sonnet 5.5 | 2026-10-27 | written, not run | [#225](https://github.com/jothi-prabaharan/Bill-Book/issues/225) | — |
-| [TK-239](./Task_Details.md#tk-239--purchase-analysis-its-own-endpoint-and-page) | Purchase Analysis: its own endpoint and page | Z | 🟪 open | — | — | — | [#226](https://github.com/jothi-prabaharan/Bill-Book/issues/226) | — |
+| [TK-239](./Task_Details.md#tk-239--purchase-analysis-its-own-endpoint-and-page) | Purchase Analysis: its own endpoint and page | Z | 🔶 working | Claude Sonnet 5.5 (working) | since 2026-10-26 | — | [#226](https://github.com/jothi-prabaharan/Bill-Book/issues/226) | — |
 | [TK-240](./Task_Details.md#tk-240--purchase-order-track-report-its-own-endpoint-and-page) | Purchase Order Track Report: its own endpoint and page | Z | 🟪 open | — | — | — | [#227](https://github.com/jothi-prabaharan/Bill-Book/issues/227) | — |
 | [TK-241](./Task_Details.md#tk-241--purchase-receive-order-details-its-own-endpoint-and-page) | Purchase Receive Order Details: its own endpoint and page | Z | 🟪 open | — | — | — | [#228](https://github.com/jothi-prabaharan/Bill-Book/issues/228) | — |
 | [TK-242](./Task_Details.md#tk-242--receive-order-track-report-its-own-endpoint-and-page) | Receive Order Track Report: its own endpoint and page | Z | 🟪 open | — | — | — | [#229](https://github.com/jothi-prabaharan/Bill-Book/issues/229) | — |
