@@ -55,4 +55,6 @@ export * from './lib/disposal-schedule/disposal-schedule-report.page';
 
 export * from './lib/fixed-asset-reconciliation/fixed-asset-reconciliation-report.page';
 
+export * from './lib/project-profitability/project-profitability-report.page';
+
 

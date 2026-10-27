@@ -1,0 +1,296 @@
+<div class="report-container">
+  <header class="report-header">
+    <div class="header-titles">
+      <h1 class="report-title">Project Profitability</h1>
+      <p class="report-subtitle">
+        Income, cost, profit, and margin over a period, evaluated against project budgets.
+      </p>
+    </div>
+  </header>
+
+  <form [formGroup]="filters" (ngSubmit)="run()" class="filters-card">
+    <div class="filters-grid">
+      <div class="filter-item">
+        <bb-branch-date-input
+          [id]="'pp-from'"
+          label="From"
+          formControlName="fromDate"
+          [required]="true"
+          [error]="err('fromDate', 'From date')"
+        />
+      </div>
+
+      <div class="filter-item">
+        <bb-branch-date-input
+          [id]="'pp-to'"
+          label="To"
+          formControlName="toDate"
+          [required]="true"
+          [error]="err('toDate', 'To date')"
+        />
+      </div>
+
+      <div class="filter-item">
+        <bb-select
+          [id]="'pp-customer'"
+          label="Customer"
+          placeholder="All customers"
+          [options]="customerOptions()"
+          formControlName="customerId"
+        />
+      </div>
+
+      <div class="filter-item">
+        <bb-select
+          [id]="'pp-status'"
+          label="Status"
+          placeholder="All statuses"
+          [options]="statusOptions()"
+          formControlName="status"
+        />
+      </div>
+
+      <div class="filter-item">
+        <bb-select
+          [id]="'pp-billing-method'"
+          label="Billing Method"
+          placeholder="All methods"
+          [options]="billingMethodOptions()"
+          formControlName="billingMethod"
+        />
+      </div>
+
+      <div class="filter-item">
+        <bb-select
+          [id]="'pp-project'"
+          label="Project"
+          placeholder="All projects"
+          [options]="projectOptions()"
+          formControlName="projectId"
+        />
+      </div>
+    </div>
+
+    <div class="filters-actions">
+      <button type="submit" class="btn btn-primary" [disabled]="loading()">
+        {{ loading() ? 'Loading...' : 'Update Report' }}
+      </button>
+      <button type="button" class="btn btn-secondary" (click)="resetFilters()" [disabled]="loading()">
+        Reset
+      </button>
+    </div>
+  </form>
+
+  @if (failure()) {
+    <bb-message-box [messages]="messages()" />
+  }
+
+  @if (reportData(); as data) {
+    <section class="summary-cards">
+      <div class="metric-card">
+        <span class="metric-label">Total Projects</span>
+        <span class="metric-value">{{ data.summary.totalProjects }}</span>
+      </div>
+
+      <div class="metric-card">
+        <span class="metric-label">Total Revenue</span>
+        <span class="metric-value">
+          <bb-report-amount [value]="data.summary.totalRevenue" />
+        </span>
+      </div>
+
+      <div class="metric-card">
+        <span class="metric-label">Total Cost</span>
+        <span class="metric-value">
+          <bb-report-amount [value]="data.summary.totalCost" />
+        </span>
+      </div>
+
+      <div class="metric-card" [class.metric-positive]="data.summary.totalProfit >= 0" [class.metric-negative]="data.summary.totalProfit < 0">
+        <span class="metric-label">Total Profit</span>
+        <span class="metric-value">
+          <bb-report-amount [value]="data.summary.totalProfit" />
+        </span>
+      </div>
+
+      <div class="metric-card">
+        <span class="metric-label">Overall Margin</span>
+        <span class="metric-value">
+          {{ data.summary.overallMarginPercent !== null ? (data.summary.overallMarginPercent | number:'1.2-2') + '%' : '—' }}
+        </span>
+      </div>
+
+      <div class="metric-card">
+        <span class="metric-label">Total Budget</span>
+        <span class="metric-value">
+          <bb-report-amount [value]="data.summary.totalBudgetAmount" />
+        </span>
+      </div>
+    </section>
+
+    @if (!narrow()) {
+      <div class="grid-card">
+        <bb-data-grid
+          flush
+          [data]="data.rows"
+          [columns]="gridColumns"
+          ariaLabel="Project profitability table"
+        >
+          <ng-template bbCellTemplate="projectCode" let-row>
+            <a
+              class="drill-link code-link"
+              [routerLink]="['/reports/budget-vs-actual-by-project']"
+              [queryParams]="{ projectId: row.projectId }"
+              title="Drill to Budget vs Actual by Project"
+            >
+              {{ row.projectCode }}
+            </a>
+          </ng-template>
+
+          <ng-template bbCellTemplate="status" let-row>
+            <span class="status-badge status-{{ row.status.toLowerCase() }}">
+              {{ row.status }}
+            </span>
+          </ng-template>
+
+          <ng-template bbCellTemplate="revenue" let-row>
+            <bb-report-amount [value]="row.revenue" />
+          </ng-template>
+
+          <ng-template bbCellTemplate="cost" let-row>
+            <bb-report-amount [value]="row.cost" />
+          </ng-template>
+
+          <ng-template bbCellTemplate="profit" let-row>
+            <span [class.profit-positive]="row.profit >= 0" [class.profit-negative]="row.profit < 0">
+              <bb-report-amount [value]="row.profit" />
+            </span>
+          </ng-template>
+
+          <ng-template bbCellTemplate="marginPercent" let-row>
+            <span>
+              {{ row.marginPercent !== null ? (row.marginPercent | number:'1.2-2') + '%' : '—' }}
+            </span>
+          </ng-template>
+
+          <ng-template bbCellTemplate="budgetAmount" let-row>
+            @if (row.budgetAmount !== null) {
+              <bb-report-amount [value]="row.budgetAmount" />
+            } @else {
+              <span class="muted">—</span>
+            }
+          </ng-template>
+
+          <ng-template bbCellTemplate="actions" let-row>
+            <button
+              type="button"
+              class="drill-action-btn"
+              (click)="drillToBudgetVsActual(row)"
+              title="View Budget vs Actual Detail"
+            >
+              Drill
+            </button>
+          </ng-template>
+        </bb-data-grid>
+
+        @if (data.rows.length > 0) {
+          <div class="grid-total-footer">
+            <div class="footer-cell col-code">Total ({{ data.summary.totalProjects }} projects)</div>
+            <div class="footer-cell col-name"></div>
+            <div class="footer-cell col-customer"></div>
+            <div class="footer-cell col-status"></div>
+            <div class="footer-cell col-method"></div>
+            <div class="footer-cell col-revenue">
+              <bb-report-amount [value]="data.summary.totalRevenue" />
+            </div>
+            <div class="footer-cell col-cost">
+              <bb-report-amount [value]="data.summary.totalCost" />
+            </div>
+            <div class="footer-cell col-profit" [class.profit-positive]="data.summary.totalProfit >= 0" [class.profit-negative]="data.summary.totalProfit < 0">
+              <bb-report-amount [value]="data.summary.totalProfit" />
+            </div>
+            <div class="footer-cell col-margin">
+              {{ data.summary.overallMarginPercent !== null ? (data.summary.overallMarginPercent | number:'1.2-2') + '%' : '—' }}
+            </div>
+            <div class="footer-cell col-budget">
+              <bb-report-amount [value]="data.summary.totalBudgetAmount" />
+            </div>
+            <div class="footer-cell col-actions"></div>
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="mobile-cards">
+        @for (row of data.rows; track row.projectId) {
+          <article class="mobile-project-card">
+            <header class="card-header">
+              <div class="code-and-status">
+                <a
+                  class="drill-link code-link"
+                  [routerLink]="['/reports/budget-vs-actual-by-project']"
+                  [queryParams]="{ projectId: row.projectId }"
+                >
+                  {{ row.projectCode }}
+                </a>
+                <span class="status-badge status-{{ row.status.toLowerCase() }}">
+                  {{ row.status }}
+                </span>
+              </div>
+              <h2 class="card-title">{{ row.projectName }}</h2>
+              <div class="card-meta">
+                <span>{{ row.customer }}</span>
+                <span class="dot-separator">•</span>
+                <span>{{ row.billingMethod }}</span>
+              </div>
+            </header>
+
+            <div class="card-metrics-grid">
+              <div class="metric-pair">
+                <span class="label">Revenue</span>
+                <span class="value"><bb-report-amount [value]="row.revenue" /></span>
+              </div>
+              <div class="metric-pair">
+                <span class="label">Cost</span>
+                <span class="value"><bb-report-amount [value]="row.cost" /></span>
+              </div>
+              <div class="metric-pair">
+                <span class="label">Profit</span>
+                <span class="value" [class.profit-positive]="row.profit >= 0" [class.profit-negative]="row.profit < 0">
+                  <bb-report-amount [value]="row.profit" />
+                </span>
+              </div>
+              <div class="metric-pair">
+                <span class="label">Margin %</span>
+                <span class="value">{{ row.marginPercent !== null ? (row.marginPercent | number:'1.2-2') + '%' : '—' }}</span>
+              </div>
+              <div class="metric-pair">
+                <span class="label">Budget</span>
+                <span class="value">
+                  @if (row.budgetAmount !== null) {
+                    <bb-report-amount [value]="row.budgetAmount" />
+                  } @else {
+                    —
+                  }
+                </span>
+              </div>
+            </div>
+
+            <footer class="card-footer">
+              <button
+                type="button"
+                class="drill-action-btn full-width"
+                (click)="drillToBudgetVsActual(row)"
+              >
+                Budget vs Actual Detail &rarr;
+              </button>
+            </footer>
+          </article>
+        } @empty {
+          <div class="empty-state">
+            <p>No project profitability data found for the selected period.</p>
+          </div>
+        }
+      </div>
+    }
+  }
+</div>

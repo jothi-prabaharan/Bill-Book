@@ -6,7 +6,7 @@ rewrites and stages it whenever the details file changes. **Never edit it by han
 status, edit the card's first line in the details file; the card there holds the rules, lanes,
 where to start, sub-tasks and notes.
 
-**Summary:** 242 completed, 0 working, 15 open, and 2 blocked (259 cards).
+**Summary:** 243 completed, 0 working, 14 open, and 2 blocked (259 cards).
 
 | Card | Title | Group | Status | Completed by | Completed at | Tests | Issue | Note |
 | :--- | :--- | :--- | :---: | :--- | :--- | :--- | :---: | :--- |
@@ -262,7 +262,7 @@ where to start, sub-tasks and notes.
 | [TK-253](./Task_Details.md#tk-253--depreciation-schedule-its-own-endpoint-and-page) | Depreciation Schedule: its own endpoint and page | Z | ✅ completed | Antigravity | 2026-10-28 | written, not run | [#240](https://github.com/jothi-prabaharan/Bill-Book/issues/240) | tests written, not run |
 | [TK-254](./Task_Details.md#tk-254--disposal-schedule-report-its-own-endpoint-and-page) | Disposal Schedule Report: its own endpoint and page | Z | ✅ completed | Antigravity | 2026-10-28 | written, not run | [#241](https://github.com/jothi-prabaharan/Bill-Book/issues/241) | tests written, not run |
 | [TK-255](./Task_Details.md#tk-255--fixed-asset-reconciliation-its-own-endpoint-and-page) | Fixed Asset Reconciliation: its own endpoint and page | Z | ✅ completed | Antigravity | 2026-10-28 | written, not run | [#242](https://github.com/jothi-prabaharan/Bill-Book/issues/242) | — |
-| [TK-256](./Task_Details.md#tk-256--project-profitability-its-own-endpoint-and-page) | Project Profitability: its own endpoint and page | Z | 🟪 open | — | — | — | [#243](https://github.com/jothi-prabaharan/Bill-Book/issues/243) | — |
+| [TK-256](./Task_Details.md#tk-256--project-profitability-its-own-endpoint-and-page) | Project Profitability: its own endpoint and page | Z | ✅ completed | Antigravity | 2026-10-28 | written, not run | [#243](https://github.com/jothi-prabaharan/Bill-Book/issues/243) | — |
 | [TK-257](./Task_Details.md#tk-257--project-budget-vs-actual-its-own-endpoint-and-page) | Project Budget vs Actual: its own endpoint and page | Z | 🟪 open | — | — | — | [#244](https://github.com/jothi-prabaharan/Bill-Book/issues/244) | — |
 | [TK-258](./Task_Details.md#tk-258--project-unbilled-work-its-own-endpoint-and-page) | Project Unbilled Work: its own endpoint and page | Z | 🟪 open | — | — | — | [#245](https://github.com/jothi-prabaharan/Bill-Book/issues/245) | — |
 | [TK-259](./Task_Details.md#tk-259--project-time-by-user-its-own-endpoint-and-page) | Project Time by User: its own endpoint and page | Z | 🟪 open | — | — | — | [#246](https://github.com/jothi-prabaharan/Bill-Book/issues/246) | — |

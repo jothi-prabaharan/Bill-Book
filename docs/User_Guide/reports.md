@@ -801,6 +801,18 @@ Four reports read project accounting, under **Projects** in the list. Running th
 
 A project's income and costs come from the ledger rows tagged with it. That covers manual journals, money documents, and sales and purchase lines. See [Projects](accounting#projects).
 
+### Project Profitability
+
+The Project Profitability report has its own page at `/reports/project-profitability` (TK-256), under **Reports > Projects**. It requires **reports.view**, **projects.view**, and the branch's business type. It answers each project's revenue, cost, net profit, and profit margin over a period, evaluated against its project budget.
+
+- **From** and **To** dates are both required (D-67). The page opens on the current financial year to date (`rangeForPreset('this-financial-year')` to today). A To date earlier than From date is refused with an inline error under To.
+- **Filters:** Optional **Customer**, **Status** (Active, Completed, OnHold, Cancelled), **Billing Method** (FixedFee, TimeAndMaterials, NonBillable), and **Project** dropdowns.
+- **Summary Metric Cards:** Top metric cards display **Total Projects**, **Total Revenue**, **Total Cost**, **Total Profit** (green when positive, red when negative), **Overall Margin %**, and **Total Budget**.
+- **Structured Project Grid:** Each project displays its Project Code, Name, Customer, Status badge, Billing Method, Revenue (credits less debits on income accounts), Cost (debits less credits on expense accounts), Profit (revenue less cost), Margin % (profit / revenue * 100), Budget, and a Drill button linking directly to Budget vs Actual by Project (`/reports/budget-vs-actual-by-project?projectId=...`) for deep account-level postings.
+- **Totals Footer:** The table displays a comprehensive totals row summarizing numeric columns across all filtered projects.
+- **Responsive Layout:** On mobile viewports (< 800px), projects transform into stacked cards showing status badges, metadata, paired metrics, and drill buttons.
+- **Catalog Source:** The catalog's **Project Profitability** report (`project-profitability`) marks both From and To parameters as required (`IsRequired = true`).
+
 ## Salary Increment Report
 
 Every salary revision that takes effect in a period, under **Payroll** in the list, or straight at `/reports/salary-increment`. It needs the Payroll add-on and **payroll.view** (TK-198). Unlike the other reports it has a page of its own, so it has no column chooser, saved views, schedule or export.

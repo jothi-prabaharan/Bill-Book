@@ -105,4 +105,7 @@ export * from './lib/disposal-schedule/disposal-schedule-report.service';
 export * from './lib/fixed-asset-reconciliation/fixed-asset-reconciliation-report.models';
 export * from './lib/fixed-asset-reconciliation/fixed-asset-reconciliation-report.service';
 
+export * from './lib/project-profitability/project-profitability-report.models';
+export * from './lib/project-profitability/project-profitability-report.service';
+
 
