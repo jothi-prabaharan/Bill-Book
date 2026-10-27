@@ -728,6 +728,19 @@ The Serial Tracking Detail Report has its own page at `/reports/serial-tracking-
 - **Arithmetic:** Each serial's closing balance equals opening quantity plus total in minus total out, and matches its status on the Serial Tracking Status Report (TK-249) at the To date (1 = InStock, 0 = Sold/Issued).
 - **Catalog Source:** The catalog's **Serial Tracking Detail Report** (`serial-tracking-detail`) marks both From and To parameters as required (`IsRequired = true`).
 
+## Warehouse Tracking Status Report
+
+The Warehouse Tracking Status Report has its own page at `/reports/warehouse-tracking-status-report` (TK-251), under **Reports > Inventory Report**. Besides access to reports it needs **inventory.view**. It shows warehouse-by-warehouse stock quantities received, issued, and available as at a chosen date, along with branch valuation estimates.
+
+- **As at** date is required (D-67). The page opens on today.
+- **Filters:** Optional **Warehouse**, **Category**, **Search** (matches warehouse name, code, item code, or item name), and an **Only Warehouses with Stock** toggle.
+- **Summary Metrics:** At the top of the report, metric cards display **Total Warehouses**, **Stocked Warehouses**, **Total Items Stocked**, **Total Available Qty**, and **Total Estimated Value**.
+- **Grouped Layout:** Warehouses are presented as structured cards displaying warehouse name, code, address, state, country, primary indicator, and active status badge.
+- **Stock Grid:** Within each warehouse card, stocked items are tabulated: Item Code, Item Name, Category, UOM, Qty Received, Qty Issued, Available Qty, Average Unit Cost (branch level), and Estimated Stock Value.
+- **Valuation Rule:** Warehouses are location dimensions only; the branch's stock pool and valuation are not split per warehouse. Valuation is computed as available quantity multiplied by the branch average unit cost.
+- **Detail View:** An inline toggle provides quick access to movement details for the warehouse.
+- **Catalog Source:** The catalog's **Warehouse Tracking Status** report (`warehouse-tracking-status`) marks the `asOf` date parameter as required (`IsRequired = true`).
+
 ## Project reports
 
 Four reports read project accounting, under **Projects** in the list. Running them needs **projects.view** as well as access to reports.

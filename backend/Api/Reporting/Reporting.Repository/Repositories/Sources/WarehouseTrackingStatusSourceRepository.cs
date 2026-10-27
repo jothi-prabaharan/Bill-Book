@@ -22,17 +22,17 @@ public sealed class WarehouseTrackingStatusSourceRepository : ReportSource<Wareh
 
     public override string RequiredPermission => "inventory.view";
 
+    public override IReadOnlyList<ReportParameterRepository> Parameters =>
+    [
+        new() { Name = "asOf", Label = "As at", DataType = ColumnDataType.Date, IsRequired = true },
+    ];
+
     public override IReadOnlyList<ReportColumn> Columns =>
     [
         ReportColumn.Of<WarehouseTrackingStatusRow, string>("warehouseName", ColumnDataType.Text, r => r.WarehouseName),
         ReportColumn.Of<WarehouseTrackingStatusRow, string?>("address", ColumnDataType.Text, r => r.Address),
         ReportColumn.Of<WarehouseTrackingStatusRow, string?>("city", ColumnDataType.Text, r => r.City, groupable: true),
 
-        // StateId and CountryId are cross-database ids into mst.States and
-        // mst.Countries — resolved to names after the page is fetched, the same
-        // batched way every other cross-database name on these reports is. A raw
-        // FK on a report a person reads is a bug, not a smaller version of the
-        // right answer.
         ReportColumn.Of<WarehouseTrackingStatusRow, string?>("state", ColumnDataType.Text, r => r.State, groupable: true),
         ReportColumn.Of<WarehouseTrackingStatusRow, string?>("country", ColumnDataType.Text, r => r.Country, groupable: true),
 
@@ -46,9 +46,17 @@ public sealed class WarehouseTrackingStatusSourceRepository : ReportSource<Wareh
 
     protected override IQueryable<WarehouseTrackingStatusRow> Build(ReportParameters parameters, ReportingDbContext db)
     {
+        DateOnly? asOf = parameters.Date("asOf");
+
+        var movements = db.StockMovements.AsQueryable();
+        if (asOf is DateOnly asOfDate)
+        {
+            movements = movements.Where(m => m.MovementDate <= asOfDate);
+        }
+
         return from w in db.Warehouses
-               let inQty = db.StockMovements.Where(m => m.WarehouseId == w.WarehouseId && m.Direction == StockDirection.In).Sum(m => (decimal?)m.Quantity) ?? 0m
-               let outQty = db.StockMovements.Where(m => m.WarehouseId == w.WarehouseId && m.Direction == StockDirection.Out).Sum(m => (decimal?)m.Quantity) ?? 0m
+               let inQty = movements.Where(m => m.WarehouseId == w.WarehouseId && m.Direction == StockDirection.In).Sum(m => (decimal?)m.Quantity) ?? 0m
+               let outQty = movements.Where(m => m.WarehouseId == w.WarehouseId && m.Direction == StockDirection.Out).Sum(m => (decimal?)m.Quantity) ?? 0m
                select new WarehouseTrackingStatusRow
                {
                    WarehouseId = w.WarehouseId,

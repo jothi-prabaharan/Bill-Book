@@ -45,3 +45,4 @@ export * from './lib/batch-tracking-status/batch-tracking-status-report.page';
 export * from './lib/batch-tracking-detail/batch-tracking-detail-report.page';
 export * from './lib/serial-tracking-status/serial-tracking-status-report.page';
 export * from './lib/serial-tracking-detail/serial-tracking-detail-report.page';
+export * from './lib/warehouse-tracking-status/warehouse-tracking-status-report.page';

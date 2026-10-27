@@ -90,3 +90,5 @@ export * from './lib/serial-tracking-status/serial-tracking-status-report.models
 export * from './lib/serial-tracking-status/serial-tracking-status-report.service';
 export * from './lib/serial-tracking-detail/serial-tracking-detail-report.models';
 export * from './lib/serial-tracking-detail/serial-tracking-detail-report.service';
+export * from './lib/warehouse-tracking-status/warehouse-tracking-status-report.models';
+export * from './lib/warehouse-tracking-status/warehouse-tracking-status-report.service';

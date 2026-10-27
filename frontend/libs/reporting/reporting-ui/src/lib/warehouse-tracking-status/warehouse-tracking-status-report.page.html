@@ -1,0 +1,222 @@
+<header class="page-head">
+  <div>
+    <h1>Warehouse Tracking Status Report</h1>
+    <p class="subtitle text-muted">
+      Stock balances across warehouses as at a date: quantities received, issued, and available item by item, valued at branch average cost.
+    </p>
+  </div>
+</header>
+
+<form class="filters card" [formGroup]="filters" (ngSubmit)="run()" novalidate>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'wts-asof'" label="As at" formControlName="asOfDate" [required]="true"
+                          [error]="err('asOfDate', 'As at date')" />
+  </div>
+
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'wts-warehouse'" label="Warehouse" placeholder="All warehouses" [options]="warehouseOptions()"
+               [loading]="!choicesLoaded()" emptyText="No warehouses" formControlName="warehouseId" />
+  </div>
+
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'wts-category'" label="Category" placeholder="All categories" [options]="categoryOptions()"
+               [loading]="!choicesLoaded()" emptyText="No categories" formControlName="itemCategoryId" />
+  </div>
+
+  <div class="filters__field filters__field--search">
+    <bb-text-input [id]="'wts-search'" label="Search" placeholder="Search item or warehouse…" formControlName="search" />
+  </div>
+
+  <div class="filters__field filters__field--check">
+    <bb-checkbox text="Show zero balance" formControlName="showZeroBalance" />
+  </div>
+
+  <div class="filters__actions">
+    <button class="btn btn-primary" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Running…' : 'Run report' }}
+    </button>
+  </div>
+</form>
+
+@if (messages().length > 0) {
+  <bb-message-box [messages]="messages()" />
+}
+
+@if (result(); as report) {
+  <div class="summary-bar">
+    <p class="period text-muted">
+      As at {{ report.asOfDate | reportDate }}.
+      Showing {{ report.warehouses.length }} of {{ report.totalWarehousesCount }} warehouse{{ report.totalWarehousesCount === 1 ? '' : 's' }}.
+    </p>
+  </div>
+
+  <!-- Summary Metric Cards -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <span class="metric-label">Total Warehouses</span>
+      <span class="metric-value">{{ report.totals.totalWarehouses }}</span>
+    </div>
+    <div class="metric-card">
+      <span class="metric-label">Stocked Items</span>
+      <span class="metric-value">{{ report.totals.totalItems }}</span>
+    </div>
+    <div class="metric-card">
+      <span class="metric-label">Total Qty In</span>
+      <span class="metric-value font-bold text-success">{{ report.totals.totalQuantityIn | number:'1.2-2' }}</span>
+    </div>
+    <div class="metric-card">
+      <span class="metric-label">Total Qty Out</span>
+      <span class="metric-value font-bold text-danger">{{ report.totals.totalQuantityOut | number:'1.2-2' }}</span>
+    </div>
+    <div class="metric-card">
+      <span class="metric-label">Available Qty</span>
+      <span class="metric-value font-bold">{{ report.totals.totalAvailableQuantity | number:'1.2-2' }}</span>
+    </div>
+    <div class="metric-card">
+      <span class="metric-label">Branch Valuation</span>
+      <span class="metric-value font-bold text-primary">
+        <bb-report-amount [value]="report.totals.totalEstimatedValue" />
+      </span>
+    </div>
+  </div>
+
+  @if (report.warehouses.length === 0) {
+    <p class="empty text-muted">No warehouse stock matches these filters.</p>
+  } @else {
+    <div class="warehouse-groups">
+      @for (w of warehouseGroups(); track w.warehouseId) {
+        <section class="card warehouse-card">
+          <!-- Warehouse Header -->
+          <header class="warehouse-card__head">
+            <div class="warehouse-card__title">
+              <div class="warehouse-card__headline">
+                <strong class="font-mono text-lg">{{ w.warehouseName }}</strong>
+                <span class="text-muted">({{ w.warehouseCode }})</span>
+                @if (w.isPrimary) {
+                  <span class="badge badge-primary">Primary Location</span>
+                }
+                <span class="badge" [class.badge-success]="w.isActive" [class.badge-muted]="!w.isActive">
+                  {{ w.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </div>
+              <div class="warehouse-card__meta">
+                @if (w.address) { <span>{{ w.address }}</span> }
+                @if (w.city) { <span>{{ w.city }}</span> }
+                @if (w.state) { <span class="badge badge-outline">{{ w.state }}</span> }
+                @if (w.country) { <span class="badge badge-outline">{{ w.country }}</span> }
+              </div>
+            </div>
+
+            <!-- Warehouse Balances Pill Summary -->
+            <div class="warehouse-card__balances">
+              <div class="balance-pill">
+                <span class="balance-label">Items</span>
+                <span class="balance-val">{{ w.totalItems }}</span>
+              </div>
+              <div class="balance-pill">
+                <span class="balance-label">Total In</span>
+                <span class="balance-val text-success">{{ w.totalQuantityIn | number:'1.2-2' }}</span>
+              </div>
+              <div class="balance-pill">
+                <span class="balance-label">Total Out</span>
+                <span class="balance-val text-danger">{{ w.totalQuantityOut | number:'1.2-2' }}</span>
+              </div>
+              <div class="balance-pill balance-pill--available">
+                <span class="balance-label">Available</span>
+                <span class="balance-val font-bold">{{ w.totalAvailableQuantity | number:'1.2-2' }}</span>
+              </div>
+              <div class="balance-pill balance-pill--value">
+                <span class="balance-label">Est. Value</span>
+                <span class="balance-val font-bold">
+                  <bb-report-amount [value]="w.totalEstimatedValue" />
+                </span>
+              </div>
+            </div>
+          </header>
+
+          <!-- Warehouse Items Grid / Cards -->
+          @if (w.items.length === 0) {
+            <p class="warehouse-card__empty text-muted">No stock on hand in this warehouse as at {{ report.asOfDate | reportDate }}.</p>
+          } @else if (narrow()) {
+            <div class="cards" role="list">
+              @for (item of w.items; track item.itemId) {
+                <article class="card item-card" role="listitem">
+                  <header class="item-card__head">
+                    <div>
+                      <strong class="item-card__name">{{ item.itemName }}</strong>
+                      <span class="font-mono text-muted text-sm"> ({{ item.itemCode }})</span>
+                    </div>
+                    @if (item.categoryName) {
+                      <span class="badge">{{ item.categoryName }}</span>
+                    }
+                  </header>
+                  <div class="item-card__body">
+                    <div class="item-card__quantities">
+                      <span>In: <strong class="text-success">{{ item.quantityIn | number:'1.2-2' }}</strong></span>
+                      <span>Out: <strong class="text-danger">{{ item.quantityOut | number:'1.2-2' }}</strong></span>
+                      <span>Available: <strong class="text-bold">{{ item.availableQuantity | number:'1.2-2' }}</strong></span>
+                    </div>
+                    <div class="item-card__valuation">
+                      <span>Avg Cost: <bb-report-amount [value]="item.averageCost" /></span>
+                      <span>Value: <strong><bb-report-amount [value]="item.estimatedValue" /></strong></span>
+                    </div>
+                  </div>
+                </article>
+              }
+            </div>
+          } @else {
+            <div class="table-container">
+              <bb-data-grid flush [columns]="columns" [data]="w.items" [ariaLabel]="'Warehouse stock table'">
+                <ng-template bbCellTemplate="itemCode" let-item>
+                  <span class="font-mono font-medium">{{ item.itemCode }}</span>
+                </ng-template>
+
+                <ng-template bbCellTemplate="itemName" let-item>
+                  <span class="font-medium">{{ item.itemName }}</span>
+                </ng-template>
+
+                <ng-template bbCellTemplate="categoryName" let-item>
+                  <span class="badge">{{ item.categoryName || '—' }}</span>
+                </ng-template>
+
+                <ng-template bbCellTemplate="unitCode" let-item>
+                  <span class="text-muted">{{ item.unitCode || '—' }}</span>
+                </ng-template>
+
+                <ng-template bbCellTemplate="quantityIn" let-item>
+                  <span class="numeric-cell text-success font-medium">
+                    {{ item.quantityIn | number:'1.2-2' }}
+                  </span>
+                </ng-template>
+
+                <ng-template bbCellTemplate="quantityOut" let-item>
+                  <span class="numeric-cell text-danger font-medium">
+                    {{ item.quantityOut | number:'1.2-2' }}
+                  </span>
+                </ng-template>
+
+                <ng-template bbCellTemplate="availableQuantity" let-item>
+                  <span class="numeric-cell font-bold" [class.text-success]="item.availableQuantity > 0">
+                    {{ item.availableQuantity | number:'1.2-2' }}
+                  </span>
+                </ng-template>
+
+                <ng-template bbCellTemplate="averageCost" let-item>
+                  <span class="numeric-cell text-muted">
+                    <bb-report-amount [value]="item.averageCost" />
+                  </span>
+                </ng-template>
+
+                <ng-template bbCellTemplate="estimatedValue" let-item>
+                  <span class="numeric-cell font-bold">
+                    <bb-report-amount [value]="item.estimatedValue" />
+                  </span>
+                </ng-template>
+              </bb-data-grid>
+            </div>
+          }
+        </section>
+      }
+    </div>
+  }
+}
