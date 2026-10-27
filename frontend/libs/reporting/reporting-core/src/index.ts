@@ -95,3 +95,6 @@ export * from './lib/warehouse-tracking-status/warehouse-tracking-status-report.
 
 export * from './lib/fixed-assets-schedule/fixed-assets-schedule-report.models';
 export * from './lib/fixed-assets-schedule/fixed-assets-schedule-report.service';
+
+export * from './lib/depreciation-schedule/depreciation-schedule-report.models';
+export * from './lib/depreciation-schedule/depreciation-schedule-report.service';

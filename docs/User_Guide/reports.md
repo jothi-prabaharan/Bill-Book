@@ -177,6 +177,18 @@ The Fixed Assets Schedule has its own page at `/reports/fixed-assets-schedule` (
 - **Disposal Details:** Toggling disposal details surfaces disposal date, sale proceeds, and gain/loss on disposal.
 - **Catalog Source:** The catalog's **Fixed Assets Schedule** report (`fixed-assets-schedule`) marks both From and To parameters as required (`IsRequired = true`) and requires `AddOn.FixedAssets`.
 
+### Depreciation Schedule
+
+The Depreciation Schedule has its own page at `/reports/depreciation-schedule` (TK-253), under **Reports > Fixed Asset**. Besides access to reports and **accounting.view**, it requires the **FixedAssets** add-on alone. It displays each asset's depreciation method, rate, useful life, residual value, and the calculated depreciation charge over the selected period.
+
+- **From** and **To** dates are both required (D-67). The page opens on the current financial year to date (`rangeForPreset('this-financial-year')` to today). A To date earlier than From date is refused with an inline error under To.
+- **Filters:** Optional **Category**, **Depreciation Method** (Straight Line, Written Down Value), **Depreciation Book** (Books / Tax), and **Search Asset** (matching asset code, name, or serial number).
+- **Summary Cards:** Top metric cards display **Total Assets**, **Total Asset Cost**, **Opening Accum Dep** (before From date), **Period Depreciation** (matches P&L Expense for the period), **Written Back (Disposals)** (accumulated depreciation removed on disposed assets), **Closing Accum Dep** (as at To date), and **Closing Net Book Value** (carrying value on balance sheet).
+- **Category Grouping & Metadata:** Assets are grouped by category with header badges showing the category's Asset Account, Accumulated Depreciation Account, Depreciation Expense Account, and the category's total period depreciation charge.
+- **Asset Roll-Forward Grid:** Each category contains a structured table showing Asset Code, Asset Name with serial number, Depreciation Method, Depreciation Start Date, Rate / Effective Life, Residual Value, Asset Cost, Opening Accum Dep, Period Charge, Disposals Accum Dep, Closing Accum Dep, and Closing NBV.
+- **Responsive Layout:** On mobile displays (< 800px), grids transform into responsive asset card lists with full roll-forward breakdowns and quick-action summaries.
+- **Catalog Source:** The catalog's **Depreciation Schedule** report (`depreciation-schedule`) marks both From and To parameters as required (`IsRequired = true`) and requires `AddOn.FixedAssets`.
+
 ## Budget reports
 
 Three reports compare the branch's budget with what was posted, under **Reports › Financial performance** in the menu. They need the **Budget** add-on.
