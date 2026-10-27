@@ -198,18 +198,28 @@ public sealed class AgedReceivablesSummaryReportRepository
     /// </summary>
     public static IQueryable<ReceivableDocument> Documents(
         IQueryable<JournalLedgerRead> ledger, IQueryable<AccountRead> accounts, DateOnly asAt) =>
+        Documents(ledger, accounts, asAt, ForeignCurrencyGainLossReportRepository.ReceivableAccountName, 1);
+
+    /// <summary>
+    /// The legs on one control account up to a date, one row for each document that posted them,
+    /// signed so that what is owed is positive: <paramref name="sign"/> is 1 on the receivable
+    /// account, where a debit is owed, and -1 on the payable one, where a credit is. The Aged
+    /// Payables reports use the same rule through this, so the two directions cannot drift apart.
+    /// </summary>
+    public static IQueryable<ReceivableDocument> Documents(
+        IQueryable<JournalLedgerRead> ledger, IQueryable<AccountRead> accounts, DateOnly asAt, string accountName, int sign) =>
         from l in ledger
         where l.LedgerDate <= asAt
         join a in accounts on l.AccountId equals a.AccountId
-        where a.AccountSystemName == ForeignCurrencyGainLossReportRepository.ReceivableAccountName
+        where a.AccountSystemName == accountName
         group l by new { l.ContactId, l.TransactionTypeCode, l.TransactionId } into g
         select new ReceivableDocument
         {
             ContactId = g.Key.ContactId,
             TypeCode = g.Key.TransactionTypeCode,
             DocumentId = g.Key.TransactionId,
-            NetBase = g.Sum(x => x.DebitAmountBase) - g.Sum(x => x.CreditAmountBase),
-            NetSource = g.Sum(x => x.DebitAmount) - g.Sum(x => x.CreditAmount),
+            NetBase = sign * (g.Sum(x => x.DebitAmountBase) - g.Sum(x => x.CreditAmountBase)),
+            NetSource = sign * (g.Sum(x => x.DebitAmount) - g.Sum(x => x.CreditAmount)),
             LedgerDate = g.Min(x => x.LedgerDate),
             DocumentNo = g.Max(x => x.DocumentNo),
         };
@@ -225,25 +235,55 @@ public sealed class AgedReceivablesSummaryReportRepository
     /// </summary>
     public static IQueryable<ReceivableSettlement> Settlements(
         IQueryable<TransactionRatioRead> ratios, IQueryable<ReceivableDocument> documents, DateOnly asAt) =>
-        from t in ratios
-        where !t.IsVoided && t.AllocationDate <= asAt
-        join d in documents
-            on new { Code = t.TargetTransactionTypeCode, Id = t.TargetTransactionId }
-            equals new { Code = d.TypeCode, Id = d.DocumentId }
-        select new ReceivableSettlement
-        {
-            SourceTypeCode = t.SourceTransactionTypeCode,
-            SourceId = t.SourceTransactionId,
-            TargetTypeCode = t.TargetTransactionTypeCode,
-            TargetId = t.TargetTransactionId,
-            Amount = Math.Round(
-                (t.SourceTransactionTypeCode == "RCM" || t.SourceTransactionTypeCode == "SPM"
-                    || t.TargetTransactionTypeCode == "RCM" || t.TargetTransactionTypeCode == "SPM")
-                && d.NetSource != 0m
-                    ? t.Amount * Math.Abs(d.NetBase) / Math.Abs(d.NetSource)
-                    : t.Amount,
-                2),
-        };
+        Settlements(ratios, documents, asAt, payable: false);
+
+    /// <summary>
+    /// The same settlements for either direction. Accounting writes the credit-side document as the
+    /// source and the debit-side one as the target, so what is owed is the target on a receivable
+    /// (an invoice) and the <b>source</b> on a payable (a bill), and it is that document whose booked
+    /// rate takes a money document's line to base. Voided rows hold nothing.
+    /// </summary>
+    public static IQueryable<ReceivableSettlement> Settlements(
+        IQueryable<TransactionRatioRead> ratios, IQueryable<ReceivableDocument> documents, DateOnly asAt, bool payable) =>
+        payable
+            ? from t in ratios
+              where !t.IsVoided && t.AllocationDate <= asAt
+              join d in documents
+                  on new { Code = t.SourceTransactionTypeCode, Id = t.SourceTransactionId }
+                  equals new { Code = d.TypeCode, Id = d.DocumentId }
+              select new ReceivableSettlement
+              {
+                  SourceTypeCode = t.SourceTransactionTypeCode,
+                  SourceId = t.SourceTransactionId,
+                  TargetTypeCode = t.TargetTransactionTypeCode,
+                  TargetId = t.TargetTransactionId,
+                  Amount = Math.Round(
+                      (t.SourceTransactionTypeCode == "RCM" || t.SourceTransactionTypeCode == "SPM"
+                          || t.TargetTransactionTypeCode == "RCM" || t.TargetTransactionTypeCode == "SPM")
+                      && d.NetSource != 0m
+                          ? t.Amount * Math.Abs(d.NetBase) / Math.Abs(d.NetSource)
+                          : t.Amount,
+                      2),
+              }
+            : from t in ratios
+              where !t.IsVoided && t.AllocationDate <= asAt
+              join d in documents
+                  on new { Code = t.TargetTransactionTypeCode, Id = t.TargetTransactionId }
+                  equals new { Code = d.TypeCode, Id = d.DocumentId }
+              select new ReceivableSettlement
+              {
+                  SourceTypeCode = t.SourceTransactionTypeCode,
+                  SourceId = t.SourceTransactionId,
+                  TargetTypeCode = t.TargetTransactionTypeCode,
+                  TargetId = t.TargetTransactionId,
+                  Amount = Math.Round(
+                      (t.SourceTransactionTypeCode == "RCM" || t.SourceTransactionTypeCode == "SPM"
+                          || t.TargetTransactionTypeCode == "RCM" || t.TargetTransactionTypeCode == "SPM")
+                      && d.NetSource != 0m
+                          ? t.Amount * Math.Abs(d.NetBase) / Math.Abs(d.NetSource)
+                          : t.Amount,
+                      2),
+              };
 
     /// <summary>
     /// The documents that still have something open: each with what is left once its
@@ -256,13 +296,7 @@ public sealed class AgedReceivablesSummaryReportRepository
     public static IQueryable<OpenReceivable> OpenDocuments(
         IQueryable<ReceivableDocument> documents, IQueryable<ReceivableSettlement> settlements, IQueryable<InvoiceRead> invoices)
     {
-        // Each document's own balance, less what settled it as the debit side, plus what it settled as the credit side.
-        IQueryable<ReceivableDelta> deltas = documents
-            .Select(d => new ReceivableDelta { TypeCode = d.TypeCode, DocumentId = d.DocumentId, Amount = d.NetBase })
-            .Concat(settlements.Select(s => new ReceivableDelta { TypeCode = s.TargetTypeCode, DocumentId = s.TargetId, Amount = -s.Amount }))
-            .Concat(settlements.Select(s => new ReceivableDelta { TypeCode = s.SourceTypeCode, DocumentId = s.SourceId, Amount = s.Amount }))
-            .GroupBy(x => new { x.TypeCode, x.DocumentId })
-            .Select(g => new ReceivableDelta { TypeCode = g.Key.TypeCode, DocumentId = g.Key.DocumentId, Amount = g.Sum(x => x.Amount) });
+        IQueryable<ReceivableDelta> deltas = Deltas(documents, settlements, payable: false);
 
         return from d in documents
                where d.NetBase != 0m
@@ -286,6 +320,68 @@ public sealed class AgedReceivablesSummaryReportRepository
                    Original = d.NetBase,
                    Amount = t.Amount,
                };
+    }
+
+    /// <summary>
+    /// The open documents of the payable account: the same rule as <see cref="OpenDocuments(IQueryable{ReceivableDocument}, IQueryable{ReceivableSettlement}, IQueryable{InvoiceRead})"/>
+    /// the other way round. <paramref name="documents"/> are signed so that what is owed is positive
+    /// (a bill), and a payment or a debit note not yet applied is negative; a settlement takes its amount
+    /// off the <b>source</b> (the bill, the credit side) and puts it on the target (the payment). A bill
+    /// brings its own bill and due dates; any other document its ledger date for both.
+    /// </summary>
+    public static IQueryable<OpenReceivable> OpenPayableDocuments(
+        IQueryable<ReceivableDocument> documents, IQueryable<ReceivableSettlement> settlements, IQueryable<BillRead> bills)
+    {
+        IQueryable<ReceivableDelta> deltas = Deltas(documents, settlements, payable: true);
+
+        return from d in documents
+               where d.NetBase != 0m
+               join t in deltas
+                   on new { Code = d.TypeCode, Id = d.DocumentId }
+                   equals new { Code = t.TypeCode, Id = t.DocumentId }
+               where t.Amount != 0m
+               join b in bills
+                   on new { Code = d.TypeCode, Id = d.DocumentId }
+                   equals new { Code = b.TransactionTypeCode, Id = b.BillId }
+                   into raised
+               from b in raised.DefaultIfEmpty()
+               select new OpenReceivable
+               {
+                   ContactId = d.ContactId,
+                   TypeCode = d.TypeCode,
+                   DocumentId = d.DocumentId,
+                   DocumentNo = d.DocumentNo,
+                   DocumentDate = b == null ? d.LedgerDate : b.DocumentDate,
+                   DueDate = b == null ? d.LedgerDate : b.DueDate,
+                   Original = d.NetBase,
+                   Amount = t.Amount,
+               };
+    }
+
+    /// <summary>
+    /// Each document's balance with its settlements taken into account: its own net, less what settled
+    /// it as the owed side and plus what it settled as the other. The owed side is the target on a
+    /// receivable (an invoice) and the source on a payable (a bill). LINQ only.
+    /// </summary>
+    private static IQueryable<ReceivableDelta> Deltas(
+        IQueryable<ReceivableDocument> documents, IQueryable<ReceivableSettlement> settlements, bool payable)
+    {
+        IQueryable<ReceivableDelta> own = documents
+            .Select(d => new ReceivableDelta { TypeCode = d.TypeCode, DocumentId = d.DocumentId, Amount = d.NetBase });
+
+        IQueryable<ReceivableDelta> owedSide = payable
+            ? settlements.Select(s => new ReceivableDelta { TypeCode = s.SourceTypeCode, DocumentId = s.SourceId, Amount = -s.Amount })
+            : settlements.Select(s => new ReceivableDelta { TypeCode = s.TargetTypeCode, DocumentId = s.TargetId, Amount = -s.Amount });
+
+        IQueryable<ReceivableDelta> otherSide = payable
+            ? settlements.Select(s => new ReceivableDelta { TypeCode = s.TargetTypeCode, DocumentId = s.TargetId, Amount = s.Amount })
+            : settlements.Select(s => new ReceivableDelta { TypeCode = s.SourceTypeCode, DocumentId = s.SourceId, Amount = s.Amount });
+
+        return own
+            .Concat(owedSide)
+            .Concat(otherSide)
+            .GroupBy(x => new { x.TypeCode, x.DocumentId })
+            .Select(g => new ReceivableDelta { TypeCode = g.Key.TypeCode, DocumentId = g.Key.DocumentId, Amount = g.Sum(x => x.Amount) });
     }
 
     // --- compose: pure, so a test needs no database --------------------------------------
@@ -441,7 +537,8 @@ public sealed class ReceivableDelta
 /// <summary>
 /// A document with something still open on the date: <see cref="Amount"/> is positive for
 /// what is owed and negative for a credit not yet applied, and the two dates are what it
-/// can be aged from.
+/// can be aged from. <b>The payable reports use it too</b> (TK-233): there it is a bill, or a
+/// payment or debit note not yet applied, and positive is what the branch owes a vendor.
 /// </summary>
 public sealed class OpenReceivable
 {

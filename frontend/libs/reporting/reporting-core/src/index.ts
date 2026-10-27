@@ -50,6 +50,8 @@ export * from './lib/quotation-track/quotation-track.models';
 export * from './lib/quotation-track/quotation-track.service';
 export * from './lib/delivery-order-track/delivery-order-track.models';
 export * from './lib/delivery-order-track/delivery-order-track.service';
+export * from './lib/aged-payables-summary/aged-payables-summary.models';
+export * from './lib/aged-payables-summary/aged-payables-summary.service';
 export * from './lib/foreign-currency-gain-or-loss/foreign-currency-gain-or-loss.models';
 export * from './lib/foreign-currency-gain-or-loss/foreign-currency-gain-or-loss.service';
 export * from './lib/foreign-currency-gain-or-loss-details/foreign-currency-gain-or-loss-details.models';

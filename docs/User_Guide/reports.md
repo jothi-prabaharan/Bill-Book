@@ -440,6 +440,21 @@ The Delivery Order Track Report has its own page at `/reports/delivery-order-tra
 
 The catalog's **Delivery Challan Track**, used for export and scheduled emails, now needs both **From** and **To** and refuses a run without them. It lists the challans of the period but void ones, with the type, how far each has been billed, its value and what is still to bill in the branch's currency. Four columns are new, so a branch set up earlier gets them when its report catalog is seeded again.
 
+## Aged Payables Summary
+
+The Aged Payables Summary has its own page at `/reports/aged-payables-summary` (TK-233), under **Reports › Purchase Report**. Besides access to reports it needs **purchase.view**. It is the Aged Receivables Summary the other way round: what the branch owed each vendor on a date and how overdue it was, in the branch's base currency.
+
+- **As at** is required. The page opens as at today and runs straight away; a missing date is refused under the field.
+- **Age by** counts a bill's age from its **due date** (the default) or its **bill date**. A document that is not a bill, such as an opening balance or a manual journal, counts from the day it was posted.
+- **Column width** is 30 days (the default), 15 or 7. There are always five columns: **Current** (not yet due, or due on the date), then four overdue columns, the last being everything beyond three widths.
+- **Vendor** narrows the report to one vendor. **Show vendors owed nothing** also lists the vendors with nothing open.
+- Each vendor is a row with its code, the five columns and a **Total**, and a **Total** row closes the table. A sentence above says how much is owed and how much of it is overdue. On a phone each vendor is a card.
+- **A debit note, and a payment or advance not yet applied to a bill, are negative amounts in Current**, so a vendor's total is what the branch owes them. A payment or debit note applied to a bill has come off both: the bill shows only what is still open on it, and the payment no longer shows at all. What was applied counts only if it was effective on or before the date and has not been released.
+- The totals add up to the Accounts Payable balance on the date, the same figure as the **Trial Balance**. A posting to Accounts Payable with no contact, such as a manual journal, is its own row, **Not tied to a vendor**, so nothing is left out. A bill in another currency is shown in the branch's currency at the rate it was booked at, and a payment in that currency is taken to the branch's currency at the same rate, so it clears the bill exactly.
+- **A vendor that is a micro or small enterprise is marked MSME.** The mark opens the **MSME ageing report**, the Sec 43B(h) view of the bills that should be paid within 45 days.
+
+The catalog's **Aged Payables Summary**, used for export and scheduled emails, now needs **As at** and refuses a run without it. It gives the same figures, aged by due date in 30-day columns. The menu item had no report behind it before TK-233.
+
 ## Project reports
 
 Four reports read project accounting, under **Projects** in the list. Running them needs **projects.view** as well as access to reports.

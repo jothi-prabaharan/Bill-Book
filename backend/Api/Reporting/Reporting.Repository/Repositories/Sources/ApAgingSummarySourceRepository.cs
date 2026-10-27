@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Reporting.Entity.Enums;
+using Reporting.Repository.ReadModels;
 using Reporting.Repository;
 
 namespace Reporting.Repository.Repositories;
@@ -18,6 +19,12 @@ public class ApAgingSummaryRow
     public decimal Total { get; set; }
 }
 
+/// <summary>
+/// The Aged Payables Summary for export, saved views and scheduled emails (TK-233): the same open documents
+/// the page uses (<see cref="AgedPayablesSummaryReportRepository.OpenOn"/>), aged by due date in 30-day
+/// columns, one row for each vendor, and a row for what no vendor claims so the rows add up to the payable
+/// account. <b>The as-at date is required</b> (D-67).
+/// </summary>
 public sealed class ApAgingSummarySourceRepository : ReportSource<ApAgingSummaryRow>
 {
     public override string ReportKey => "ap-aging-summary";
@@ -27,6 +34,11 @@ public sealed class ApAgingSummarySourceRepository : ReportSource<ApAgingSummary
     public override ReportModule Module => ReportModule.Purchase;
 
     public override string RequiredPermission => "purchase.view";
+
+    public override IReadOnlyList<ReportParameterRepository> Parameters =>
+    [
+        new() { Name = "asOf", Label = "As At", DataType = ColumnDataType.Date, IsRequired = true },
+    ];
 
     public override IReadOnlyList<ReportColumn> Columns =>
     [
@@ -43,28 +55,60 @@ public sealed class ApAgingSummarySourceRepository : ReportSource<ApAgingSummary
 
     protected override IQueryable<ApAgingSummaryRow> Build(ReportParameters parameters, ReportingDbContext db)
     {
-        var asOf = DateOnly.FromDateTime(DateTime.UtcNow);
-        
-        return from l in db.Ledger
-               where l.ContactId != null && l.LedgerDate <= asOf
-               join a in db.Accounts on l.AccountId equals a.AccountId
-               where a.AccountSystemName == "Accounts Payable"
-               join c in db.Contacts on l.ContactId equals c.ContactId
-               where c.IsVendor
-               group l by new { c.ContactId, c.ContactCode, c.DisplayName } into g
-               select new ApAgingSummaryRow
-               {
-                   ContactId = g.Key.ContactId,
-                   ContactCode = g.Key.ContactCode,
-                   ContactName = g.Key.DisplayName,
-                   // Note: We use CreditAmountBase - DebitAmountBase for Payables
-                   Current = g.Sum(x => asOf.DayNumber - x.LedgerDate.DayNumber <= 0 ? (x.CreditAmountBase - x.DebitAmountBase) : 0),
-                   Days1_30 = g.Sum(x => asOf.DayNumber - x.LedgerDate.DayNumber > 0 && asOf.DayNumber - x.LedgerDate.DayNumber <= 30 ? (x.CreditAmountBase - x.DebitAmountBase) : 0),
-                   Days31_60 = g.Sum(x => asOf.DayNumber - x.LedgerDate.DayNumber > 30 && asOf.DayNumber - x.LedgerDate.DayNumber <= 60 ? (x.CreditAmountBase - x.DebitAmountBase) : 0),
-                   Days61_90 = g.Sum(x => asOf.DayNumber - x.LedgerDate.DayNumber > 60 && asOf.DayNumber - x.LedgerDate.DayNumber <= 90 ? (x.CreditAmountBase - x.DebitAmountBase) : 0),
-                   Days90Plus = g.Sum(x => asOf.DayNumber - x.LedgerDate.DayNumber > 90 ? (x.CreditAmountBase - x.DebitAmountBase) : 0),
-                   Total = g.Sum(x => x.CreditAmountBase - x.DebitAmountBase)
-               };
+        DateOnly asOf = parameters.Date("asOf") ?? throw new ReportQueryException("As at date is required.");
+        int asOfDay = asOf.DayNumber;
+
+        // The open documents are the page's: the same documents, settlements and dates, so the totals agree.
+        // Aged by due date in 30-day columns, which is what the seeded columns are named for; the page offers
+        // the other widths and the bill date.
+        IQueryable<OpenReceivable> open = AgedPayablesSummaryReportRepository.OpenOn(db, asOf, null);
+
+        var perContact = from o in open
+                         group o by o.ContactId into g
+                         select new
+                         {
+                             ContactId = g.Key,
+                             Current = g.Sum(o => o.Amount < 0m || asOfDay - o.DueDate.DayNumber <= 0 ? o.Amount : 0m),
+                             Days1_30 = g.Sum(o => o.Amount > 0m && asOfDay - o.DueDate.DayNumber > 0 && asOfDay - o.DueDate.DayNumber <= 30 ? o.Amount : 0m),
+                             Days31_60 = g.Sum(o => o.Amount > 0m && asOfDay - o.DueDate.DayNumber > 30 && asOfDay - o.DueDate.DayNumber <= 60 ? o.Amount : 0m),
+                             Days61_90 = g.Sum(o => o.Amount > 0m && asOfDay - o.DueDate.DayNumber > 60 && asOfDay - o.DueDate.DayNumber <= 90 ? o.Amount : 0m),
+                             Days90Plus = g.Sum(o => o.Amount > 0m && asOfDay - o.DueDate.DayNumber > 90 ? o.Amount : 0m),
+                             Total = g.Sum(o => o.Amount),
+                         };
+
+        IQueryable<ApAgingSummaryRow> vendors =
+            from p in perContact
+            join c in db.Contacts on p.ContactId equals (long?)c.ContactId
+            select new ApAgingSummaryRow
+            {
+                ContactId = c.ContactId,
+                ContactCode = c.ContactCode,
+                ContactName = c.DisplayName,
+                Current = p.Current,
+                Days1_30 = p.Days1_30,
+                Days31_60 = p.Days31_60,
+                Days61_90 = p.Days61_90,
+                Days90Plus = p.Days90Plus,
+                Total = p.Total,
+            };
+
+        // What no vendor claims, as the page lists it, so the rows add up to the payable account.
+        IQueryable<ApAgingSummaryRow> unassigned = perContact
+            .Where(p => p.ContactId == null)
+            .Select(p => new ApAgingSummaryRow
+            {
+                ContactId = 0,
+                ContactCode = "",
+                ContactName = AgedPayablesSummaryReportRepository.UnassignedName,
+                Current = p.Current,
+                Days1_30 = p.Days1_30,
+                Days31_60 = p.Days31_60,
+                Days61_90 = p.Days61_90,
+                Days90Plus = p.Days90Plus,
+                Total = p.Total,
+            });
+
+        return vendors.Concat(unassigned);
     }
 
     protected override LambdaExpression DefaultOrder =>

@@ -1,0 +1,117 @@
+<header class="page-head">
+  <div>
+    <h1>Aged Payables Summary</h1>
+    <p class="subtitle text-muted">
+      What the branch owed each vendor on a date and how overdue it was, in the branch's base currency.
+    </p>
+  </div>
+</header>
+
+<form class="filters card" [formGroup]="filters" (ngSubmit)="run()" novalidate>
+  <div class="filters__field">
+    <bb-branch-date-input [id]="'ap-as-at'" label="As at" formControlName="asAtDate" [required]="true"
+                          [error]="err('asAtDate', 'As at date')" />
+  </div>
+  <div class="filters__field">
+    <bb-select [id]="'ap-age-by'" label="Age by" [options]="ageOptions" [clearable]="false"
+               formControlName="ageBy" [error]="err('ageBy', 'Age by')" />
+  </div>
+  <div class="filters__field">
+    <bb-select [id]="'ap-bucket'" label="Column width" [options]="bucketOptions" [clearable]="false"
+               formControlName="bucketDays" [error]="err('bucketDays', 'Column width')" />
+  </div>
+  <div class="filters__field filters__field--wide">
+    <bb-select [id]="'ap-vendor'" label="Vendor" placeholder="All vendors" [options]="vendorOptions()"
+               [loading]="!choicesLoaded()" emptyText="No vendors" formControlName="contactId"
+               [error]="err('contactId', 'Vendor')" />
+  </div>
+  <div class="filters__field filters__field--check">
+    <bb-checkbox text="Show vendors owed nothing" formControlName="showZeroBalances" />
+  </div>
+  <div class="filters__actions">
+    <button class="btn btn-primary" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Running…' : 'Run report' }}
+    </button>
+  </div>
+</form>
+
+@if (messages().length > 0) {
+  <bb-message-box [messages]="messages()" />
+}
+
+@if (result(); as report) {
+  <p class="period text-muted">
+    As at {{ report.asAtDate | reportDate }}, aged by {{ basisText() }} in {{ report.bucketDays }}-day columns, in {{ report.baseCurrencyCode }}.
+  </p>
+
+  @if (rows().length === 0) {
+    <p class="empty text-muted">The branch owes no vendor anything on this date.</p>
+  } @else if (narrow()) {
+    <div class="cards" role="list" aria-label="Aged payables">
+      @for (row of rows(); track row.key) {
+        <article class="card entry" role="listitem" [class.entry--total]="row.kind === 'total'">
+          <header class="entry__head">
+            <strong>{{ row.name }}</strong>
+            @if (row.code) { <span class="entry__detail text-muted">{{ row.code }}</span> }
+            @if (row.isMsme) { <a class="tag tag-info" [routerLink]="msmeLink" title="Open the Sec 43B(h) view of MSME bills">MSME</a> }
+          </header>
+          <dl class="figures">
+            @if (row.current !== null) {
+              <div class="figures__row"><dt>{{ labels()[0] }}</dt><dd><bb-report-amount [value]="row.current" /></dd></div>
+            }
+            @if (row.bucket1 !== null) {
+              <div class="figures__row"><dt>{{ labels()[1] }}</dt><dd><bb-report-amount [value]="row.bucket1" /></dd></div>
+            }
+            @if (row.bucket2 !== null) {
+              <div class="figures__row"><dt>{{ labels()[2] }}</dt><dd><bb-report-amount [value]="row.bucket2" /></dd></div>
+            }
+            @if (row.bucket3 !== null) {
+              <div class="figures__row"><dt>{{ labels()[3] }}</dt><dd><bb-report-amount [value]="row.bucket3" /></dd></div>
+            }
+            @if (row.bucket4 !== null) {
+              <div class="figures__row"><dt>{{ labels()[4] }}</dt><dd><bb-report-amount [value]="row.bucket4" /></dd></div>
+            }
+            <div class="figures__row figures__row--balance">
+              <dt>Total</dt>
+              <dd><bb-report-amount [value]="row.total" /></dd>
+            </div>
+          </dl>
+        </article>
+      }
+    </div>
+  } @else {
+    <div class="matrix">
+      <bb-data-grid flush [columns]="columns()" [data]="rows()" [rowClass]="rowClass" [sortable]="false"
+                    [showColumnFilters]="false" [showCount]="false" [paged]="false" label="Aged payables">
+        <ng-template bbCellTemplate="vendor" let-row>
+          <span class="vendor">
+            <span class="vendor__who">
+              <strong class="vendor__name">{{ row.name }}</strong>
+              @if (row.isMsme) { <a class="tag tag-info" [routerLink]="msmeLink" title="Open the Sec 43B(h) view of MSME bills">MSME</a> }
+            </span>
+            @if (row.code) { <span class="vendor__code text-muted">{{ row.code }}</span> }
+          </span>
+        </ng-template>
+        <ng-template bbCellTemplate="current" let-row><bb-report-amount [value]="row.current" /></ng-template>
+        <ng-template bbCellTemplate="bucket1" let-row><bb-report-amount [value]="row.bucket1" /></ng-template>
+        <ng-template bbCellTemplate="bucket2" let-row><bb-report-amount [value]="row.bucket2" /></ng-template>
+        <ng-template bbCellTemplate="bucket3" let-row><bb-report-amount [value]="row.bucket3" /></ng-template>
+        <ng-template bbCellTemplate="bucket4" let-row><bb-report-amount [value]="row.bucket4" /></ng-template>
+        <ng-template bbCellTemplate="total" let-row><strong><bb-report-amount [value]="row.total" /></strong></ng-template>
+      </bb-data-grid>
+    </div>
+  }
+
+  @if (rows().length > 0) {
+    <p class="notes text-muted">
+      A bill is aged from its {{ basisText() }}; a document with no due date, such as an opening balance or a journal, from the day it was posted.
+      What a payment or debit note was applied to has come off both the bill and the payment, so a bill shows what is still open on it.
+      A debit note or payment not yet applied to a bill is a negative amount in Current.
+      Each vendor's total is what the branch owes them, and the totals add up to the Accounts Payable balance on the date; a posting to
+      Accounts Payable with no contact is listed as "Not tied to a vendor".
+      @if (msmes() > 0) {
+        A vendor marked MSME is a micro or small enterprise, whose bills the Sec 43B(h) rule asks to be paid within 45 days; the <a class="link" [routerLink]="msmeLink">MSME ageing report</a> shows that view.
+      }
+    </p>
+  }
+}
