@@ -248,11 +248,17 @@ export class DocumentLineGridComponent {
   }
 
   protected isFreeText(line: DocumentLine): boolean {
-    return line.itemId === null && (line.description?.trim().length ?? 0) > 0;
+    return line.itemId === null;
   }
 
   protected needsAccount(line: DocumentLine): boolean {
-    return this.isFreeText(line) || line.lineType === 'Expense';
+    return (
+      this.isFreeText(line) ||
+      line.lineType === 'Expense' ||
+      line.accountId !== null ||
+      Boolean(line.itemLabel) ||
+      line.itemId !== null
+    );
   }
 
   /**

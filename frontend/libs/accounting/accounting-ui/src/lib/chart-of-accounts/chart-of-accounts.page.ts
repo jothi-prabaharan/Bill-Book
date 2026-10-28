@@ -15,7 +15,7 @@ import {
   SelectComponent,
   StatusTabsComponent,
   TextInputComponent,
-  countStatusTabs,
+
   rangeForPreset,
 } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
@@ -295,7 +295,7 @@ export class ChartOfAccountsPage implements OnInit {
    * type, then each parent followed by its children, then by code.
    */
   protected readonly registerRows = computed<AccountRegisterRow[]>(() => {
-    const types = new Map(this.types().map((t) => [t.accountTypeId, t]));
+    const _types = new Map(this.types().map((t) => [t.accountTypeId, t]));
     const balances = this.balances();
     const accounts = this.accounts();
 

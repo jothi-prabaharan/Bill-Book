@@ -42,7 +42,7 @@
               </svg>
             </div>
           </div>
-          <input #logoFileInput type="file" accept="image/*" (change)="onLogoSelected($event)" style="display: none;" />
+          <input #logoFileInput type="file" accept="image/*" (change)="onLogoSelected($event)" hidden />
           <div class="avatar-links">
             <button type="button" class="avatar-link" (click)="logoFileInput.click()">
               {{ org.logoUrl ? 'Change logo' : 'Upload logo' }}

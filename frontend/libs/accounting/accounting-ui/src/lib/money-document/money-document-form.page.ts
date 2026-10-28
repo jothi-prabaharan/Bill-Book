@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
@@ -148,6 +148,7 @@ export class MoneyDocumentFormPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly confirmDialog = inject(ConfirmDialogService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   editLinesColumns: ColumnDef[] = [
     { field: 'lineNumber', header: '#' },
@@ -173,7 +174,7 @@ export class MoneyDocumentFormPage implements OnInit {
   protected readonly bankAccountOptions = computed<BbSelectOption<number>[]>(() =>
     this.usableAccounts().map((a) => ({
       value: a.bankAccountId,
-      label: `${a.accountName} (${a.accountNumber})`,
+      label: a.accountNumber ? `${a.accountName} (${a.accountNumber})` : a.accountName,
     })),
   );
 
@@ -247,7 +248,7 @@ export class MoneyDocumentFormPage implements OnInit {
   }
 
   protected readonly usableAccounts = computed(() =>
-    this.bankAccounts().filter((a) => a.isActive && a.isLedgerLinked),
+    this.bankAccounts().filter((a) => a.isActive),
   );
 
   protected get allocated(): number {
@@ -352,6 +353,7 @@ export class MoneyDocumentFormPage implements OnInit {
     this.memo = '';
     this.resetTds();
     this.lines.set([this.blankLine()]);
+    this.cdr.markForCheck();
   }
 
   async open(documentId: number): Promise<void> {
@@ -398,6 +400,7 @@ export class MoneyDocumentFormPage implements OnInit {
         })),
       );
       await this.onContact();
+      this.cdr.markForCheck();
     } catch {
       this.show('Could not open document.', true);
     }
@@ -440,6 +443,7 @@ export class MoneyDocumentFormPage implements OnInit {
       if (this.contactId === wanted) {
         this.subAccounts.set(rows);
         this.subAccountsFor.set(wanted);
+        this.cdr.markForCheck();
       }
     } catch {
       this.show('The contact’s ledger accounts could not be read.', true);
@@ -750,6 +754,7 @@ export class MoneyDocumentFormPage implements OnInit {
   private show(text: string, isError: boolean): void {
     this.message.set(text);
     this.messageIsError.set(isError);
+    this.cdr.markForCheck();
   }
 
   private reason(err: unknown, fallback: string): string {

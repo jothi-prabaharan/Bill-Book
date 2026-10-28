@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -57,6 +57,7 @@ export class TransferMoneyFormPage implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   protected readonly bankAccounts = signal<BankAccountOption[]>([]);
   protected readonly viewing = signal<TransferDetailView | null>(null);
@@ -78,7 +79,7 @@ export class TransferMoneyFormPage implements OnInit {
   protected readonly paymentMethods = PAYMENT_METHODS;
 
   protected readonly usableAccounts = computed(() =>
-    this.bankAccounts().filter((a) => a.isActive && a.isLedgerLinked),
+    this.bankAccounts().filter((a) => a.isActive),
   );
 
   protected readonly bankAccountOptions = computed<BbSelectOption<number>[]>(() =>
@@ -148,6 +149,7 @@ export class TransferMoneyFormPage implements OnInit {
     this.referenceNo = '';
     this.referenceDate = '';
     this.memo = '';
+    this.cdr.markForCheck();
   }
 
   async open(documentId: number): Promise<void> {
@@ -171,6 +173,7 @@ export class TransferMoneyFormPage implements OnInit {
       this.referenceNo = document.referenceNo ?? '';
       this.referenceDate = '';
       this.memo = document.memo ?? '';
+      this.cdr.markForCheck();
     } catch {
       this.show('Could not open transfer document.', true);
     }
@@ -180,6 +183,7 @@ export class TransferMoneyFormPage implements OnInit {
     const tmp = this.fromBankAccountId;
     this.fromBankAccountId = this.toBankAccountId;
     this.toBankAccountId = tmp;
+    this.cdr.markForCheck();
   }
 
   goBack(): void {
@@ -288,6 +292,7 @@ export class TransferMoneyFormPage implements OnInit {
   private show(text: string, isError: boolean): void {
     this.message.set(text);
     this.messageIsError.set(isError);
+    this.cdr.markForCheck();
   }
 
   private reason(err: unknown, fallback: string): string {

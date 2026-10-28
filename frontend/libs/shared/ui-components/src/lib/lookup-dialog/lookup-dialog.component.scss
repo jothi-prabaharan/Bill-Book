@@ -9,12 +9,12 @@
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  z-index: var(--z-modal, 1050);
+  z-index: var(--z-modal-elevated, 1100);
 }
 
 .dialog {
   position: relative;
-  z-index: calc(var(--z-modal, 30) + 1);
+  z-index: calc(var(--z-modal-elevated, 1100) + 1);
   top: auto;
   left: auto;
   transform: none;
@@ -146,7 +146,7 @@
     border-radius: 0;
     border: none;
     transform: none;
-    z-index: calc(var(--z-modal, 30) + 1);
+    z-index: calc(var(--z-modal-elevated, 1100) + 1);
     animation: fadeIn 150ms ease;
   }
 }

@@ -29,7 +29,7 @@
               </svg>
             </div>
           </div>
-          <input #avatarFileInput type="file" accept="image/*" (change)="onAvatarSelected($event)" style="display: none;" />
+          <input #avatarFileInput type="file" accept="image/*" (change)="onAvatarSelected($event)" hidden />
           <div class="avatar-links">
             <button type="button" class="avatar-link" (click)="avatarFileInput.click()">
               {{ avatarUrl() ? 'Change photo' : 'Upload photo' }}

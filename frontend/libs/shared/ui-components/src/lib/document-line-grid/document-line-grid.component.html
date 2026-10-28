@@ -198,7 +198,7 @@
             <td [attr.colspan]="components().length + 8" class="account-sub-cell">
               <div class="account-inline-strip">
                 <span class="muted text-xs">
-                  {{ isFreeText(line) ? 'No item — posts to' : 'Expense line — posts to' }}:
+                  {{ isFreeText(line) ? 'No item — posts to' : (line.itemLabel ? line.itemLabel + ' — posts to' : 'Expense line — posts to') }}:
                 </span>
                 <input
                   type="number"
@@ -556,7 +556,7 @@
         @if (needsAccount(activeLine)) {
           <div class="modal-field-group modal-account-box">
             <span class="modal-label">
-              {{ isFreeText(activeLine) ? 'Post to Account (No Item)' : 'Expense Account' }}
+              {{ isFreeText(activeLine) ? 'Post to Account (No Item)' : (activeLine.itemLabel ? 'Account (' + activeLine.itemLabel + ')' : 'Expense Account') }}
             </span>
             <input
               type="number"

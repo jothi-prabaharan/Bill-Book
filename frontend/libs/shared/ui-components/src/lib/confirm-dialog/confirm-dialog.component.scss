@@ -22,7 +22,7 @@
   padding: 1rem;
   background: color-mix(in srgb, var(--color-neutral-900, #0f172a) 50%, transparent);
   backdrop-filter: blur(4px);
-  z-index: 1050;
+  z-index: var(--z-modal-elevated, 1100);
   animation: modalFadeIn 180ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 

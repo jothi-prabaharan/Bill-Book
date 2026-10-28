@@ -112,7 +112,7 @@
               </svg>
             </div>
           </div>
-          <input #branchLogoFileInput type="file" accept="image/*" (change)="onBranchLogoSelected($event)" style="display: none;" />
+          <input #branchLogoFileInput type="file" accept="image/*" (change)="onBranchLogoSelected($event)" hidden />
           <div class="avatar-links">
             <button type="button" class="avatar-link" (click)="branchLogoFileInput.click()">
               {{ form.logoUrl ? 'Change logo' : 'Upload logo' }}

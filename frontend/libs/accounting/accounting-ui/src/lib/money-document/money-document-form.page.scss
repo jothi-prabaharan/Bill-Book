@@ -114,3 +114,5 @@
 
 .tds-check { display: flex; gap: .75rem; align-items: baseline; flex-wrap: wrap; font-size: .85rem; margin: .5rem 0; }
 .tds-check span { color: var(--color-text-muted, #6a6f80); }
+.add-line-action { margin-top: var(--space-2, 8px); }
+.unallocated-notice { margin-top: var(--space-1, 4px); }

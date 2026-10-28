@@ -305,7 +305,7 @@
         </ng-template>
       </bb-data-grid>
 
-      <div style="margin-top: 8px;">
+      <div class="add-line-action">
         <button type="button" class="btn btn-secondary btn-sm" (click)="addLine()">+ Add line</button>
       </div>
 
@@ -325,7 +325,7 @@
       </div>
 
       @if (unallocated > 0) {
-        <div style="margin-top: 4px;"><button type="button" class="link" (click)="addOverpayment()">Add {{ unallocated | number: '1.2-2' }} as {{ overpaymentLabel.toLowerCase() }}</button> <bb-info-tooltip text="{{ unallocated | number: '1.2-2' }} is not yet accounted for. An excess over what was owed is an overpayment."></bb-info-tooltip></div>
+        <div class="unallocated-notice"><button type="button" class="link" (click)="addOverpayment()">Add {{ unallocated | number: '1.2-2' }} as {{ overpaymentLabel.toLowerCase() }}</button> <bb-info-tooltip text="{{ unallocated | number: '1.2-2' }} is not yet accounted for. An excess over what was owed is an overpayment."></bb-info-tooltip></div>
       } @else if (unallocated < 0) {
         <bb-info-tooltip text="The lines add up to {{ allocated | number: '1.2-2' }}, more than the {{ amount || 0 | number: '1.2-2' }} that moved."></bb-info-tooltip>
       }

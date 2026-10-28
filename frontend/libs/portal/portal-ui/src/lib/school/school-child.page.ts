@@ -7,7 +7,7 @@ import {
   MonthInputComponent,
 } from '@bill-book/ui-components';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { SchoolPortalApi } from './school-portal-api.service';
 import { PortalAttendance, PortalChild, PortalExam, attendancePercent } from './school-portal.models';
 
