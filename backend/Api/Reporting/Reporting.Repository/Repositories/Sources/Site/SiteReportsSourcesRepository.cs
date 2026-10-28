@@ -19,9 +19,15 @@ public static class SiteReports
         IQueryable<SiteAttendanceRead> attendances,
         IQueryable<SiteJobRead> sites,
         IQueryable<SiteLaborerRead> laborers,
-        IQueryable<SiteTradeRead> trades)
+        IQueryable<SiteTradeRead> trades,
+        DateOnly? start = null,
+        DateOnly? end = null)
     {
-        return attendances
+        var att = attendances.Where(a =>
+            (start == null || a.WorkDate >= start) &&
+            (end == null || a.WorkDate <= end));
+
+        return att
             .Join(sites, a => a.SiteId, s => s.SiteId, (a, s) => new { a, s })
             .Join(laborers, x => x.a.LaborerId, l => l.LaborerId, (x, l) => new { x.a, x.s, l })
             .Join(trades, x => x.l.TradeId, t => t.TradeId, (x, t) => new SiteLaborerAttendanceRow
@@ -45,7 +51,8 @@ public static class SiteReports
     public static IQueryable<SiteMaterialReconciliationRow> MaterialReconciliation(
         IQueryable<SiteStockBalanceRead> balances,
         IQueryable<SiteJobRead> sites,
-        IQueryable<ItemRead> items)
+        IQueryable<ItemRead> items,
+        DateOnly? asOf = null)
     {
         return balances
             .Join(sites, b => b.SiteId, s => s.SiteId, (b, s) => new { b, s })
@@ -68,9 +75,15 @@ public static class SiteReports
         IQueryable<SiteJobRead> sites,
         IQueryable<SiteBillingInvoiceLineRead> billLines,
         IQueryable<SiteAttendanceRead> attendances,
-        IQueryable<SiteStockLineRead> stockLines)
+        IQueryable<SiteStockLineRead> stockLines,
+        DateOnly? start = null,
+        DateOnly? end = null)
     {
-        var rawBills = bills
+        var filteredBills = bills.Where(b =>
+            (start == null || b.BillingDate >= start) &&
+            (end == null || b.BillingDate <= end));
+
+        var rawBills = filteredBills
             .Join(sites, b => b.SiteId, s => s.SiteId, (b, s) => new
             {
                 b.SiteBillingInvoiceId,
@@ -143,6 +156,13 @@ public sealed class SiteLaborerAttendanceSource : ReportSource<SiteLaborerAttend
     public override ReportModule Module => ReportModule.Site;
     public override AddOn RequiredAddOn => AddOn.SiteServices;
     public override string RequiredPermission => "site.view";
+
+    public override IReadOnlyList<ReportParameterRepository> Parameters =>
+    [
+        new() { Name = "from", Label = "From", DataType = ColumnDataType.Date, IsRequired = true },
+        new() { Name = "to", Label = "To", DataType = ColumnDataType.Date, IsRequired = true },
+    ];
+
     protected override System.Linq.Expressions.LambdaExpression DefaultOrder => (System.Linq.Expressions.Expression<Func<SiteLaborerAttendanceRow, DateOnly>>)(r => r.WorkDate);
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -161,7 +181,7 @@ public sealed class SiteLaborerAttendanceSource : ReportSource<SiteLaborerAttend
     ];
 
     protected override IQueryable<SiteLaborerAttendanceRow> Build(ReportParameters parameters, ReportingDbContext db) =>
-        SiteReports.LaborerAttendance(db.SiteAttendances, db.SiteJobs, db.SiteLaborers, db.SiteTrades);
+        SiteReports.LaborerAttendance(db.SiteAttendances, db.SiteJobs, db.SiteLaborers, db.SiteTrades, parameters.Date("from"), parameters.Date("to"));
 }
 
 // 2. Material Reconciliation Source
@@ -185,6 +205,12 @@ public sealed class SiteMaterialReconciliationSource : ReportSource<SiteMaterial
     public override ReportModule Module => ReportModule.Site;
     public override AddOn RequiredAddOn => AddOn.SiteServices;
     public override string RequiredPermission => "site.view";
+
+    public override IReadOnlyList<ReportParameterRepository> Parameters =>
+    [
+        new() { Name = "asOf", Label = "As at", DataType = ColumnDataType.Date, IsRequired = true },
+    ];
+
     protected override System.Linq.Expressions.LambdaExpression DefaultOrder => (System.Linq.Expressions.Expression<Func<SiteMaterialReconciliationRow, string>>)(r => r.SiteName);
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -201,7 +227,7 @@ public sealed class SiteMaterialReconciliationSource : ReportSource<SiteMaterial
     ];
 
     protected override IQueryable<SiteMaterialReconciliationRow> Build(ReportParameters parameters, ReportingDbContext db) =>
-        SiteReports.MaterialReconciliation(db.SiteStockBalances, db.SiteJobs, db.Items);
+        SiteReports.MaterialReconciliation(db.SiteStockBalances, db.SiteJobs, db.Items, parameters.Date("asOf"));
 }
 
 // 3. Site Profit Summary Source
@@ -229,6 +255,13 @@ public sealed class SiteProfitSummarySource : ReportSource<SiteProfitSummaryRow>
     public override ReportModule Module => ReportModule.Site;
     public override AddOn RequiredAddOn => AddOn.SiteServices;
     public override string RequiredPermission => "site.cost.view";
+
+    public override IReadOnlyList<ReportParameterRepository> Parameters =>
+    [
+        new() { Name = "from", Label = "From", DataType = ColumnDataType.Date, IsRequired = true },
+        new() { Name = "to", Label = "To", DataType = ColumnDataType.Date, IsRequired = true },
+    ];
+
     protected override System.Linq.Expressions.LambdaExpression DefaultOrder => (System.Linq.Expressions.Expression<Func<SiteProfitSummaryRow, DateOnly>>)(r => r.BillingDate);
 
     public override IReadOnlyList<ReportColumn> Columns =>
@@ -249,5 +282,5 @@ public sealed class SiteProfitSummarySource : ReportSource<SiteProfitSummaryRow>
     ];
 
     protected override IQueryable<SiteProfitSummaryRow> Build(ReportParameters parameters, ReportingDbContext db) =>
-        SiteReports.ProfitSummary(db.SiteBillingInvoices, db.SiteJobs, db.SiteBillingInvoiceLines, db.SiteAttendances, db.SiteStockLines);
+        SiteReports.ProfitSummary(db.SiteBillingInvoices, db.SiteJobs, db.SiteBillingInvoiceLines, db.SiteAttendances, db.SiteStockLines, parameters.Date("from"), parameters.Date("to"));
 }

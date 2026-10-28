@@ -6,7 +6,7 @@ rewrites and stages it whenever the details file changes. **Never edit it by han
 status, edit the card's first line in the details file; the card there holds the rules, lanes,
 where to start, sub-tasks and notes.
 
-**Summary:** 246 completed, 0 working, 11 open, and 2 blocked (259 cards).
+**Summary:** 247 completed, 0 working, 10 open, and 2 blocked (259 cards).
 
 | Card | Title | Group | Status | Completed by | Completed at | Tests | Issue | Note |
 | :--- | :--- | :--- | :---: | :--- | :--- | :--- | :---: | :--- |
@@ -182,7 +182,7 @@ where to start, sub-tasks and notes.
 | [TK-173](./Task_Details.md#tk-173--site-stock-dispatch-to-site-and-return-to-central) | Site stock: dispatch to site and return to central | P | ✅ completed | Antigravity | 2026-10-09 | written, not run | [#161](https://github.com/jothi-prabaharan/Bill-Book/issues/161) | — |
 | [TK-174](./Task_Details.md#tk-174--material-usage-reports-from-the-site-and-their-approval) | Material usage reports from the site and their approval | P | ✅ completed | Antigravity | 2026-10-09 | written, not run | [#162](https://github.com/jothi-prabaharan/Bill-Book/issues/162) | — |
 | [TK-175](./Task_Details.md#tk-175--site-billing-partial-invoices-with-selling-price-only) | Site billing: partial invoices with selling price only | P | ✅ completed | Antigravity | 2026-10-09 | written, not run | [#163](https://github.com/jothi-prabaharan/Bill-Book/issues/163) | — |
-| [TK-176](./Task_Details.md#tk-176--site-reports-labor-days-material-reconciliation-and-site-profit) | Site reports: labor days, material reconciliation and site profit | P | 🟪 open | — | — | — | [#164](https://github.com/jothi-prabaharan/Bill-Book/issues/164) | — |
+| [TK-176](./Task_Details.md#tk-176--site-reports-labor-days-material-reconciliation-and-site-profit) | Site reports: labor days, material reconciliation and site profit | P | ✅ completed | Antigravity | 2026-10-28 | written, not run | [#164](https://github.com/jothi-prabaharan/Bill-Book/issues/164) | tests written, not run |
 | [TK-177](./Task_Details.md#tk-177--requirements-wholesale-distribution-business-type) | Requirements: Wholesale distribution business type | O | 🟪 open | — | — | — | [#150](https://github.com/jothi-prabaharan/Bill-Book/issues/150) | — |
 | [TK-178](./Task_Details.md#tk-178--requirements-textile--garments-business-type) | Requirements: Textile / garments business type | O | 🟪 open | — | — | — | [#151](https://github.com/jothi-prabaharan/Bill-Book/issues/151) | — |
 | [TK-179](./Task_Details.md#tk-179--requirements-manufacturing-business-type) | Requirements: Manufacturing business type | O | 🟪 open | — | — | — | [#152](https://github.com/jothi-prabaharan/Bill-Book/issues/152) | — |

@@ -31,6 +31,8 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Added**: **Site services reports available in the report catalog (TK-176).** Branches with the SiteServices add-on can now run Site Laborer Attendance, Site Material Reconciliation, and Site Profit Summary reports directly from the report catalog with mandatory date filtering, labor and material cost tracking, and margin analysis.
+
 - **Added**: **The Project Time by User report has a page of its own with a required period (TK-259).** Breaks down all time logged across projects by team member or project, tracking total, billable, billed, and non-billable hours alongside staff utilisation percentages. Both From and To dates are required, with grouping options by Team Member or Project, summary metrics, and mobile-responsive cards.
 
 - **Changed**: **The Reports guide shows each report with a screenshot.** Every report page that was rebuilt on its own endpoint (TK-240 to TK-243, and the receivable, payable, sales, invoice and bill reports before them) has a picture of it under its heading, taken from a branch with sample figures. The financial statements, the other Accounting and Inventory reports and the restaurant and project reports do not have one yet.

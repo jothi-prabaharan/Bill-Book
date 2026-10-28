@@ -138,6 +138,11 @@ public class ReportSourceTests
     private static readonly RestaurantWastageSource RestaurantWastage = new();
     private static readonly RestaurantKotCancellationsSource RestaurantKotCancellations = new(OfflineResolver());
 
+    // The site reports (TK-176).
+    private static readonly Reporting.Repository.Repositories.Sources.Site.SiteLaborerAttendanceSource SiteLaborerAttendance = new();
+    private static readonly Reporting.Repository.Repositories.Sources.Site.SiteMaterialReconciliationSource SiteMaterialReconciliation = new();
+    private static readonly Reporting.Repository.Repositories.Sources.Site.SiteProfitSummarySource SiteProfitSummary = new();
+
     // The datasets (TK-113), with no custom field definitions: their seeded columns only.
     private static readonly SalesLinesDataset SalesLines = new();
     private static readonly PurchaseLinesDataset PurchaseLines = new();
@@ -271,6 +276,9 @@ public class ReportSourceTests
         StockMovements,
         ItemsData,
         ContactsData,
+        SiteLaborerAttendance,
+        SiteMaterialReconciliation,
+        SiteProfitSummary,
     ];
 
     [Theory]

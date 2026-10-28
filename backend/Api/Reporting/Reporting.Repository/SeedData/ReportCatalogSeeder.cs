@@ -2712,6 +2712,75 @@ public sealed class ReportCatalogSeeder
                 new("contactId", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
             ],
         },
+        new()
+        {
+            ReportKey = "site-attendance",
+            Title = "Site Laborer Attendance",
+            Module = ReportModule.Site,
+            RequiredPermission = "site.view",
+            Description = "Laborer days and overtime hours by site, trade, and laborer with approval and billing status.",
+            SortOrder = 1701,
+            Columns =
+            [
+                new("workDate", "Work date", ColumnDataType.Date, IsDefault: true),
+                new("siteName", "Site", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("tradeName", "Trade", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("laborerName", "Laborer", ColumnDataType.Text, IsDefault: true, IsGroupable: true, IsPrimary: true),
+                new("daysClaimed", "Days claimed", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("daysApproved", "Days approved", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("otHoursClaimed", "OT claimed", ColumnDataType.Quantity, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("otHoursApproved", "OT approved", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("approvalStatus", "Approval status", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("billingStatus", "Billing status", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("id", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "site-material-reconciliation",
+            Title = "Site Material Reconciliation",
+            Module = ReportModule.Site,
+            RequiredPermission = "site.view",
+            Description = "Site stock reconciliation: dispatched, used, returned, on site, and billed quantities.",
+            SortOrder = 1702,
+            Columns =
+            [
+                new("siteName", "Site", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("itemName", "Item", ColumnDataType.Text, IsDefault: true, IsGroupable: true, IsPrimary: true),
+                new("dispatchedQty", "Dispatched", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("usedQty", "Used", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("returnedQty", "Returned", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("onSiteQty", "On site", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("unbilledQty", "Unbilled", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("billedQty", "Billed", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("id", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "site-profit-summary",
+            Title = "Site Profit Summary",
+            Module = ReportModule.Site,
+            RequiredPermission = "site.cost.view",
+            Description = "Labor and material costs, billable amounts, and margins by site and billing invoice.",
+            SortOrder = 1703,
+            Columns =
+            [
+                new("siteName", "Site", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("billingNumber", "Bill number", ColumnDataType.Text, IsDefault: true, IsPrimary: true),
+                new("billingDate", "Bill date", ColumnDataType.Date, IsDefault: true),
+                new("laborCost", "Labor cost", ColumnDataType.Money, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("laborSell", "Labor sell", ColumnDataType.Money, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("laborMargin", "Labor margin", ColumnDataType.Money, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("materialCost", "Material cost", ColumnDataType.Money, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("materialSell", "Material sell", ColumnDataType.Money, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("materialMargin", "Material margin", ColumnDataType.Money, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("totalCost", "Total cost", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("totalSell", "Total sell", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("totalProfit", "Total profit", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("id", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
     ];
     private sealed class ReportSeed
     {

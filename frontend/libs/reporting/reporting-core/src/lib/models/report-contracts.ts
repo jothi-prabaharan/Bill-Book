@@ -67,7 +67,8 @@ export type ReportModule =
   | 'Claims'
   | 'Projects'
   | 'Custom'
-  | 'Restaurant';
+  | 'Restaurant'
+  | 'Site';
 
 /**
  * `Xlsx` and `Csv` are the supported export formats. `Pdf` is declared so the

@@ -5447,7 +5447,7 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** two partial bills on one site (Electrical labor, then material) post two invoices, no day or unit is on both, 2 used of 3 dispatched bills 2, and the printed invoice holds no cost or margin.
 
 ### TK-176 · Site reports: labor days, material reconciliation and site profit
-- [ ] open
+- [x] completed (Antigravity) · tests written, not run — 2026-10-28
 - **Issue:** [#164](https://github.com/jothi-prabaharan/Bill-Book/issues/164)
 - **Group:** P · Site services (Service business type) — owner priority: first
 - **Lanes:** L-RPT, L-SIT, L-SITE-UI · **Depends on:** TK-175 · **Decision:** —

@@ -851,6 +851,28 @@ The Project Time by User report has its own page at `/reports/project-time-by-us
 - **Responsive Layout:** On mobile viewports (< 800px and ~360px), grids collapse into structured time-entry cards with metadata strips.
 - **Catalog Source:** The catalog's **Project Time by User** report (`project-time-by-user`) marks both `from` and `to` date parameters as required (`IsRequired = true`).
 
+## Site services reports
+
+Three reports cover site operations for branches with the **SiteServices** add-on (TK-176), available from the report catalog under the **Site** module.
+
+### Site Laborer Attendance (site-attendance)
+Tracks laborer attendance records by site, trade, and laborer:
+- **Parameters:** Mandatory **From** and **To** dates (D-67).
+- **Columns:** Work date, site name, trade name, laborer name, days claimed, days approved, OT hours claimed, OT hours approved, approval status, and billing status.
+- **Permissions:** Requires `site.view` and the `SiteServices` add-on.
+
+### Site Material Reconciliation (site-material-reconciliation)
+Reconciles materials dispatched to job sites against usage, returns, and billing:
+- **Parameters:** Mandatory **As at** date (`asOf`) (D-67).
+- **Columns:** Site name, item name, dispatched quantity, used quantity, returned quantity, on-site quantity, unbilled quantity, and billed quantity.
+- **Permissions:** Requires `site.view` and the `SiteServices` add-on.
+
+### Site Profit Summary (site-profit-summary)
+Evaluates billing invoices against laborer and material cost snapshots to calculate margins:
+- **Parameters:** Mandatory **From** and **To** dates (D-67).
+- **Columns:** Site name, bill number, bill date, labor cost, labor sell, labor margin, material cost, material sell, material margin, total cost, total sell, and total profit.
+- **Permissions:** Requires `site.cost.view` and the `SiteServices` add-on.
+
 ## Salary Increment Report
 
 Every salary revision that takes effect in a period, under **Payroll** in the list, or straight at `/reports/salary-increment`. It needs the Payroll add-on and **payroll.view** (TK-198). Unlike the other reports it has a page of its own, so it has no column chooser, saved views, schedule or export.
