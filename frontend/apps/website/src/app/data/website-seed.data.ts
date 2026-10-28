@@ -34,14 +34,14 @@ export interface ProjectScreenshot {
 }
 
 // -----------------------------------------------------------------------------
-// 1. Application Owner Profile (Strictly Chennai and Kumbakonam, 7010449938)
+// 1. Application Owner Profile (Strictly Chennai and Kumbakonam, 7010449908)
 // -----------------------------------------------------------------------------
 export const APPLICATION_OWNER_SEED: ApplicationOwnerProfile = {
   legalName: 'Eternal Pathway Technologies Pvt Ltd',
   tradeName: 'Bill-Book Cloud ERP',
   productBrand: 'Bill-Book RetailErp & Accounting Cloud',
-  supportPhone: '7010449938',
-  salesPhone: '7010449938',
+  supportPhone: '7010449908',
+  salesPhone: '7010449908',
   primaryEmail: 'info@yourbusiness.com',
   salesEmail: 'info@yourbusiness.com',
   branches: [
@@ -49,7 +49,7 @@ export const APPLICATION_OWNER_SEED: ApplicationOwnerProfile = {
       branchId: 'branch-chennai',
       name: 'Chennai',
       location: 'Chennai',
-      phone: '7010449938',
+      phone: '7010449908',
       email: 'info@yourbusiness.com',
       badge: 'Chennai Branch',
     },
@@ -57,7 +57,7 @@ export const APPLICATION_OWNER_SEED: ApplicationOwnerProfile = {
       branchId: 'branch-kumbakonam',
       name: 'Kumbakonam',
       location: 'Kumbakonam',
-      phone: '7010449938',
+      phone: '7010449908',
       email: 'info@yourbusiness.com',
       badge: 'Kumbakonam Branch',
     },

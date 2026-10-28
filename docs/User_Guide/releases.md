@@ -31,6 +31,9 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Fixed**: **Subdomain redirection on staging environments and SSL wildcard compatibility.** Fixed the website `/login` redirection logic which previously constructed nested subdomains (`app.stg.eternalpathway.in`), triggering browser Privacy and SSL certificate errors because wildcard certificates (`*.eternalpathway.in`) only cover single-level subdomains. Staging subdomains now cleanly map `stg.eternalpathway.in` (website) -> `stg-erp.eternalpathway.in` (ERP app), with UAT and production subdomains matching standard conventions, and Gateway API CORS updated with staging, UAT, and production allowed origins.
+- **Changed**: **Updated corporate contact and support phone number to 7010449908 across all web applications.** Corrected all customer-facing sales, technical support, direct line, and operational hub branches (Chennai and Kumbakonam) to `7010449908`.
+
 - **Added**: **Site services reports available in the report catalog (TK-176).** Branches with the SiteServices add-on can now run Site Laborer Attendance, Site Material Reconciliation, and Site Profit Summary reports directly from the report catalog with mandatory date filtering, labor and material cost tracking, and margin analysis.
 
 - **Added**: **The Project Time by User report has a page of its own with a required period (TK-259).** Breaks down all time logged across projects by team member or project, tracking total, billable, billed, and non-billable hours alongside staff utilisation percentages. Both From and To dates are required, with grouping options by Team Member or Project, summary metrics, and mobile-responsive cards.

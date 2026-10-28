@@ -78,7 +78,7 @@ export class HomePageComponent {
   private readonly router = inject(Router);
 
   // ---------------------------------------------------------------------------
-  // Master Seed Data (Owner details: Chennai & Kumbakonam, Phone: 7010449938)
+  // Master Seed Data (Owner details: Chennai & Kumbakonam, Phone: 7010449908)
   // ---------------------------------------------------------------------------
   readonly ownerProfile: ApplicationOwnerProfile = APPLICATION_OWNER_SEED;
   readonly standaloneDbFeature = STANDALONE_DB_FEATURE;
@@ -437,7 +437,7 @@ export class HomePageComponent {
         this.submissionSuccess.set(true);
       } else {
         this.submissionError.set(
-          response?.message || 'Unable to register your inquiry right now. Please call us at 7010449938.'
+          response?.message || 'Unable to register your inquiry right now. Please call us at 7010449908.'
         );
       }
     } catch {
