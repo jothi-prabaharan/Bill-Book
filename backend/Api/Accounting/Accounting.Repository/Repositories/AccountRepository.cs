@@ -1,6 +1,7 @@
 using Accounting.Entity.Models;
 using Accounting.Entity.TableEntities;
 using Accounting.Repository;
+using Accounting.Repository.Clients;
 using Microsoft.EntityFrameworkCore;
 
 namespace Accounting.Repository.Repositories;
@@ -8,8 +9,13 @@ namespace Accounting.Repository.Repositories;
 public sealed class AccountRepository
 {
     private readonly AccountingDbContext _db;
+    private readonly IBranchCurrencies _currencies;
 
-    public AccountRepository(AccountingDbContext db) => _db = db;
+    public AccountRepository(AccountingDbContext db, IBranchCurrencies currencies)
+    {
+        _db = db;
+        _currencies = currencies;
+    }
 
     public async Task<IReadOnlyList<AccountListItem>> ListAsync(
         bool includeInactive, CancellationToken ct)
@@ -93,12 +99,38 @@ public sealed class AccountRepository
         return Map(account, 0, hasChildren, parentName, hasTx);
     }
 
+    /// <summary>
+    /// Ok when the branch may use this currency; otherwise the reason. A list that cannot be read refuses
+    /// rather than letting an unchecked currency through.
+    /// </summary>
+    private async Task<SaveAccountOutcome> CurrencyOutcomeAsync(string code, CancellationToken ct)
+    {
+        IReadOnlyList<string>? active = await _currencies.ActiveCodesAsync(ct);
+        if (active is null)
+        {
+            return SaveAccountOutcome.CurrencyUnavailable;
+        }
+
+        return active.Contains(code, StringComparer.Ordinal) ? SaveAccountOutcome.Ok : SaveAccountOutcome.CurrencyNotInUse;
+    }
+
     public async Task<SaveAccountResult> CreateAsync(SaveAccountRequest request, CancellationToken ct)
     {
         bool codeTaken = await _db.Accounts.AnyAsync(a => a.AccountCode == request.AccountCode, ct);
         if (codeTaken)
         {
             return new SaveAccountResult(SaveAccountOutcome.CodeInUse, null);
+        }
+
+        // Bank accounts are set up under Banking, which provisions their ledger account and sets this flag itself.
+        if (request.IsBank)
+        {
+            return new SaveAccountResult(SaveAccountOutcome.BankFlagNotAllowed, null);
+        }
+
+        if (request.CurrencyCode is not null && await CurrencyOutcomeAsync(request.CurrencyCode, ct) is { } currencyOutcome and not SaveAccountOutcome.Ok)
+        {
+            return new SaveAccountResult(currencyOutcome, null);
         }
 
         if (request.ParentAccountId is long parentId)
@@ -170,7 +202,18 @@ public sealed class AccountRepository
             account.IsSales = request.IsSales;
             account.IsPurchase = request.IsPurchase;
             account.IsPayment = request.IsPayment;
-            account.IsBank = request.IsBank;
+            // Set by Banking when a bank account is made, so it cannot be turned on or off here.
+            if (request.IsBank != account.IsBank)
+            {
+                return new SaveAccountResult(SaveAccountOutcome.BankFlagNotAllowed, null);
+            }
+
+            if (request.CurrencyCode != account.CurrencyCode && request.CurrencyCode is not null
+                && await CurrencyOutcomeAsync(request.CurrencyCode, ct) is { } changedOutcome and not SaveAccountOutcome.Ok)
+            {
+                return new SaveAccountResult(changedOutcome, null);
+            }
+
             account.CurrencyCode = request.CurrencyCode;
         }
         else if (ChangesLockedFields(account, request))
@@ -393,6 +436,9 @@ public enum SaveAccountOutcome
     ConfigLocked = 4,
     InvalidParent = 5,
     ParentHasTransactions = 6,
+    CurrencyNotInUse = 7,
+    CurrencyUnavailable = 8,
+    BankFlagNotAllowed = 9,
 }
 
 public sealed record SaveAccountResult(SaveAccountOutcome Outcome, long? AccountId);

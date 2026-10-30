@@ -31,6 +31,7 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+- **Changed**: **An account can only use a currency the branch uses, and the bank flag belongs to Banking.** An account saved in a currency the branch has not switched on under **Settings › Currencies** is refused with a message saying so, and so is one whose currency code is not three letters. The **bank** flag can no longer be set on a new account or changed on an existing one: a bank account gets its own ledger account when it is set up under Banking. Nothing already saved is changed.
 - **Fixed**: **Subdomain redirection on staging environments and SSL wildcard compatibility.** Fixed the website `/login` redirection logic which previously constructed nested subdomains (`app.stg.eternalpathway.in`), triggering browser Privacy and SSL certificate errors because wildcard certificates (`*.eternalpathway.in`) only cover single-level subdomains. Staging subdomains now cleanly map `stg.eternalpathway.in` (website) -> `stg-erp.eternalpathway.in` (ERP app), with UAT and production subdomains matching standard conventions, and Gateway API CORS updated with staging, UAT, and production allowed origins.
 - **Changed**: **Updated corporate contact and support phone number to 7010449908 across all web applications.** Corrected all customer-facing sales, technical support, direct line, and operational hub branches (Chennai and Kumbakonam) to `7010449908`.
 

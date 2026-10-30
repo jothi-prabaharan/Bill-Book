@@ -9,6 +9,7 @@ using Microsoft.Extensions.Options;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Tenancy;
 using Xunit;
+using Accounting.Repository.Clients;
 
 namespace Accounting.Api.Tests;
 
@@ -54,7 +55,7 @@ public class AccountParentTests
             var tenant = new TenantContext { CustomerId = Guid.NewGuid(), OrgId = orgId };
             AccountingDbContext db = postgres.CreateContext(tenant.CustomerId!.Value, tenant.OrgId!.Value);
 
-            var accounts = new AccountRepository(db);
+            var accounts = new AccountRepository(db, new StubBranchCurrencies());
             var numbers = new NumberGenerator(
                 db,
                 Options.Create(new NumberingOptions()),

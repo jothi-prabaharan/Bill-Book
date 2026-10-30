@@ -15,6 +15,7 @@ using Shared.Kernel.Internal;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Persistence;
 using Shared.Kernel.Tenancy;
+using Accounting.Repository.Clients;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -162,6 +163,14 @@ builder.Services.AddHttpClient<IInventoryOpeningStock, InventoryOpeningStockRepo
 // organization for the same reason the financial year is: it changes about
 // never, and the alternative is an HTTP call on every posting.
 builder.Services.AddHttpClient<IBaseCurrencyProvider, HttpBaseCurrencyProvider>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
+// The currencies the branch may use. An account is refused any other, so the list is read from Master
+// the same way the base currency is.
+builder.Services.AddHttpClient<IBranchCurrencies, HttpBranchCurrencies>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
 })

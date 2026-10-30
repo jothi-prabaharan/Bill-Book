@@ -362,6 +362,12 @@ public class OrgContextResponse
     public string BaseCurrency { get; set; } = null!;
 
     /// <summary>
+    /// Every currency the branch may use, by ISO code: its base currency and each other one switched on.
+    /// An account, bank account or document in any other currency is refused.
+    /// </summary>
+    public IReadOnlyList<string> ActiveCurrencyCodes { get; set; } = [];
+
+    /// <summary>
     /// The 2-digit state code of the branch. Needed for GST place of supply calculations
     /// on documents, which happen in per-customer services that cannot read mst.Organizations.
     /// </summary>

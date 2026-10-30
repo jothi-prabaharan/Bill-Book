@@ -81,6 +81,18 @@ public sealed class OrgContextRepository
             return null;
         }
 
+        // The branch's active currencies, by code. The base currency is always among them, even
+        // when its OrgCurrency row has been switched off, because the books are kept in it.
+        List<string> currencyCodes = await (
+            from oc in _db.OrgCurrencies
+            join cur in _db.Currencies on oc.CurrencyId equals cur.CurrencyId
+            where oc.OrgId == orgId && oc.IsActive
+            select cur.Code).ToListAsync(ct);
+        if (row.BaseCurrency is { Length: 3 } baseCode && !currencyCodes.Contains(baseCode))
+        {
+            currencyCodes.Add(baseCode);
+        }
+
         DateOnly today = DateOnly.FromDateTime(_clock.GetUtcNow().UtcDateTime);
 
         // Internal and Demo customers are never billed, so they never lapse,
@@ -192,6 +204,7 @@ public sealed class OrgContextRepository
             MonthlyPurchaseTransactionLimit = neverLapses ? null : row.PurchaseLimit,
             FinancialYearStartMonth = row.FinancialYearStartMonth,
             BaseCurrency = row.BaseCurrency,
+            ActiveCurrencyCodes = currencyCodes,
             StateCode = stateCode,
             DiscountBeforeTax = row.DiscountBeforeTax,
             Vertical = row.Vertical.ToString(),

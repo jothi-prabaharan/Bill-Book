@@ -4,6 +4,7 @@ using Shared.Kernel.Interfaces;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Tenancy;
 using Xunit;
+using Accounting.Repository.Clients;
 
 namespace Accounting.Api.Tests;
 
@@ -104,6 +105,14 @@ public sealed class PostgresFixture : IAsyncLifetime
 public sealed class PostgresCollection : ICollectionFixture<PostgresFixture>;
 
 /// <summary>The branch's own currency, fixed for tests. Platform is not running here.</summary>
+public sealed class StubBranchCurrencies(params string[] codes) : IBranchCurrencies
+{
+    private readonly IReadOnlyList<string> _codes = codes.Length == 0 ? ["INR"] : codes;
+
+    public Task<IReadOnlyList<string>?> ActiveCodesAsync(CancellationToken ct = default) =>
+        Task.FromResult<IReadOnlyList<string>?>(_codes);
+}
+
 public sealed class StubBaseCurrency(string? currency = "INR") : IBaseCurrencyProvider
 {
     public Task<string?> GetBaseCurrencyAsync(CancellationToken ct = default) =>

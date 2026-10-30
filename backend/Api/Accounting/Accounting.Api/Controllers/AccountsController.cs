@@ -89,6 +89,18 @@ public sealed class AccountsController : ControllerBase
             {
                 Message = "An account with existing transactions cannot be assigned as a parent account.",
             }),
+            SaveAccountOutcome.CurrencyNotInUse => BadRequest(new MessageResponse
+            {
+                Message = "This branch does not use that currency. Switch it on under Settings › Currencies first.",
+            }),
+            SaveAccountOutcome.CurrencyUnavailable => StatusCode(StatusCodes.Status503ServiceUnavailable, new MessageResponse
+            {
+                Message = "The branch's currencies could not be read just now. Nothing was saved; try again.",
+            }),
+            SaveAccountOutcome.BankFlagNotAllowed => BadRequest(new MessageResponse
+            {
+                Message = "Bank accounts are set up under Banking, which sets this flag itself. It cannot be changed here.",
+            }),
             _ => StatusCode(StatusCodes.Status500InternalServerError),
         };
 }
