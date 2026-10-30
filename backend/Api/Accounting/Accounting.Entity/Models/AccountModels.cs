@@ -72,7 +72,7 @@ public class SaveAccountRequest
 
     public long? ParentAccountId { get; set; }
 
-    [MaxLength(3, ErrorMessage = "Currency code must be a 3-letter code.")]
+    [RegularExpression("^[A-Z]{3}$", ErrorMessage = "Currency code must be a 3-letter code, such as INR.")]
     public string? CurrencyCode { get; set; }
 
     public bool IsContra { get; set; }
