@@ -172,11 +172,28 @@ public sealed class ItemRepository
             .ToListAsync(ct);
         ILookup<long, string> byItem = barcodes.ToLookup(b => b.ItemId, b => b.Barcode);
 
+        // What is on hand for the page's items, in one query. An item that has never moved has no stock row
+        // and reads as a zero; one that holds no stock at all reads as none.
+        var stock = (await _db.ItemStock
+                .AsNoTracking()
+                .Where(s => ids.Contains(s.ItemId))
+                .Select(s => new { s.ItemId, s.QuantityOnHand, s.WeightedAverageCost })
+                .ToListAsync(ct))
+            .GroupBy(s => s.ItemId)
+            .ToDictionary(g => g.Key, g => (Quantity: g.Sum(s => s.QuantityOnHand), Value: g.Sum(s => s.QuantityOnHand * s.WeightedAverageCost)));
+
         return items
             .Select(i =>
             {
                 ItemListItem summary = MapSummary(i, unitCodes, categoryNames);
                 summary.BarcodeValues = [.. byItem[i.ItemId]];
+                if (i.TrackInventory)
+                {
+                    (decimal quantity, decimal value) = stock.TryGetValue(i.ItemId, out var position) ? position : (0m, 0m);
+                    summary.QuantityOnHand = quantity;
+                    summary.StockValue = Math.Round(value, 2, MidpointRounding.AwayFromZero);
+                }
+
                 return summary;
             })
             .ToList();
@@ -782,6 +799,7 @@ public sealed class ItemRepository
         InventoryUomCode = unitCodes.GetValueOrDefault(i.InventoryUomId, string.Empty),
         SalesPrice = i.SalesPrice,
         Mrp = i.Mrp,
+        HsnSacCodeId = i.HsnSacCodeId,
         IsActive = i.IsActive,
         DisplayOrder = i.DisplayOrder,
         CustomFields = CustomFieldStore.Read(i.CustomFields),

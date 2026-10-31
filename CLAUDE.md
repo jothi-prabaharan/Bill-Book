@@ -446,8 +446,9 @@ TK-81). A document's own service builds a `PrintPayload` from its own tables —
 `PlaceholderCatalog`'s tags — and posts it to Printing's `api/print/render` **under the user's own
 token**, so Printing resolves that branch's template through its own query filter and no internal
 endpoint has to be told which branch it is serving. Sales never reads a template and Printing
-never reads an invoice. Only the invoice prints this way so far (`GET api/sales/invoices/{id}/print`);
-the other eleven printable types have no print route yet.
+never reads an invoice. The invoice (`GET api/sales/invoices/{id}/print`) and the purchase order, goods
+receipt, bill and debit note (`GET api/purchase/{purchase-orders|goods-receipts|bills|debit-notes}/{id}/print`,
+`purchase.print`) print this way so far; the other seven printable types have no print route yet.
 
 - **The contract stays in `Shared.Kernel.Printing`**: `PrintPayload`, `PrintFormatContext`,
   `DocumentTypeCatalog`, `PlaceholderCatalog` and `MergeTags`' text-level half — what both sides

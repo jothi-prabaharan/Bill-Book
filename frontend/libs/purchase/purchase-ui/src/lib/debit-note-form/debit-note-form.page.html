@@ -8,6 +8,9 @@
 >
   <div createActions class="child-actions m-0">
     @if (!isNew()) {
+      @if (canPrint()) {
+        <a class="btn btn-secondary m-0" [routerLink]="printLink()">Print</a>
+      }
       @if (canPost()) {
         <button type="button" class="btn btn-secondary m-0" [disabled]="saving()" (click)="post()">
           Post the debit note

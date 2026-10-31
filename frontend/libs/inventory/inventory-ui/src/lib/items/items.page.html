@@ -34,16 +34,20 @@
       </span>
     </ng-template>
     <ng-template bbCellTemplate="hsnSac" let-row>
-      —
+      {{ hsnOf(row) }}
     </ng-template>
     <ng-template bbCellTemplate="status" let-row>
       <span class="tag tag-neutral">{{ row.isActive ? 'Active' : 'Inactive' }}</span>
     </ng-template>
     <ng-template bbCellTemplate="onHand" let-row>
-      <span class="tabular-nums">—</span>
+      <span class="tabular-nums">{{ onHandOf(row) }}</span>
     </ng-template>
     <ng-template bbCellTemplate="stockValue" let-row>
-      <span class="tabular-nums">—</span>
+      @if (row.stockValue !== null && row.stockValue !== undefined) {
+        <bb-money-cell [value]="row.stockValue" />
+      } @else {
+        <span class="tabular-nums">—</span>
+      }
     </ng-template>
     <ng-template bbCellTemplate="actions" let-row>
       @if (row.itemType === 'Service') {

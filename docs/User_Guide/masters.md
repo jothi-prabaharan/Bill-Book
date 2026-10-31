@@ -652,6 +652,16 @@ LIFO is not permitted for Indian statutory reporting; it is available for intern
 
 Three levels deep at most. Each can default an item's **profile**, **costing method** and **unit type** — copied onto the item when it is created, and then the item's own. Changing a category's default never rewrites items already saved.
 
+## The item list
+
+**Inventory › Items** lists every item with its code, name, type, **HSN/SAC**, status, **On hand** and **Stock value**.
+
+- **HSN/SAC** is the code the item is filed under, or a dash when none is set.
+- **On hand** is what is in the branch across every warehouse, in the item's own unit. An item that has never moved shows 0; an item that holds no stock, such as a service, shows a dash, because it has no quantity rather than a quantity of nothing.
+- **Stock value** is the quantity on hand at its weighted-average cost, which is the figure the **Stock** page's list gives. An item costed on layers (FIFO, LIFO, FEFO or specific identification) has a more exact figure on its own stock page, which values the layers.
+
+These three columns used to show a dash on every row whatever the item held.
+
 ## Item profiles
 
 ![Inventory Items & Profiles](assets/screenshots/inventory-items.png)

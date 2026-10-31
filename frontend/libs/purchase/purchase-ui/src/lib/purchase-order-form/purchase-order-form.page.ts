@@ -53,6 +53,7 @@ import {
   gstinState,
   placeOfSupplyFor,
   supplyIsInterState,
+  purchasePrintRoute,
 } from '@bill-book/purchase-core';
 import { matchScannedItem } from '@bill-book/scan-core';
 
@@ -424,6 +425,11 @@ export class PurchaseOrderFormPage {
   );
 
   protected readonly isNew = computed(() => this.purchaseOrderId() === null);
+
+  /** Printing is the branch's to hand out, so the button is shown only to someone who holds the permission. */
+  protected readonly canPrint = computed(() => this.auth.has('purchase.print'));
+
+  protected readonly printLink = computed(() => purchasePrintRoute('purchase-orders', this.purchaseOrderId() ?? 0));
   protected readonly canDraft = computed(() => this.isNew() || this.status() === 'Draft');
 
   protected readonly canApprove = computed(() => this.status() === 'Draft');

@@ -1209,7 +1209,7 @@ argument does not have to be reconstructed from a diff.
 | | |
 |---|---|
 | **Built** | The eighth service, `Printing`, on `prt`: the ten-route template API, `api/print/render`, branch seeding, the renderer and sanitiser, the twelve-type catalogue; the editor (Settings › Print templates); the sales invoice's print route, with PROFORMA/VOID stamped by the renderer |
-| **Not built** | Print routes for the other eleven document types; PDF/A; the amount in words and the place-of-supply state name on the invoice payload |
+| **Not built** | Print routes for the other seven document types (quote, sales order, delivery challan, credit note, receipt, payment, journal); the purchase order, goods receipt, bill and debit note print through `PurchasePrintRepository` (`GET api/purchase/{purchase-orders\|goods-receipts\|bills\|debit-notes}/{id}/print`); PDF/A; the amount in words and the place-of-supply state name on the invoice payload |
 | **Decided** | Full move; callers push the payload under the user's token; `con.PrintTemplates` dropped and branches re-seeded rather than copied (D-13: nothing deployed) |
 
 ---

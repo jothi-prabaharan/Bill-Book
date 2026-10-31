@@ -127,6 +127,12 @@ are configured per document kind, with levels that apply above an amount.
 
 Workflows are set up under **Settings › Approval workflows**, and an approver finds what waits on them under **Approvals › Waiting for me**. See [Approvals](#/approvals).
 
+## Printing
+
+Once an order is saved, **Print** in the action bar opens it laid out by the branch's print template, with the vendor, the lines, the tax split by rate and the totals. **Print** then sends it to the printer or saves it as a PDF from the browser's own dialog. A draft order is stamped **DRAFT** across every page and a voided one **VOID**, so one that was never issued is not mistaken for one the vendor holds.
+
+The layout is the template's, so a change in **Settings › Print templates** changes every printed document of that kind. The button shows only to someone who holds **purchase.print**, the permission for handing a document to somebody outside the business.
+
 ## Withdrawing one
 
 **Orders are never deleted.** The number was spent when the order was created, so
@@ -239,6 +245,12 @@ Enter these for items that track them. Inventory refuses the receipt and names
 the line if a batch-tracked item arrives without one, so nothing is silently
 recorded against the wrong lot.
 
+## Printing
+
+Once a receipt is saved, **Print** in the action bar opens it laid out by the branch's print template, with the vendor, the lines, the tax split by rate and the totals. **Print** then sends it to the printer or saves it as a PDF from the browser's own dialog. It prints what was delivered; a line that was not all kept says how much was accepted and rejected, and why. The vendor's delivery note and the order it was received against are on it. A draft receipt is stamped **DRAFT** and a voided one **VOID**.
+
+The layout is the template's, so a change in **Settings › Print templates** changes every printed document of that kind. The button shows only to someone who holds **purchase.print**, the permission for handing a document to somebody outside the business.
+
 ## Labels for what arrived
 
 Once a receipt is saved, **Print labels** prints one sticker per whole unit accepted on each line, ready to put on the goods as they are shelved. A bill offers the same. Sizes and kinds are set as described in [Printing labels](masters#printing-labels).
@@ -334,6 +346,12 @@ draft reopens with the vendor's state again.
 
 A bill opens with its own print template, and keeps it when the draft is saved
 again.
+
+## Printing
+
+Once a bill is saved, **Print** in the action bar opens it laid out by that template, with the vendor's own bill number, the due date, the receipt or order it was raised against, the lines, the tax split by rate and the totals. **Print** then sends it to the printer or saves it as a PDF from the browser's own dialog. A draft bill is stamped **DRAFT** across every page and a voided one **VOID**.
+
+The layout is the template's, so a change in **Settings › Print templates** changes every printed bill. The button shows only to someone who holds **purchase.print**; a bill also offers **Print labels** for the goods on it, which is separate.
 
 ## Three kinds of line
 
@@ -493,6 +511,12 @@ credit back twice over.
   goods that went back.
 - **Stock leaves**, if the reason is a purchase return, at what the layers it
   came from were carrying.
+
+## Printing
+
+Once a debit note is saved, **Print** in the action bar opens it laid out by the branch's print template, with the vendor, the lines, the tax split by rate and the totals. **Print** then sends it to the printer or saves it as a PDF from the browser's own dialog. It names the reason it was raised and the bill it is against. A draft debit note is stamped **DRAFT** and a voided one **VOID**.
+
+The layout is the template's, so a change in **Settings › Print templates** changes every printed document of that kind. The button shows only to someone who holds **purchase.print**, the permission for handing a document to somebody outside the business.
 
 ## Getting it wrong
 

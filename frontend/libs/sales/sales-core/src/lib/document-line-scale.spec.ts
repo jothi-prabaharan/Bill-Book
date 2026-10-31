@@ -76,6 +76,66 @@ describe('document line scale', () => {
     expect(line.lineTotal).toBe(100_000);
   });
 
+  it('reads the label the server serves a saved line with', () => {
+    // The API sends "CODE - Name" as `itemLabel`; it has no itemName or itemCode on a line.
+    const line = toGridLine({ ...apiLine, itemName: undefined, itemCode: undefined, itemLabel: 'ITM7 - Widget' }, 1);
+
+    expect(line.itemLabel).toBe('ITM7 - Widget');
+  });
+
+  it('carries a saved line\'s amounts and tax rows, so a reopened document does not read zero', () => {
+    const line = toGridLine(
+      {
+        ...apiLine,
+        quantity: 1,
+        unitPrice: 100,
+        grossAmount: 100,
+        taxableAmount: 100,
+        taxAmount: 18,
+        lineTotal: 118,
+        taxes: [
+          { taxComponent: 'Cgst', rate: 9, subAccountId: 5, taxableAmount: 100, amount: 9 },
+          { taxComponent: 'Sgst', rate: 9, subAccountId: 6, taxableAmount: 100, amount: 9 },
+        ],
+      },
+      1,
+    );
+
+    expect(line.grossAmount).toBe(10_000);
+    expect(line.taxableAmount).toBe(10_000);
+    expect(line.taxAmount).toBe(1_800);
+    expect(line.lineTotal).toBe(11_800);
+    expect(line.taxes.map((t) => [t.component, t.rate, t.amount])).toEqual([
+      ['Cgst', 90_000, 900],
+      ['Sgst', 90_000, 900],
+    ]);
+  });
+
+  it('keeps the tax when a reopened line is edited and recalculated', () => {
+    const saved = toGridLine(
+      {
+        ...apiLine,
+        quantity: 1,
+        unitPrice: 100,
+        taxes: [{ taxComponent: 'Cgst', rate: 9 }, { taxComponent: 'Sgst', rate: 9 }],
+      },
+      1,
+    );
+    const edited = recalculate({ ...saved, quantity: 2_000_000 }, {
+      isInterState: false,
+      allowFreeTextLines: true,
+      discountBeforeTax: true,
+      discountLevel: 'Line',
+      readonly: false,
+      currencyDecimals: 2,
+    });
+
+    // 2 x ₹100 = ₹200 taxable, 9% + 9% = ₹36.
+    expect(edited.taxableAmount).toBe(20_000);
+    expect(edited.taxAmount).toBe(3_600);
+    expect(edited.lineTotal).toBe(23_600);
+  });
+
   it('round-trips without changing what the line says', () => {
     const back = toApiLine(toGridLine(apiLine, 1));
 

@@ -1,0 +1,21 @@
+<div class="print-bar">
+  <button type="button" class="btn btn-secondary" (click)="back()">Back</button>
+  <button type="button" class="btn btn-primary" [disabled]="!html()" (click)="print()">Print</button>
+  @if (pageCount() > 0) {
+    <span class="print-note">{{ pageCount() }} {{ pageCount() === 1 ? 'page' : 'pages' }}</span>
+  }
+</div>
+
+<bb-message-box [messages]="messages()" />
+
+@if (loading()) {
+  <p class="print-note">Preparing the {{ label() }}…</p>
+} @else if (html(); as document) {
+  <iframe
+    #frame
+    class="print-frame"
+    [title]="'Print preview of the ' + label()"
+    sandbox="allow-same-origin allow-modals"
+    [srcdoc]="document"
+  ></iframe>
+}

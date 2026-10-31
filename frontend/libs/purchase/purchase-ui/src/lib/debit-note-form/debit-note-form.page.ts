@@ -51,6 +51,7 @@ import {
   gstinState,
   placeOfSupplyFor,
   supplyIsInterState,
+  purchasePrintRoute,
 } from '@bill-book/purchase-core';
 import { matchScannedItem } from '@bill-book/scan-core';
 import { debitScanned } from './debit-note-scan';
@@ -437,6 +438,11 @@ export class DebitNoteFormPage {
   );
 
   protected readonly isNew = computed(() => this.debitNoteId() === null);
+
+  /** Printing is the branch's to hand out, so the button is shown only to someone who holds the permission. */
+  protected readonly canPrint = computed(() => this.auth.has('purchase.print'));
+
+  protected readonly printLink = computed(() => purchasePrintRoute('debit-notes', this.debitNoteId() ?? 0));
 
   /** Whether the chosen reason sends goods back. Drives the whole warning. */
   protected readonly movesStock = computed(

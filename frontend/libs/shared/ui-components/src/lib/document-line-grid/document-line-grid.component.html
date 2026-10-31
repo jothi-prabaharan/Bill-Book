@@ -26,8 +26,8 @@
             <div class="item-primary-row">
               @if (line.itemId !== null) {
                 <div class="item-picked-tag">
-                  <button type="button" class="link item-picked-label" [disabled]="context().readonly" (click)="pickItem.emit(i)">
-                    {{ line.itemLabel }}
+                  <button type="button" class="link item-picked-label" [disabled]="context().readonly" [attr.title]="line.itemLabel || null" (click)="pickItem.emit(i)">
+                    {{ line.itemLabel || 'Item #' + line.itemId }}
                   </button>
                   <button
                     type="button"
@@ -195,7 +195,7 @@
         @if (needsAccount(line)) {
           <tr class="sub account-sub-row">
             <td class="col-num"></td>
-            <td [attr.colspan]="components().length + 8" class="account-sub-cell">
+            <td [attr.colspan]="subRowSpan()" class="account-sub-cell">
               <div class="account-inline-strip">
                 <span class="muted text-xs">
                   {{ isFreeText(line) ? 'No item — posts to' : (line.itemLabel ? line.itemLabel + ' — posts to' : 'Expense line — posts to') }}:
@@ -223,7 +223,7 @@
         @if (projects().length > 0) {
           <tr class="sub project-sub-row">
             <td class="col-num"></td>
-            <td [attr.colspan]="components().length + 8">
+            <td [attr.colspan]="subRowSpan()">
               <div class="project-inline-strip">
                 <label class="muted project text-xs">
                   Project:

@@ -6,7 +6,7 @@
 
 table.lines {
   width: 100%;
-  min-width: 58rem;
+  min-width: 57rem;
   border-collapse: collapse;
   table-layout: fixed;
 }
@@ -65,19 +65,19 @@ tbody td {
 }
 
 .col-rate {
-  width: 110px;
+  width: 100px;
 }
 
 .col-disc {
-  width: 76px;
+  width: 70px;
 }
 
 .col-tax {
-  width: 135px;
+  width: 125px;
 }
 
 .col-tax-comp {
-  width: 85px;
+  width: 80px;
   padding-top: 0.65rem !important;
 }
 
@@ -114,6 +114,7 @@ tbody td {
   border-radius: var(--radius-sm, 4px);
   padding: 2px 6px;
   max-width: 100%;
+  min-width: 0;
 }
 
 .item-picked-label {
@@ -123,7 +124,8 @@ tbody td {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 200px;
+  /* The cell is the limit, not a fixed 200px: the item column takes what the other columns leave. */
+  min-width: 0;
   text-decoration: none !important;
   cursor: pointer;
 }
@@ -906,3 +908,8 @@ tr.empty-row td {
   }
 }
 
+
+/* The footer's "Taxable: 3000.00" stays on one line; it is right-aligned, so it grows into the empty discount cell. */
+tfoot .col-tax {
+  white-space: nowrap;
+}

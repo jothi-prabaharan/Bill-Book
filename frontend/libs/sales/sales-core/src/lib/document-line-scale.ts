@@ -1,4 +1,4 @@
-import { DocumentLine } from '@bill-book/ui-components';
+import { DocumentLine, DocumentLineTax } from '@bill-book/ui-components';
 
 /**
  * The scale boundary between the API and the line grid.
@@ -29,13 +29,14 @@ const PAISE = 100;
 /** Quantity carries six decimals, matching `decimal(18,6)` on the column. */
 const QTY_SCALE = 1_000_000;
 
-// There is deliberately no rate scale here. Tax rows are not carried across:
-// the grid rebuilds them from the line's treatment and rate as it renders, so
-// converting the server's would put two sets of the same rows on one line.
+/** A tax rate carries four decimals in the grid, as `DocumentLineTax.rate` says. */
+const RATE_SCALE = 10_000;
 
 /** A line as the API serves it: rupees and plain quantities. */
 export interface ApiDocumentLine {
   itemId?: number | null;
+  /** What a saved document's line is served with: the item's "CODE - Name". */
+  itemLabel?: string | null;
   itemName?: string | null;
   itemCode?: string | null;
   hsnSacCode?: string | null;
@@ -58,6 +59,22 @@ export interface ApiDocumentLine {
   projectId?: number | null;
   itemBatchId?: number | null;
   lineNotes?: string | null;
+  /** The amounts the server worked out when it saved the line, in rupees. */
+  grossAmount?: number | null;
+  taxableAmount?: number | null;
+  taxAmount?: number | null;
+  lineTotal?: number | null;
+  /** The tax rows the server saved with the line; the rate is a percent. */
+  taxes?: readonly ApiDocumentLineTax[] | null;
+}
+
+/** One saved tax row on a line, as the server serves it. */
+export interface ApiDocumentLineTax {
+  taxComponent?: string | null;
+  subAccountId?: number | null;
+  rate?: number | null;
+  taxableAmount?: number | null;
+  amount?: number | null;
 }
 
 export function toPaise(rupees: number): number {
@@ -71,10 +88,11 @@ export function toRupees(paise: number): number {
 /**
  * An API line, scaled for the grid.
  *
- * Computed amounts — gross, taxable, tax, line total — are left at zero rather
- * than carried across: the grid recalculates them from quantity, price and
- * discount the moment it renders, so copying the server's figures in would put
- * two answers on screen for the same line until the first keystroke.
+ * <b>A saved line arrives with the amounts and tax rows the server saved it with</b>,
+ * because the grid recalculates a line only when somebody edits it. Left at zero, a
+ * reopened ₹100 invoice shows a total of 0.00 until a key is pressed, and editing
+ * a quantity would drop its tax, as there would be no rows to recompute from. A new
+ * line carries none, so it starts at zero and the first edit fills it in.
  */
 export function toGridLine(line: ApiDocumentLine, lineNumber: number): DocumentLine {
   const quantity = line.quantity ?? 0;
@@ -84,7 +102,7 @@ export function toGridLine(line: ApiDocumentLine, lineNumber: number): DocumentL
     detailId: 0,
     lineNumber,
     itemId: line.itemId ?? null,
-    itemLabel: line.itemName ?? line.itemCode ?? null,
+    itemLabel: line.itemLabel ?? line.itemName ?? line.itemCode ?? null,
     hsnSacCode: line.hsnSacCode ?? null,
     description: line.description ?? null,
     warehouseId: line.warehouseId ?? null,
@@ -97,18 +115,24 @@ export function toGridLine(line: ApiDocumentLine, lineNumber: number): DocumentL
     isPriceInclusive: line.isPriceInclusive ?? false,
     discountPercent: line.discountPercent ?? null,
     discountAmount: toPaise(line.discountAmount ?? 0),
-    grossAmount: 0,
-    taxableAmount: 0,
+    grossAmount: toPaise(line.grossAmount ?? 0),
+    taxableAmount: toPaise(line.taxableAmount ?? 0),
     taxTreatment: (line.taxTreatment ?? 'Taxable') as DocumentLine['taxTreatment'],
     taxMasterId: line.taxMasterId ?? null,
     taxGroupId: line.taxGroupId ?? line.taxMasterId ?? null,
-    taxAmount: 0,
-    taxes: [],
+    taxAmount: toPaise(line.taxAmount ?? 0),
+    taxes: (line.taxes ?? []).map((tax) => ({
+      component: (tax.taxComponent ?? 'Cgst') as DocumentLineTax['component'],
+      subAccountId: tax.subAccountId ?? 0,
+      rate: Math.round((tax.rate ?? 0) * RATE_SCALE),
+      taxableAmount: toPaise(tax.taxableAmount ?? 0),
+      amount: toPaise(tax.amount ?? 0),
+    })),
     lineType: (line.lineType ?? 'Stock') as DocumentLine['lineType'],
     accountId: line.accountId ?? null,
     fixedAssetCategoryId: line.fixedAssetCategoryId ?? null,
     projectId: line.projectId ?? null,
-    lineTotal: 0,
+    lineTotal: toPaise(line.lineTotal ?? 0),
     itemBatchId: line.itemBatchId ?? null,
     lineNotes: line.lineNotes ?? null,
   };

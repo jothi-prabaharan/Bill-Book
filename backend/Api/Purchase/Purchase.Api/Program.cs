@@ -106,6 +106,14 @@ builder.Services.AddHttpClient<Shared.Kernel.Tenancy.IOrgIdentityProvider, Share
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 builder.Services.AddScoped<Gstr2bRepository>();
+
+// Printing lays a document out from its template. No internal key: the call carries the signed-in user's own
+// token, so Printing resolves that user's branch template through its own query filter.
+builder.Services.AddHttpClient<IPrintingClient, PrintingClient>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Printing:BaseUrl"));
+});
+builder.Services.AddScoped<PurchasePrintRepository>();
 builder.Services.AddScoped<GoodsReceiptRepository>();
 builder.Services.AddScoped<BillRepository>();
 builder.Services.AddScoped<DocumentNumberRepository>();

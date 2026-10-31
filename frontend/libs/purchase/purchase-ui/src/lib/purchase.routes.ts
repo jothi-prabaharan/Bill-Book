@@ -50,6 +50,27 @@ export const purchaseRoutes: Routes = [
     pathMatch: 'full'
   },
   // Keep form routes intact for navigating to them from the transaction list
+  // Printing a document, one page for all four (the :id routes below are two segments, so these never clash).
+  {
+    path: 'purchase-orders/:id/print',
+    loadComponent: () => import('./purchase-print/purchase-print.page').then((m) => m.PurchasePrintPage),
+    data: { printKind: 'purchase-orders', access: { permission: 'purchase.print' } },
+  },
+  {
+    path: 'bills/:id/print',
+    loadComponent: () => import('./purchase-print/purchase-print.page').then((m) => m.PurchasePrintPage),
+    data: { printKind: 'bills', access: { permission: 'purchase.print' } },
+  },
+  {
+    path: 'goods-receipts/:id/print',
+    loadComponent: () => import('./purchase-print/purchase-print.page').then((m) => m.PurchasePrintPage),
+    data: { printKind: 'goods-receipts', access: { permission: 'purchase.print' } },
+  },
+  {
+    path: 'debit-notes/:id/print',
+    loadComponent: () => import('./purchase-print/purchase-print.page').then((m) => m.PurchasePrintPage),
+    data: { printKind: 'debit-notes', access: { permission: 'purchase.print' } },
+  },
   {
     path: 'purchase-orders/new',
     loadComponent: () =>

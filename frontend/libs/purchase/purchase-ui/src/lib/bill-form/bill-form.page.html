@@ -16,6 +16,9 @@
     }
 
     @if (!isNew()) {
+      @if (canPrint()) {
+      <a class="btn btn-secondary m-0" [routerLink]="printLink()">Print</a>
+    }
       <button type="button" class="btn btn-secondary m-0" (click)="openLabels()">
         Print labels
       </button>

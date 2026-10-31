@@ -29,6 +29,22 @@ public class ItemListItem
 
     public decimal? Mrp { get; set; }
 
+    /// <summary>The item's HSN or SAC code, as an id into Master's list; null when none is set.</summary>
+    public int? HsnSacCodeId { get; set; }
+
+    /// <summary>
+    /// What is on hand across the whole branch, in the inventory unit. Null for an item that holds no stock,
+    /// such as a service, which has no quantity rather than a quantity of nought.
+    /// </summary>
+    public decimal? QuantityOnHand { get; set; }
+
+    /// <summary>
+    /// The quantity on hand at its weighted-average cost, which is how the Stock page's list values it. Null
+    /// for an item that holds no stock. For an item costed on layers the Stock page's detail gives the real
+    /// figure; this is the quick one the list can show for every row.
+    /// </summary>
+    public decimal? StockValue { get; set; }
+
     public bool IsActive { get; set; }
 
     public int DisplayOrder { get; set; }
@@ -51,7 +67,7 @@ public class ItemDetail : ItemListItem
 
     public string? Description { get; set; }
 
-    public int? HsnSacCodeId { get; set; }
+    // HsnSacCodeId is inherited from the list row, which now carries it too.
 
     public long? TaxGroupId { get; set; }
 

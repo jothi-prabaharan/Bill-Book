@@ -95,7 +95,14 @@ export class DocumentLineGridComponent {
     componentsFor(this.context().isInterState, this.context().isUnionTerritory ?? false),
   );
 
+  /** Every column of the table: the number, item, quantity, rate, discount, tax, one for each tax component, total and actions. */
   protected readonly columnCount = computed(() => this.components().length + 8);
+
+  /**
+   * What a row under a line spans: all of them but the number cell it begins with. Spanning every column
+   * after that cell adds an eleventh, which a fixed layout hands the width the item column should have had.
+   */
+  protected readonly subRowSpan = computed(() => this.columnCount() - 1);
 
   protected readonly treatments: readonly TaxTreatment[] = [
     'Taxable',

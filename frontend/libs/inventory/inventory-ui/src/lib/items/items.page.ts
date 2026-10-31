@@ -9,6 +9,7 @@ import {
 } from '@bill-book/ui-components';
 import { Router } from '@angular/router';
 import { SessionContextService } from '@bill-book/auth';
+import { FormatSettingsService } from '@bill-book/currency-format';
 import { ChangeDetectionStrategy } from '@angular/core';
 import {
   BbSelectOption,
@@ -33,6 +34,7 @@ import {
   LabelData,
   LabelKind,
   LabelPrintDialog,
+  MoneyCellComponent,
 } from '@bill-book/ui-components';
 import {
   BatchLabelSource,
@@ -135,6 +137,12 @@ interface ItemListRow {
   inventoryUomCode: string;
   salesPrice: number | null;
   mrp: number | null;
+  /** The item's HSN or SAC code, as an id into Master's list. */
+  hsnSacCodeId?: number | null;
+  /** What is on hand in the inventory unit; null for an item that holds no stock. */
+  quantityOnHand?: number | null;
+  /** The quantity on hand at its average cost; null for an item that holds no stock. */
+  stockValue?: number | null;
   isActive: boolean;
   /** The item's custom field values (TK-111). */
   customFields?: CustomFieldValues | null;
@@ -209,6 +217,7 @@ type Tab = 'general' | 'units' | 'stock' | 'profile' | 'barcodes' | 'history';
     MessageBoxComponent,
     RegisterHeaderComponent,
     StatusTabsComponent,
+    MoneyCellComponent,
   ],
   host: { class: 'register-page' },
   templateUrl: './items.page.html',
@@ -218,6 +227,7 @@ export class ItemsPage implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly session = inject(SessionContextService);
+  private readonly formats = inject(FormatSettingsService);
 
   /**
    * Held as a property rather than written inline, so the apostrophe does not
@@ -546,11 +556,52 @@ export class ItemsPage implements OnInit {
       query.set('includeInactive', 'true');
 
       this.rows.set(await this.get<ItemListRow[]>(`/api/items?${query}`));
+      void this.loadHsnCodes(this.rows());
     } catch {
       this.fail('Could not load items.');
     } finally {
       this.busy.set(false);
     }
+  }
+
+  /** HSN and SAC codes by id, for the list's column. Master answers one code at a time, so only the ids not yet known are asked for. */
+  protected readonly hsnCodes = signal<ReadonlyMap<number, string>>(new Map());
+
+  private async loadHsnCodes(rows: readonly ItemListRow[]): Promise<void> {
+    const known = this.hsnCodes();
+    const wanted = [...new Set(rows.map((r) => r.hsnSacCodeId).filter((id): id is number => typeof id === 'number' && !known.has(id)))];
+    if (wanted.length === 0) {
+      return;
+    }
+
+    const found = await Promise.all(
+      wanted.map(async (id) => {
+        try {
+          return [id, (await this.get<HsnCode>(`/api/master/hsn-sac/${id}`)).code] as const;
+        } catch {
+          // A code that no longer resolves still has an id on the item; the column shows a dash rather than a guess.
+          return null;
+        }
+      }),
+    );
+
+    const next = new Map(known);
+    for (const entry of found) {
+      if (entry) {
+        next.set(entry[0], entry[1]);
+      }
+    }
+    this.hsnCodes.set(next);
+  }
+
+  /** The item's HSN or SAC code, or a dash when it has none or Master could not name it. */
+  protected hsnOf(row: ItemListRow): string {
+    return (row.hsnSacCodeId != null ? this.hsnCodes().get(row.hsnSacCodeId) : undefined) ?? '—';
+  }
+
+  /** What is on hand with its unit, or a dash for an item that holds no stock. */
+  protected onHandOf(row: ItemListRow): string {
+    return row.quantityOnHand == null ? '—' : `${this.formats.formatQuantity(row.quantityOnHand)} ${row.inventoryUomCode}`.trim();
   }
 
   async loadLookups(): Promise<void> {

@@ -4,3 +4,4 @@ export * from './lib/bill-form/bill-form.page';
 export * from './lib/debit-note-form/debit-note-form.page';
 export * from './lib/purchase-list/purchase-list.page';
 export * from './lib/purchase.routes';
+export * from './lib/purchase-print/purchase-print.page';

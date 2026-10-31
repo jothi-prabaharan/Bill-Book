@@ -33,6 +33,21 @@ public sealed class BillsController : ControllerBase
         return bill is null ? NotFound() : Ok(bill);
     }
 
+    /// <summary>
+    /// The bill laid out by its print template, as HTML for the browser to print. Purchase builds the document's
+    /// data and Printing lays it out under the caller's own token, so the branch's template is the one used.
+    /// <c>purchase.print</c> rather than <c>purchase.view</c>: printing hands a document to somebody outside
+    /// the business, which is the separation the print permission was seeded for.
+    /// </summary>
+    [HttpGet("{billId:long}/print")]
+    [PermissionAction("print")]
+    public async Task<IActionResult> Print(
+        long billId, [FromServices] PurchasePrintRepository printing, CancellationToken ct)
+    {
+        PrintedDocument? printed = await printing.PrintBillAsync(billId, ct);
+        return printed is null ? NotFound() : Ok(printed);
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create(
         [FromBody] SaveBillRequest request, [FromServices] BillBudgetCheckRepository budget, CancellationToken ct)
