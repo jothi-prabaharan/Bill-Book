@@ -251,6 +251,7 @@ builder.Services.AddHttpClient<IPrintingClient, PrintingClient>(client =>
     client.BaseAddress = new Uri(RequiredSetting("Printing:BaseUrl"));
 });
 builder.Services.AddScoped<InvoicePrintRepository>();
+builder.Services.AddScoped<SalesPrintRepository>();
 
 // E-invoicing (TK-91): the IRP gateway, chosen by EInvoicing:Gateway, and the
 // builder that turns a posted document into INV-01. Sandbox in Development,

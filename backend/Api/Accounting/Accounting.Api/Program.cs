@@ -115,6 +115,14 @@ builder.Services.AddHttpClient<Shared.Kernel.Documents.IContactNameLookup, Share
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
+// Printing lays a document out from its template. No internal key: the call carries the signed-in user's own
+// token, so Printing resolves that user's branch template through its own query filter.
+builder.Services.AddHttpClient<Accounting.Repository.Clients.IPrintingClient, Accounting.Api.Services.PrintingClient>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Printing:BaseUrl"));
+});
+builder.Services.AddScoped<AccountingPrintRepository>();
+
 // Approval chains for spend money and manual journals (TK-101): Master
 // resolves them, this service stores the steps.
 builder.Services.AddScoped<AccountingApprovalRepository>();

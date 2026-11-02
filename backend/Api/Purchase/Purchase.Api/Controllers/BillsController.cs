@@ -48,6 +48,20 @@ public sealed class BillsController : ControllerBase
         return printed is null ? NotFound() : Ok(printed);
     }
 
+    /// <summary>
+    /// The bill laid out by its print template, for the view page to show on screen. The same document the
+    /// <c>print</c> route returns, but at <c>purchase.view</c>: reading a document is not handing it to somebody
+    /// outside the business, and a read-only role has to be able to open the page that shows one.
+    /// </summary>
+    [HttpGet("{billId:long}/view")]
+    [PermissionAction("view")]
+    public async Task<IActionResult> View(
+        long billId, [FromServices] PurchasePrintRepository printing, CancellationToken ct)
+    {
+        PrintedDocument? printed = await printing.PrintBillAsync(billId, ct);
+        return printed is null ? NotFound() : Ok(printed);
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create(
         [FromBody] SaveBillRequest request, [FromServices] BillBudgetCheckRepository budget, CancellationToken ct)

@@ -47,6 +47,20 @@ public sealed class DebitNotesController : ControllerBase
         return printed is null ? NotFound() : Ok(printed);
     }
 
+    /// <summary>
+    /// The debit note laid out by its print template, for the view page to show on screen. The same document the
+    /// <c>print</c> route returns, but at <c>purchase.view</c>: reading a document is not handing it to somebody
+    /// outside the business, and a read-only role has to be able to open the page that shows one.
+    /// </summary>
+    [HttpGet("{debitNoteId:long}/view")]
+    [PermissionAction("view")]
+    public async Task<IActionResult> View(
+        long debitNoteId, [FromServices] PurchasePrintRepository printing, CancellationToken ct)
+    {
+        PrintedDocument? printed = await printing.PrintDebitNoteAsync(debitNoteId, ct);
+        return printed is null ? NotFound() : Ok(printed);
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create(
         [FromBody] SaveDebitNoteRequest request, CancellationToken ct)

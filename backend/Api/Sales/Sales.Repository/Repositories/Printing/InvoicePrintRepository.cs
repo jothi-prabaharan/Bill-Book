@@ -107,14 +107,22 @@ public sealed class InvoicePrintRepository
         // A UPI QR for what is still owed (TK-158), when the branch has a UPI id.
         payload.Singles[UpiQrTag] = await UpiQrTextAsync(invoice, seller.Name, ct) ?? string.Empty;
 
-        return await _printing.RenderAsync(
-            invoice.TransactionTypeCode?.Trim() is { Length: 3 } code && DocumentTypeCatalog.IsPrintable(code)
-                ? code
-                : "INV",
+        string typeCode = invoice.TransactionTypeCode?.Trim() is { Length: 3 } code && DocumentTypeCatalog.IsPrintable(code)
+            ? code
+            : "INV";
+
+        PrintedDocument printed = await _printing.RenderAsync(
+            typeCode,
             invoice.PrintTemplateId,
             payload,
             Watermark(invoice.Status, eInvoice?.Status),
             ct);
+
+        // Which document this is, for the page that shows it (the view page's heading).
+        printed.DocumentNo = invoice.DocumentNo;
+        printed.DocumentTypeCode = typeCode;
+        printed.Status = invoice.Status.ToString();
+        return printed;
     }
 
     /// <summary>

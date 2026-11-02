@@ -109,6 +109,21 @@ public sealed class InvoicesController : ControllerBase
     }
 
     /// <summary>
+    /// The invoice laid out by its print template, for the view page to show on screen. Sales builds the
+    /// document's data and Printing lays it out under the caller's own token, so the branch's template is the
+    /// one used. At <c>sales.view</c>: reading a document is not handing it to somebody outside the business,
+    /// and a read-only role has to be able to open the page that shows one.
+    /// </summary>
+    [HttpGet("{id:long}/view")]
+    [PermissionAction("view")]
+    public async Task<IActionResult> View(
+        long id, [FromServices] InvoicePrintRepository printing, CancellationToken ct)
+    {
+        PrintedDocument? printed = await printing.PrintAsync(id, ct);
+        return printed is null ? NotFound() : Ok(printed);
+    }
+
+    /// <summary>
     /// The PDF archived when this invoice was posted (TK-22). Not found for a
     /// draft, for a invoice in another branch, or when the file is missing — the
     /// three are not told apart. Needs <c>sales.print</c>, as printing does: both

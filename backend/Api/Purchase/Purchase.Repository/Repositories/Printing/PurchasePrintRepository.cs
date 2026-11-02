@@ -189,12 +189,18 @@ public sealed class PurchasePrintRepository
             ? code
             : fallbackTypeCode;
 
-        return await _printing.RenderAsync(
+        PrintedDocument printed = await _printing.RenderAsync(
             typeCode,
             document.PrintTemplateId,
             payload,
             PurchasePrintPayloadRepository.Watermark(document.Status),
             ct);
+
+        // Which document this is, for the page that shows it (the view page's heading).
+        printed.DocumentNo = document.DocumentNo;
+        printed.DocumentTypeCode = typeCode;
+        printed.Status = document.Status.ToString();
+        return printed;
     }
 
     /// <summary>

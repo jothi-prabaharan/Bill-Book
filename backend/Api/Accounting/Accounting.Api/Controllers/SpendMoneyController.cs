@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Clients;
 using Accounting.Repository.Repositories;
 using Accounting.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -42,6 +43,21 @@ public sealed class SpendMoneyController : ControllerBase
     {
         MoneyDocumentView? document = await _documents.GetAsync(id, ct);
         return document is null ? NotFound() : Ok(document);
+    }
+
+    /// <summary>
+    /// The payment laid out by its print template, for the view page to show on screen. Accounting builds the
+    /// document's data and Printing lays it out under the caller's own token, so the branch's template is the
+    /// one used. At <c>banking.view</c>: reading a document is not handing it to somebody outside the
+    /// business, and a read-only role has to be able to open the page that shows one.
+    /// </summary>
+    [HttpGet("{id:long}/view")]
+    [PermissionAction("view")]
+    public async Task<IActionResult> View(
+        long id, [FromServices] AccountingPrintRepository printing, CancellationToken ct)
+    {
+        PrintedDocument? printed = await printing.PrintPaymentAsync(id, ct);
+        return printed is null ? NotFound() : Ok(printed);
     }
 
     [HttpPost]

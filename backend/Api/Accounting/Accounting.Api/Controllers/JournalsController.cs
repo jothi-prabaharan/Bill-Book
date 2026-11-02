@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Accounting.Repository.Clients;
 using Accounting.Repository.Repositories;
 using Accounting.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -43,6 +44,21 @@ public sealed class JournalsController : ControllerBase
     {
         JournalDetailView? journal = await _journals.GetAsync(journalId, ct);
         return journal is null ? NotFound() : Ok(journal);
+    }
+
+    /// <summary>
+    /// The journal voucher laid out by its print template, for the view page to show on screen. Accounting builds the
+    /// document's data and Printing lays it out under the caller's own token, so the branch's template is the
+    /// one used. At <c>accounting.view</c>: reading a document is not handing it to somebody outside the
+    /// business, and a read-only role has to be able to open the page that shows one.
+    /// </summary>
+    [HttpGet("{journalId:long}/view")]
+    [PermissionAction("view")]
+    public async Task<IActionResult> View(
+        long journalId, [FromServices] AccountingPrintRepository printing, CancellationToken ct)
+    {
+        PrintedDocument? printed = await printing.PrintJournalAsync(journalId, ct);
+        return printed is null ? NotFound() : Ok(printed);
     }
 
     [HttpPost]
