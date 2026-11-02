@@ -205,6 +205,9 @@
       "@bill-book/time-leave-ui": [
         "libs/time-leave/time-leave-ui/src/index.ts"
       ],
+      "@bill-book/transaction-view": [
+        "libs/transaction-view/src/index.ts"
+      ],
       "@bill-book/ui-components": [
         "libs/shared/ui-components/src/index.ts"
       ],

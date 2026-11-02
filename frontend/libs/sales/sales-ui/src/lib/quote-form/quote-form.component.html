@@ -4,6 +4,12 @@
   [busy]="saving()"
   (save)="save()"
 >
+  <div createActions class="child-actions m-0">
+    @if (isEdit && quoteId) {
+      <a class="btn btn-secondary m-0" [routerLink]="viewLink()">View</a>
+    }
+  </div>
+
   <form class="create-stack" [formGroup]="form">
     <!-- Card 1: Document -->
     <div class="card">

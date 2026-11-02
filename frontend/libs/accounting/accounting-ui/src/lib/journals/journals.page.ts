@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { transactionViewRoute } from '@bill-book/transaction-view';
 import { ProjectListItem, loadProjects, projectOptions } from '../projects/project-options';
 import {
   BbSelectOption,
@@ -378,6 +379,11 @@ export class JournalsPage implements OnInit {
     // is a debit and a credit.
     this.lines.set([this.blankLine(), this.blankLine()]);
     this.editing.set(true);
+  }
+
+  /** The journal number links to the view page, where it reads as its print template lays it out (TK-263). */
+  viewRoute(journalId: number): string[] {
+    return transactionViewRoute('journals', journalId);
   }
 
   async open(journalId: number): Promise<void> {

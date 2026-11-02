@@ -1,0 +1,139 @@
+import { describe, expect, it } from 'vitest';
+import {
+  DESK_COLOUR,
+  MAX_ZOOM,
+  MIN_ZOOM,
+  clampZoom,
+  documentHeading,
+  fitScale,
+  isEditableStatus,
+  nextZoom,
+  statusLabel,
+  statusNotice,
+  statusTone,
+  viewerDocument,
+  zoomPercent,
+} from './transaction-view.model';
+
+describe('viewerDocument', () => {
+  const printed = '<style>@page{size:210mm 297mm;margin:0}</style><div class="pt-doc"><section class="pt-page">a</section></div>';
+
+  it('TXV-10: the document the template produced is inside the viewer page, unchanged', () => {
+    const page = viewerDocument(printed);
+
+    expect(page).toContain(printed);
+    expect(page.startsWith('<!doctype html>')).toBe(true);
+    expect(page).toContain('<meta charset="utf-8">');
+  });
+
+  it('TXV-11: the pages lie on a grey desk with a gap and a shadow between them, for the screen only', () => {
+    const page = viewerDocument(printed);
+
+    expect(page).toContain(`html{background:${DESK_COLOUR}}`);
+    expect(page).toContain('.pt-page+.pt-page{margin-top:16px}');
+    expect(page).toContain('box-shadow');
+  });
+
+  it('TXV-12: printing takes the desk, the gap and the shadow away so the pages meet exactly', () => {
+    const page = viewerDocument(printed);
+    const print = page.slice(page.indexOf('@media print'));
+
+    expect(print).toContain('html{background:#fff}');
+    expect(print).toContain('.pt-page+.pt-page{margin-top:0}');
+    expect(print).toContain('box-shadow:none');
+  });
+
+  it('TXV-13: the viewer adds nothing that could run', () => {
+    const page = viewerDocument(printed);
+
+    expect(page).not.toContain('<script');
+  });
+});
+
+describe('fitScale', () => {
+  it('TXV-14: a page wider than the room is scaled down to the room', () => {
+    expect(fitScale(397, 794)).toBeCloseTo(0.5, 5);
+    expect(fitScale(330, 794)).toBeCloseTo(0.4156, 3);
+  });
+
+  it('TXV-15: a page that fits is shown at its own size, never blown up', () => {
+    expect(fitScale(1600, 794)).toBe(1);
+    expect(fitScale(794, 794)).toBe(1);
+  });
+
+  it('TXV-16: a room or a page not measured yet gives life size rather than nothing', () => {
+    expect(fitScale(0, 794)).toBe(1);
+    expect(fitScale(500, 0)).toBe(1);
+    expect(fitScale(Number.NaN, 794)).toBe(1);
+  });
+
+  it('TXV-17: it never goes below the smallest scale the viewer allows', () => {
+    expect(fitScale(50, 794)).toBe(MIN_ZOOM);
+  });
+});
+
+describe('zoom', () => {
+  it('TXV-18: plus and minus step through the usual levels and stop at the ends', () => {
+    expect(nextZoom(1, 1)).toBe(1.25);
+    expect(nextZoom(1, -1)).toBe(0.75);
+    expect(nextZoom(MAX_ZOOM, 1)).toBe(MAX_ZOOM);
+    expect(nextZoom(MIN_ZOOM, -1)).toBe(MIN_ZOOM);
+  });
+
+  it('TXV-19: from a fitted scale between two levels, the next step is the one beyond it', () => {
+    expect(nextZoom(0.4156, 1)).toBe(0.5);
+    expect(nextZoom(0.4156, -1)).toBe(0.25);
+    expect(nextZoom(0.9, 1)).toBe(1);
+    expect(nextZoom(0.9, -1)).toBe(0.75);
+  });
+
+  it('TXV-20: a chosen scale is kept between the smallest and the largest', () => {
+    expect(clampZoom(0.01)).toBe(MIN_ZOOM);
+    expect(clampZoom(9)).toBe(MAX_ZOOM);
+    expect(clampZoom(1.5)).toBe(1.5);
+  });
+
+  it('TXV-21: the scale reads as a rounded percentage', () => {
+    expect(zoomPercent(1)).toBe(100);
+    expect(zoomPercent(0.755)).toBe(76);
+    expect(zoomPercent(0.4156)).toBe(42);
+  });
+});
+
+describe('status', () => {
+  it('TXV-22: only a draft or one waiting to be posted can still be edited', () => {
+    expect(isEditableStatus('Draft')).toBe(true);
+    expect(isEditableStatus('ReadyToPost')).toBe(true);
+    expect(isEditableStatus('Posted')).toBe(false);
+    expect(isEditableStatus('Void')).toBe(false);
+    expect(isEditableStatus('Reversed')).toBe(false);
+    expect(isEditableStatus(null)).toBe(false);
+  });
+
+  it('TXV-23: a status is worded for a person and coloured the way every screen colours it', () => {
+    expect(statusLabel('ReadyToPost')).toBe('Ready to post');
+    expect(statusLabel('Posted')).toBe('Posted');
+    expect(statusLabel(null)).toBe('');
+
+    expect(statusTone('Posted')).toBe('tag-success');
+    expect(statusTone('Void')).toBe('tag-danger');
+    expect(statusTone('Draft')).toBe('tag-warning');
+    expect(statusTone('Reversed')).toBe('tag-warning');
+    expect(statusTone(null)).toBe('tag-info');
+  });
+
+  it('TXV-24: a document that is not final says so in words, and a posted one says nothing', () => {
+    expect(statusNotice('quote', 'Draft')).toBe('This quote is a draft. It is stamped so, and is not final until it is posted.');
+    expect(statusNotice('bill', 'ReadyToPost')).toContain('This bill is a draft');
+    expect(statusNotice('invoice', 'Void')).toBe('This invoice is void.');
+    expect(statusNotice('journal voucher', 'Reversed')).toBe('This journal voucher has been reversed by another entry.');
+    expect(statusNotice('invoice', 'Posted')).toBeNull();
+    expect(statusNotice('invoice', null)).toBeNull();
+  });
+
+  it('TXV-25: the heading names the document and its number, or says it has none yet', () => {
+    expect(documentHeading('goods receipt', 'GRN-0007')).toBe('Goods receipt GRN-0007');
+    expect(documentHeading('receipt', null)).toBe('Receipt (no number yet)');
+    expect(documentHeading('journal voucher', '')).toBe('Journal voucher (no number yet)');
+  });
+});

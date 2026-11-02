@@ -1,0 +1,11 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "transaction-view",
+  "projectType": "library",
+  "sourceRoot": "libs/transaction-view/src",
+  "tags": [
+    "scope:shared",
+    "type:ui"
+  ],
+  "targets": {}
+}

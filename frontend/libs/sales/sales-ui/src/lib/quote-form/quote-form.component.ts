@@ -46,6 +46,7 @@ import {
 import { AuthService } from '@bill-book/auth';
 import { PrintTemplateChoice, PrintTemplateService } from '@bill-book/master-core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { transactionViewRoute } from '@bill-book/transaction-view';
 import { SalesPicker } from '../sales-picker';
 
 @Component({
@@ -113,6 +114,11 @@ export class QuoteFormComponent implements OnInit {
 
   isEdit = false;
   quoteId: number | null = null;
+
+  /** The view page shows the document as its print template lays it out, and is where it is printed (TK-263). */
+  viewLink(): string[] {
+    return transactionViewRoute('quotes', this.quoteId ?? 0);
+  }
 
   /** Available print templates for this transaction type */
   protected readonly printTemplates = signal<PrintTemplateChoice[]>([]);

@@ -28,6 +28,9 @@
     <div class="editor-header">
       <h2>{{ editingId === null ? 'New entry' : 'Draft entry' }}</h2>
       <div class="editor-actions">
+        @if (editingId !== null) {
+          <a class="btn btn-secondary" [routerLink]="viewRoute(editingId)">View</a>
+        }
         <button type="button" class="btn btn-ghost" (click)="close()">Cancel</button>
         <button class="btn btn-secondary" type="button" (click)="save(false)" [disabled]="busy()">Save draft</button>
         <button type="button" class="btn btn-primary" (click)="save(true)" [disabled]="busy() || !canPost()">
@@ -185,6 +188,7 @@
         <span class="badge" [class.reversed]="j.status === 'Reversed'">{{ j.status }}</span>
       </h2>
       <div class="editor-actions">
+        <a class="btn btn-secondary" [routerLink]="viewRoute(j.journalId)">View</a>
         <button type="button" class="btn btn-ghost" (click)="close()">Close</button>
         @if (j.status === 'Posted') {
           <button class="btn btn-secondary" type="button" (click)="reverse(j)" [disabled]="busy()">Reverse</button>
@@ -266,7 +270,7 @@
     (rowClick)="open($event.journalId)"
   >
     <ng-template bbCellTemplate="journalNo" let-row>
-      <bb-doc-number code="JRN" [number]="row.journalNo ?? 'Unnumbered draft'" />
+      <bb-doc-number code="JRN" [number]="row.journalNo ?? 'Unnumbered draft'" [viewRoute]="viewRoute(row.journalId)" />
     </ng-template>
 
     <ng-template bbCellTemplate="journalDate" let-row>

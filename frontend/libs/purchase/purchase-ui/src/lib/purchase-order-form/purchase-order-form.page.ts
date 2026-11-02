@@ -39,6 +39,7 @@ import {
   resolveOrgCurrency,
 } from '@bill-book/ui-components';
 import { AuthService } from '@bill-book/auth';
+import { transactionViewRoute } from '@bill-book/transaction-view';
 import { PrintTemplateChoice, PrintTemplateService } from '@bill-book/master-core';
 import {
   ItemOption,
@@ -53,7 +54,6 @@ import {
   gstinState,
   placeOfSupplyFor,
   supplyIsInterState,
-  purchasePrintRoute,
 } from '@bill-book/purchase-core';
 import { matchScannedItem } from '@bill-book/scan-core';
 
@@ -426,10 +426,8 @@ export class PurchaseOrderFormPage {
 
   protected readonly isNew = computed(() => this.purchaseOrderId() === null);
 
-  /** Printing is the branch's to hand out, so the button is shown only to someone who holds the permission. */
-  protected readonly canPrint = computed(() => this.auth.has('purchase.print'));
-
-  protected readonly printLink = computed(() => purchasePrintRoute('purchase-orders', this.purchaseOrderId() ?? 0));
+  /** The view page shows the document as its print template lays it out, and is where it is printed (TK-263). */
+  protected readonly viewLink = computed(() => transactionViewRoute('purchase-orders', this.purchaseOrderId() ?? 0));
   protected readonly canDraft = computed(() => this.isNew() || this.status() === 'Draft');
 
   protected readonly canApprove = computed(() => this.status() === 'Draft');

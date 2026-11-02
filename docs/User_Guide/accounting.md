@@ -302,6 +302,17 @@ A posted document is never edited. If it is wrong, void it and key it again.
 
 A number is taken at **post**, not at save, so drafts you abandon leave the sequence unbroken.
 
+## Viewing and printing
+
+**View** on a saved spend money or receive money document, and its number in the list, open it laid out by the branch's print template for
+payments or receipts on pages like a PDF (TK-263): who was paid or who paid, how (cash, cheque, UPI and so on) and the reference, the bank
+account, and a line for each document the money was applied to with that document's number, date and total. A line that settles no
+document says what it is instead, such as *Advance from customer*. A draft has no number yet and is stamped **DRAFT**; a voided document
+is stamped **VOID**. The layout is the template's, so a change in **Settings › Print templates** changes every receipt and payment, on the
+screen and on paper. **Print** on that page sends the pages to the browser's print dialog, where they can also be saved as a PDF; it shows
+only to someone who holds **banking.print**, and viewing needs only **banking.view**. How much each document still owes after the money
+was applied is not on the page yet.
+
 ## Closed periods
 
 If the books are closed to you for that date, posting is refused and the screen says so. Voiding is refused too — a void changes what the ledger says about that date just as much as a post does. Dating the document after the lock, or having the lock moved, is what unblocks it.
@@ -576,6 +587,14 @@ It is the only screen in the product that names two accounts directly. Everythin
 **The number is taken at post, not when the form opens.** A draft that is never posted must not consume a number, and a person who starts an entry and changes their mind has done exactly that. Drafts read as *Unnumbered* until they post.
 
 **A posted entry is never edited.** It is corrected by a reversing entry that stands beside it — both stay in the ledger, and both are visible.
+
+### Viewing and printing
+
+**View** on a saved journal entry, and its number in the list, open it laid out by the branch's print template for journal vouchers on
+pages like a PDF (TK-263): the reference and memo, and each line's account (with the sub-account beneath it where it has one, such as a
+customer's receivable), its narration and its debit or credit. A draft is stamped **DRAFT** and a reversed entry **REVERSED**. **Print** on
+that page sends the pages to the browser's print dialog, where they can also be saved as a PDF; it shows only to someone who holds
+**accounting.print**, and viewing needs only **accounting.view**.
 
 ### Reversal is paired line by line
 

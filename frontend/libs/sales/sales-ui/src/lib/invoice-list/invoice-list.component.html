@@ -40,7 +40,7 @@
     (rowClick)="open($event)"
   >
     <ng-template bbCellTemplate="documentNo" let-row>
-      <bb-doc-number code="INV" [number]="row.documentNo" />
+      <bb-doc-number code="INV" [number]="row.documentNo" [viewRoute]="viewRoute(row.invoiceId)" />
 
       @if (row.salesOrderId) {
         <span class="chip" title="Raised from a sales order">from order</span>

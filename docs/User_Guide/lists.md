@@ -13,13 +13,14 @@ Every list of documents reads the same way (TK-187). That covers quotes, sales o
 ## Reading a row
 
 - **Number**: the document's code in a small box, then its number. *POR POR-000615*.
+  On the lists of quotes, sales orders, invoices, delivery challans, credit notes, purchase orders, goods receipts, bills, debit notes, spend money, receive money and journal entries, the number is a link: it opens the document as its print template lays it out, on pages like a PDF (TK-263), without opening the document itself. See [Viewing and printing](invoices#viewing-and-printing).
 - **Date**: written with the month by name, *11 Aug 2026*.
 - **Status**: a small tag, the same colour on every list. Still to do is orange, done is grey, and not yet real or no longer real is outlined.
 - **Taxable** and **Total**: amounts in your branch's money format, with paise only when there are some: *₹4,00,000*, but *₹3,38,983.05*. The Total shows the document's currency after it. A document in another currency is written without the ₹.
 
 A purchase order or sales order shows its **fulfilment** once it is confirmed: *Open*, *PartlyReceived* (or *PartlyDelivered*), *Closed* or *Cancelled*. Before that it shows *Draft*.
 
-Click a row to open the document. The buttons in a row, such as **Allocate**, **Delete**, **Reverse** and **Void**, act without opening it.
+Click a row to open the document; click its number to view it as printed. The buttons in a row, such as **Allocate**, **Delete**, **Reverse** and **Void**, act without opening it.
 
 Every row is one line. A list with more columns than fit scrolls sideways inside the card. On a phone each row becomes a card instead.
 

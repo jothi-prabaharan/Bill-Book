@@ -50,27 +50,12 @@ export const purchaseRoutes: Routes = [
     pathMatch: 'full'
   },
   // Keep form routes intact for navigating to them from the transaction list
-  // Printing a document, one page for all four (the :id routes below are two segments, so these never clash).
-  {
-    path: 'purchase-orders/:id/print',
-    loadComponent: () => import('./purchase-print/purchase-print.page').then((m) => m.PurchasePrintPage),
-    data: { printKind: 'purchase-orders', access: { permission: 'purchase.print' } },
-  },
-  {
-    path: 'bills/:id/print',
-    loadComponent: () => import('./purchase-print/purchase-print.page').then((m) => m.PurchasePrintPage),
-    data: { printKind: 'bills', access: { permission: 'purchase.print' } },
-  },
-  {
-    path: 'goods-receipts/:id/print',
-    loadComponent: () => import('./purchase-print/purchase-print.page').then((m) => m.PurchasePrintPage),
-    data: { printKind: 'goods-receipts', access: { permission: 'purchase.print' } },
-  },
-  {
-    path: 'debit-notes/:id/print',
-    loadComponent: () => import('./purchase-print/purchase-print.page').then((m) => m.PurchasePrintPage),
-    data: { printKind: 'debit-notes', access: { permission: 'purchase.print' } },
-  },
+  // The old print URLs open the view page, which is where a document is read as its print template lays
+  // it out and printed (TK-263). Absolute, because the view page's routes are not under this parent.
+  { path: 'purchase-orders/:id/print', redirectTo: '/purchase/purchase-orders/:id/view' },
+  { path: 'bills/:id/print', redirectTo: '/purchase/bills/:id/view' },
+  { path: 'goods-receipts/:id/print', redirectTo: '/purchase/goods-receipts/:id/view' },
+  { path: 'debit-notes/:id/print', redirectTo: '/purchase/debit-notes/:id/view' },
   {
     path: 'purchase-orders/new',
     loadComponent: () =>

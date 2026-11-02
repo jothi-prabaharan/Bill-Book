@@ -2,7 +2,8 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, computed
 import { DecimalPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { transactionViewRoute } from '@bill-book/transaction-view';
 import { ProjectListItem, loadProjects, projectOptions } from '../projects/project-options';
 import {
   ApprovalPanelComponent,
@@ -139,6 +140,7 @@ const SUPPLIER_ADVANCE_SOURCE = 8;
     ApprovalPanelComponent,
     CheckboxComponent,
     IconButtonComponent,
+    RouterLink,
   ],
   templateUrl: './money-document-form.page.html',
   styleUrl: './money-document-form.page.scss',
@@ -234,6 +236,11 @@ export class MoneyDocumentFormPage implements OnInit {
   protected readonly sources = computed<readonly MoneySource[]>(() =>
     this.direction() === 'spend' ? SPEND_SOURCES : RECEIVE_SOURCES,
   );
+
+  /** The view page shows the document as its print template lays it out, and is where it is printed (TK-263). */
+  protected viewRoute(documentId: number): string[] {
+    return transactionViewRoute(this.direction() === 'spend' ? 'spend-money' : 'receive-money', documentId);
+  }
 
   protected readonly title = computed(() =>
     this.direction() === 'spend' ? 'Spend money' : 'Receive money',

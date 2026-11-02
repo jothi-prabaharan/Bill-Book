@@ -10,6 +10,7 @@
         <span class="badge" [class.void]="d.status === 'Void'">{{ d.status }}</span>
       </h2>
       <div class="editor-actions">
+        <a class="btn btn-secondary" [routerLink]="viewRoute(d.documentId)">View</a>
         <button type="button" class="btn btn-ghost" (click)="goBack()">Close</button>
         @if (d.status === 'Posted') {
           @if (d.contactId !== null) {
@@ -88,6 +89,9 @@
     <div class="editor-header">
       <h2>{{ editingId === null ? 'New ' + title().toLowerCase() : 'Draft' }}</h2>
       <div class="editor-actions">
+        @if (editingId !== null) {
+          <a class="btn btn-secondary" [routerLink]="viewRoute(editingId)">View</a>
+        }
         <button type="button" class="btn btn-ghost" (click)="goBack()">Cancel</button>
         <button class="btn btn-secondary" type="button" (click)="save(false)" [disabled]="busy()">Save draft</button>
         <button type="button" class="btn btn-primary" (click)="save(true)" [disabled]="busy() || !canPost">

@@ -26,6 +26,7 @@ import { workOrderRoutes } from '@bill-book/work-order-ui';
 import { preventiveRoutes } from '@bill-book/preventive-ui';
 import { maintenanceContractRoutes } from '@bill-book/maintenance-contract-ui';
 import { siteRoutes } from '@bill-book/site-ui';
+import { transactionViewRoutes } from '@bill-book/transaction-view';
 import { DashboardPage } from './dashboard/dashboard.page';
 
 // Every route waits behind a forced update on the desktop and mobile builds (TK-184).
@@ -364,6 +365,10 @@ export const appRoutes: Routes = withUpdateGate([
         loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.TransferMoneyFormPage),
         data: { access: { permission: 'banking.view' } },
       },
+      // Any transaction, laid out by its print template and shown like a PDF (TK-263): one page, a route
+      // per document type. Ahead of the sales and purchase screens, which are lazy and would otherwise
+      // be asked for a path they do not know.
+      ...transactionViewRoutes,
       // Feature modules mount here as they are built:
       // sales, purchase, banking, contacts, inventory, accounting, reports
       // A lazy module's parent declares access for every child that declares

@@ -28,7 +28,7 @@
     (rowClick)="openDocument($event.documentId)"
   >
     <ng-template bbCellTemplate="transactionNo" let-row>
-      <bb-doc-number [code]="documentCode()" [number]="row.transactionNo ?? 'Unnumbered draft'" />
+      <bb-doc-number [code]="documentCode()" [number]="row.transactionNo ?? 'Unnumbered draft'" [viewRoute]="viewRoute(row.documentId)" />
     </ng-template>
 
     <ng-template bbCellTemplate="transactionDate" let-row>

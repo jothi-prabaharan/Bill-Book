@@ -11,6 +11,7 @@ import {
   readApiFailure,
 } from '@bill-book/api-client';
 import { FormatSettingsService } from '@bill-book/currency-format';
+import { transactionViewRouteOfRow } from '@bill-book/transaction-view';
 import { TransactionService, SalesTransactionListItem } from '@bill-book/sales-core';
 import {
   AllocationModalComponent,
@@ -267,6 +268,11 @@ export class SalesListComponent implements OnInit {
 
   navigateToTransaction(transaction: SalesTransactionListItem) {
     void this.router.navigate([this.getRouteForTransaction(transaction)]);
+  }
+
+  /** The number links to the view page, where the document reads as its print template lays it out (TK-263). */
+  viewRoute(transaction: SalesTransactionListItem): string[] | null {
+    return transactionViewRouteOfRow(transaction.transactionType, transaction.transactionId);
   }
 
   /**

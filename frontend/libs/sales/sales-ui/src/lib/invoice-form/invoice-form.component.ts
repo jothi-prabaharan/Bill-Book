@@ -4,6 +4,7 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { transactionViewRoute } from '@bill-book/transaction-view';
 import { readApiFailure } from '@bill-book/api-client';
 import {
   blankGridLine,
@@ -167,6 +168,9 @@ export class InvoiceFormComponent implements OnInit {
 
   protected readonly isEdit = signal(false);
   protected readonly invoiceId = signal<number | null>(null);
+
+  /** The view page shows the document as its print template lays it out, and is where it is printed (TK-263). */
+  protected readonly viewLink = computed(() => transactionViewRoute('invoices', this.invoiceId() ?? 0));
   protected readonly saving = signal(false);
   protected readonly messages = signal<UiMessage[]>([]);
   protected readonly showConvert = signal(false);

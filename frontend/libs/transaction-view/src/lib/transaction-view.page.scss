@@ -1,0 +1,93 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.view-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.view-title {
+  display: flex;
+  flex: 1 1 14rem;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.view-title__text {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.view-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.zoom {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.zoom__level {
+  min-width: 3.25rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+}
+
+.view-note {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.view-notice {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+}
+
+/* The desk the pages lie on. Its colour is the same grey the frame paints behind the pages, bound in the
+   template from the one constant, so the gap between two pages and the margin around them are one surface. */
+.desk {
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+}
+
+/* The room the paper has. It scrolls sideways only when the person has zoomed past the width. */
+.viewer {
+  overflow-x: auto;
+}
+
+/* Takes the paper's scaled size, because a transform does not: the frame is laid out at its own size and
+   scaled from its corner, and this box is what the page around it measures. */
+.sizer {
+  position: relative;
+  margin: 0 auto;
+}
+
+.paper-frame {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border: 0;
+  transform-origin: 0 0;
+  background: transparent;
+}
+
+/* Until the document has loaded and been measured, the frame is the wrong size. */
+.paper-frame--waiting {
+  visibility: hidden;
+}

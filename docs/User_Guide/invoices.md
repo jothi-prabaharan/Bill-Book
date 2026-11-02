@@ -83,42 +83,56 @@ The list has an **overdue** filter and shows how many days late each invoice is.
 
 The **total** beside the period covers every invoice that matches, in base currency, not only the page on screen. The server works it out with the rest of the query, so it never comes up short against the list it heads. The status tabs count the same way (TK-187).
 
-## Printing
+## Viewing and printing
 
-**Print** on an invoice lays it out with the branch's print template for invoices — the one marked
-default in Settings › Print templates, or the one the invoice names — so changing the template
-changes how every invoice prints. The page shows the document as it will print, and **Print**
-sends that document alone to the browser's print dialog, where it can also be saved as a PDF.
+**View** in an invoice's action bar, and the invoice number in the list, open the invoice laid out by
+the branch's print template for invoices — the one marked default in Settings › Print templates, or
+the one the invoice names — on pages like a PDF (TK-263). Changing the template changes how every
+invoice reads on the screen and on paper, because it is the same layout: what you see is what prints.
 
-**Only a posted invoice is a tax invoice.** A draft still prints, so it can be checked before it is
-posted, but every page is stamped **PROFORMA**; a voided invoice is stamped **VOID**. The stamp is
-added whatever the template holds, so a template cannot leave it off.
+The same page opens every kind of sales and purchase document, and a receipt, a payment or a journal
+voucher. Across the top:
 
-**An unpaid invoice prints a UPI QR code** (TK-158) under the amount in words, captioned *Scan to pay
+- **Back** returns to where you came from.
+- **Edit** (while the invoice is a draft and you may edit sales documents) or **Open** goes to the
+  invoice's own screen, where it is posted, voided or settled.
+- **−**, the percentage, **+** and **Fit** zoom the pages. They open fitted to the width of the
+  screen, so a phone shows the whole page; zoom in to read the small print.
+- **Print** sends the pages, and only the pages, to the browser's print dialog, where they can also be
+  saved as a PDF. Choose *Save as PDF* as the printer and the file is exactly what is on the screen.
+
+Anyone who can see sales documents can view an invoice, Viewer included. **Print** shows only to
+someone who may print sales documents, which Owner, Administrator and Sales have and Viewer does not.
+
+**Only a posted invoice is a tax invoice.** A draft can still be viewed and printed, so it can be
+checked before it is posted, but every page is stamped **PROFORMA** and a line above the pages says
+so; a voided invoice is stamped **VOID**. The stamp is added whatever the template holds, so a
+template cannot leave it off.
+
+**An unpaid invoice shows a UPI QR code** (TK-158) under the amount in words, captioned *Scan to pay
 with any UPI app*. Scanning it opens the customer's payments app with the branch's UPI id, the
 branch's name, the amount still due and the invoice number already filled in.
 
 - Set the branch's UPI id once, as **UPI ID** under **Settings › Configuration** (for example
-  `shop@okhdfcbank`). Something that is not a UPI id is refused. With none set, no QR prints.
+  `shop@okhdfcbank`). Something that is not a UPI id is refused. With none set, no QR shows.
 - A posted invoice asks for what is still outstanding, so a part-paid invoice asks for the rest,
-  and a paid one prints no QR at all. A draft asks for its whole total. A voided invoice prints none.
-- If the amount still due cannot be read from the books at that moment, the invoice prints without
-  the QR rather than risk asking a customer who has paid to pay again. Print again a moment later.
-- UPI carries rupees only, so an invoice in another currency prints none.
+  and a paid one shows no QR at all. A draft asks for its whole total. A voided invoice shows none.
+- If the amount still due cannot be read from the books at that moment, the invoice shows without
+  the QR rather than risk asking a customer who has paid to pay again. Open it again a moment later.
+- UPI carries rupees only, so an invoice in another currency shows none.
 - The QR is the `{{Payment.UpiQr}}` field in Settings › Print templates, offered on invoices.
   Untouched standard invoice templates carry it already; on an edited one, insert it where you like.
 
-Printing needs the permission to print sales documents, which Owner, Administrator and Sales
-have and Viewer does not.
-
-**Download PDF** on a posted or voided invoice saves the PDF that was filed when it was posted.
+**The PDF filed when an invoice was posted is a different thing, and the screen no longer offers it.**
 That copy is kept for the record and is not redrawn later, so it has its own fixed layout rather than
-the print template, and a voided invoice's copy is not stamped VOID. It is a plain PDF, not the
-PDF/A archive format yet. A draft has no filed copy. The download needs the same permission as
-printing.
+the print template, and a voided invoice's copy is not stamped VOID. It is a plain PDF, not the PDF/A
+archive format yet. It used to be behind a **Download PDF** button; with that gone, what you view,
+print and save always matches the template. `GET api/sales/invoices/{id}/pdf` still serves it, and the
+customer portal's download is unchanged.
 
-Two things do not print yet: the amount in words, and the place of supply's state name — it prints
-as the two-digit state code for now.
+Two things do not show yet: the amount in words, and the place of supply's state name — it shows as
+the two-digit state code for now. **Paid** and **Outstanding** rows of a template are blank for the
+same reason: the invoice does not carry them.
 
 ## E-invoicing
 
@@ -264,7 +278,7 @@ After each sale the till prints a receipt through the browser, as a page exactly
 
 - **Set up the paper once per till** under **Printer** at the top of the screen: the roll width (80 mm or 58 mm) and the line printed at the bottom. **Test print** prints a sample at that width. The first time, choose the receipt printer in the browser's print dialog; most browsers remember it. Install the printer's own driver on the computer, as for any printer.
 - **The sale stands if the printer fails.** If the printer is out of paper or unplugged, the sale is still posted and the till says the receipt did not print. Fix the printer and press **F10** to reprint. A reprint is marked *DUPLICATE*.
-- **The receipt ends with the bill number as a barcode** (TK-164), so a return or a reprint finds the sale by scanning it, and scanning it anywhere in the app opens the invoice. **When something is still owed** and the branch has a **UPI ID** under Settings › Configuration, a UPI QR code for that amount prints beneath it, captioned *Scan to pay with any UPI app* — the same rule as the printed invoice's (see [Printing](#printing)). A fully paid sale prints no QR. If the codes cannot be drawn, the receipt prints without them.
+- **The receipt ends with the bill number as a barcode** (TK-164), so a return or a reprint finds the sale by scanning it, and scanning it anywhere in the app opens the invoice. **When something is still owed** and the branch has a **UPI ID** under Settings › Configuration, a UPI QR code for that amount prints beneath it, captioned *Scan to pay with any UPI app* — the same rule as the printed invoice's (see [Viewing and printing](#viewing-and-printing)). A fully paid sale prints no QR. If the codes cannot be drawn, the receipt prints without them.
 - **Names in Tamil or other scripts print as question marks.** The receipt is laid out in fixed-width columns, and those scripts are wider than one column; printing them needs a layout that measures text rather than counting characters.
 
 ## Picking the customer and items

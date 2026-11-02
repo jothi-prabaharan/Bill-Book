@@ -95,8 +95,18 @@ A posted quote shows on the [customer portal](portal#quotes). The customer can *
 - Accepting does not create a sales order. Raising the order stays your decision, because only you
   know the stock, the price and the delivery date.
 
+## Viewing and printing
+
+**View** in a saved quote's action bar, and the quote's number in the list, open it laid out by the branch's print template for quotes
+on pages like a PDF (TK-263): the letterhead, the customer, the lines, the tax split by rate and the totals. The layout is the template's,
+so a change in **Settings › Print templates** changes every quote, on the screen and on paper. **Print** on that page sends the pages to
+the browser's print dialog, where they can also be saved as a PDF; it shows only to someone who may print sales documents. Viewing needs
+only permission to see sales documents. A quote that is still a draft is stamped **DRAFT** across every page.
+
+The quote's **valid until** date is not offered to a template yet, so it does not print unless the quote's notes or terms say it.
+
 ## What is not here yet
 
 - **Converting a quote into a sales order from the quote screen.** The sales order can be raised directly in the meantime.
-- **A PDF archived against the document** — printing is the browser's for now.
+- **A PDF archived against the document** — a quote is read and printed from its view page (see [Viewing and printing](#viewing-and-printing)).
 - **Emailing a quote to the customer.**

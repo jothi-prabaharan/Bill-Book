@@ -505,7 +505,7 @@ Numbering follows `TRANSACTIONS.md`, so a cross-reference written before this fi
 | **Written, unverified end to end** | T3.6 delivery challan, T5.2 credit note — both can now save, neither has been driven through a full path |
 | **Written, defective in a named line** | T5.2 (`ReturnsStockMovementId`), T3.6 (invoice re-issues challan stock) |
 | **Part built** | T3.3 outstanding — settlement now shows on the invoice list (Paid / Part-paid / Unpaid, from `internal/ledger/settlements`), still no aging buckets |
-| **Part built** | T3.4 print — the browser print view exists, and since 6 September a **template master and server-side renderer** exist behind it (`docs/Master.md` stage 7). The per-document print route is not built, blocked on a tenancy decision. An archived copy **is** written: posting an invoice renders it with PDFsharp and saves it to storage — but as plain PDF rather than PDF/A, in a fixed layout rather than the template, for invoices only, and with no endpoint to fetch it (TK-22, D-11 in `docs/Task_Details.md`) |
+| **Part built** | T3.4 print — the browser print view exists, and since 6 September a **template master and server-side renderer** exist behind it (`docs/Master.md` stage 7). The per-document routes are built for all twelve types (TK-263: `GET …/{id}/view`, one page, `libs/transaction-view`). An archived copy **is** written: posting an invoice renders it with PDFsharp and saves it to storage — but as plain PDF rather than PDF/A, in a fixed layout rather than the template, for invoices only, and with no endpoint to fetch it (TK-22, D-11 in `docs/Task_Details.md`) |
 | **Not built** | T7.1 POS till screen (Phase 3); the item and customer pickers on every sales form, which wait on the item lookup endpoint |
 
 ---
@@ -1208,8 +1208,8 @@ argument does not have to be reconstructed from a diff.
 
 | | |
 |---|---|
-| **Built** | The eighth service, `Printing`, on `prt`: the ten-route template API, `api/print/render`, branch seeding, the renderer and sanitiser, the twelve-type catalogue; the editor (Settings › Print templates); the sales invoice's print route, with PROFORMA/VOID stamped by the renderer |
-| **Not built** | Print routes for the other seven document types (quote, sales order, delivery challan, credit note, receipt, payment, journal); the purchase order, goods receipt, bill and debit note print through `PurchasePrintRepository` (`GET api/purchase/{purchase-orders\|goods-receipts\|bills\|debit-notes}/{id}/print`); PDF/A; the amount in words and the place-of-supply state name on the invoice payload |
+| **Built** | The eighth service, `Printing`, on `prt`: the ten-route template API, `api/print/render`, branch seeding, the renderer and sanitiser, the twelve-type catalogue; the editor (Settings › Print templates); a `view` route for each of the twelve transaction types (Sales, Purchase and Accounting build the payload and Printing lays it out), and the one view page that shows them (TK-263); PROFORMA/DRAFT/VOID/REVERSED stamped by the renderer |
+| **Not built** | PDF/A; the amount in words, the unit, the party's state, and paid and outstanding on the payloads; a receipt line's remaining balance; a quote's valid-until date (it has no template tag); a PDF download rendered from the template (`api/print/render-pdf` exists but no screen calls it) |
 | **Decided** | Full move; callers push the payload under the user's token; `con.PrintTemplates` dropped and branches re-seeded rather than copied (D-13: nothing deployed) |
 
 ---

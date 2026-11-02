@@ -13,9 +13,7 @@
           Receive the goods
         </button>
       }
-      @if (canPrint()) {
-        <a class="btn btn-secondary m-0" [routerLink]="printLink()">Print</a>
-      }
+      <a class="btn btn-secondary m-0" [routerLink]="viewLink()">View</a>
       <button type="button" class="btn btn-secondary m-0" (click)="openLabels()">
         Print labels
       </button>

@@ -4,6 +4,7 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { transactionViewRoute } from '@bill-book/transaction-view';
 import { firstValueFrom } from 'rxjs';
 import { readApiFailure } from '@bill-book/api-client';
 import {
@@ -138,6 +139,9 @@ export class CreditNoteFormComponent implements OnInit {
 
   protected readonly isEdit = signal(false);
   protected readonly creditNoteId = signal<number | null>(null);
+
+  /** The view page shows the document as its print template lays it out, and is where it is printed (TK-263). */
+  protected readonly viewLink = computed(() => transactionViewRoute('credit-notes', this.creditNoteId() ?? 0));
   protected readonly saving = signal(false);
   protected readonly loadingInvoice = signal(false);
   protected readonly messages = signal<UiMessage[]>([]);

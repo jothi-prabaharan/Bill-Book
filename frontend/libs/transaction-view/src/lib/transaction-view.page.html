@@ -1,0 +1,71 @@
+<div class="view-bar">
+  <button type="button" class="btn btn-secondary" (click)="back()">Back</button>
+
+  <div class="view-title">
+    <h1 class="view-title__text">{{ heading() }}</h1>
+    @if (status(); as current) {
+      <span class="tag" [ngClass]="tone(current)">{{ statusText(current) }}</span>
+    }
+  </div>
+
+  <div class="view-actions">
+    @if (paper()) {
+      <div class="zoom" role="group" aria-label="Zoom">
+        <button type="button" class="btn btn-secondary" aria-label="Zoom out" (click)="zoomOut()">−</button>
+        <span class="zoom__level" aria-live="polite">{{ percent() }}%</span>
+        <button type="button" class="btn btn-secondary" aria-label="Zoom in" (click)="zoomIn()">+</button>
+        <button type="button" class="btn btn-secondary" [disabled]="fitting()" (click)="fit()">Fit</button>
+      </div>
+    }
+
+    @if (info()) {
+      <button
+        type="button"
+        class="btn btn-secondary"
+        [title]="canEdit() ? 'Change this ' + label() : 'Open this ' + label() + ' where it can be posted, voided or settled'"
+        (click)="open()"
+      >
+        {{ canEdit() ? 'Edit' : 'Open' }}
+      </button>
+    }
+
+    @if (canPrint()) {
+      <button type="button" class="btn btn-primary" [disabled]="!paper()" (click)="print()">Print</button>
+    }
+  </div>
+</div>
+
+<bb-message-box [messages]="messages()" />
+
+@if (notice(); as text) {
+  <p class="view-notice">{{ text }}</p>
+}
+
+@if (loading()) {
+  <p class="view-note">Preparing the {{ label() }}…</p>
+} @else if (srcdoc(); as document) {
+  <p class="view-note">{{ pages() }}</p>
+
+  <div class="desk" [style.background]="desk">
+    <div #viewer class="viewer">
+      <div
+        class="sizer"
+        [style.width.px]="paper() ? paper()!.width * scale() : null"
+        [style.height.px]="paper() ? paper()!.height * scale() : null"
+      >
+        <iframe
+          #frame
+          class="paper-frame"
+          [class.paper-frame--waiting]="!paper()"
+          [title]="'The ' + label() + ' as it prints'"
+          sandbox="allow-same-origin allow-modals"
+          [srcdoc]="document"
+          [style.width.px]="paper()?.width ?? 800"
+          [style.height.px]="paper()?.height ?? 600"
+          [style.transform]="'scale(' + scale() + ')'"
+          (load)="onFrameLoad()"
+        ></iframe>
+      </div>
+    </div>
+  </div>
+}

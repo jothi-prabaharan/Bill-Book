@@ -31,6 +31,7 @@ import {
   readApiFailure,
 } from '@bill-book/api-client';
 import { FormatSettingsService } from '@bill-book/currency-format';
+import { transactionViewRouteOfRow } from '@bill-book/transaction-view';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { combineLatest, of } from 'rxjs';
@@ -268,6 +269,11 @@ export class PurchaseListPage implements OnInit {
 
   navigateToTransaction(transaction: PurchaseTransactionListItem) {
     void this.router.navigate([this.getRouteForTransaction(transaction)]);
+  }
+
+  /** The number links to the view page, where the document reads as its print template lays it out (TK-263). */
+  viewRoute(transaction: PurchaseTransactionListItem): string[] | null {
+    return transactionViewRouteOfRow(transaction.transactionType, transaction.transactionId);
   }
 
   /**

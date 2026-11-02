@@ -46,6 +46,18 @@ Lower a quantity or a price to credit part of a line; remove a line to leave it 
 | GST return | The note is recorded for GSTR-1 against its original invoice |
 | PDF | A PDF of the note, naming the invoice it is against, is filed for the record. `GET api/sales/credit-notes/{id}/pdf` downloads it |
 
+## Viewing and printing
+
+**View** in a saved credit note's action bar, and the note's number in the list, open it laid out by the branch's print template for
+credit notes on pages like a PDF (TK-263): the customer, the lines, the tax split by rate and the totals, with the reason it was raised
+and the invoice it is against. A note registered with the IRP shows its IRN and signed QR code even if the template does not place them;
+a posted note that needs an IRN and has none yet is stamped **IRN PENDING**, as an invoice is. The layout is the template's, so a change
+in **Settings › Print templates** changes every credit note, on the screen and on paper. **Print** on that page sends the pages to the
+browser's print dialog, where they can also be saved as a PDF; it shows only to someone who may print sales documents.
+
+The PDF filed when the note was posted is a separate copy with its own fixed layout, kept for the record. It is not linked from the
+screen; `GET api/sales/credit-notes/{id}/pdf` still serves it.
+
 Posting is refused, with the reason, when:
 
 - the invoice is no longer posted, or is for another customer

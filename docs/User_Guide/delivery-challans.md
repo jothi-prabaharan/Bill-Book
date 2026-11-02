@@ -67,6 +67,18 @@ The checks run again when the challan is posted, not only when it is saved: anot
 
 Posting also files a PDF of the challan, naming its sales order if it has one. `GET api/sales/delivery-challans/{id}/pdf` downloads it. A refused post files nothing.
 
+## Viewing and printing
+
+**View** in a saved challan's action bar, and the challan's number in the list, open it laid out by the branch's print template for
+delivery challans on pages like a PDF (TK-263): the customer, the lines, the dispatch date, the vehicle and transporter, the e-way bill
+number and date, and the sales order it was raised against. The layout is the template's, so a change in **Settings › Print templates**
+changes every challan, on the screen and on paper. **Print** on that page sends the pages to the browser's print dialog, where they can
+also be saved as a PDF; it shows only to someone who may print sales documents. A draft challan is stamped **DRAFT** and a voided one
+**VOID**.
+
+The PDF filed when the challan was posted is a separate copy with its own fixed layout, kept for the record. It is not linked from the
+screen; `GET api/sales/delivery-challans/{id}/pdf` still serves it.
+
 A posted challan cannot be withdrawn. The goods have physically left, and taking the paperwork back would leave the stock gone with nothing to explain it. **Raise a return instead.**
 
 ## Voiding one

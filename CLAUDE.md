@@ -446,9 +446,16 @@ TK-81). A document's own service builds a `PrintPayload` from its own tables —
 `PlaceholderCatalog`'s tags — and posts it to Printing's `api/print/render` **under the user's own
 token**, so Printing resolves that branch's template through its own query filter and no internal
 endpoint has to be told which branch it is serving. Sales never reads a template and Printing
-never reads an invoice. The invoice (`GET api/sales/invoices/{id}/print`) and the purchase order, goods
-receipt, bill and debit note (`GET api/purchase/{purchase-orders|goods-receipts|bills|debit-notes}/{id}/print`,
-`purchase.print`) print this way so far; the other seven printable types have no print route yet.
+never reads an invoice. **All twelve transaction types print this way** (TK-263): the invoice, quote, sales order,
+delivery challan and credit note (`GET api/sales/{invoices|quotes|sales-orders|delivery-challans|credit-notes}/{id}/view`),
+the purchase order, goods receipt, bill and debit note (`GET api/purchase/{purchase-orders|goods-receipts|bills|debit-notes}/{id}/view`),
+the receipt and payment (`GET api/{receive-money|spend-money}/{id}/view`) and the journal voucher (`GET api/journals/{id}/view`).
+**`view` is at the module's `.view` permission and `print` at its `.print`**: the Viewer role holds only `.view`, and reading a
+document on screen is not handing it to somebody outside the business. The invoice and the four purchase documents keep their
+`print` route beside `view`; the other seven have `view` only. The response is the laid-out document plus its number, type and
+status. **One page shows them all**: `TransactionViewPage` in `libs/transaction-view`, a route per type
+(`sales/quotes/:id/view`, `banking/receive-money/:id/view`, …) built from one kind table, with the document's number in each
+register linking to it. The shared header, party, item and tax payload is `Shared.Kernel.Printing.DocumentPrintPayload`.
 
 - **The contract stays in `Shared.Kernel.Printing`**: `PrintPayload`, `PrintFormatContext`,
   `DocumentTypeCatalog`, `PlaceholderCatalog` and `MergeTags`' text-level half — what both sides

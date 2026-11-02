@@ -4,6 +4,7 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { readApiFailure } from '@bill-book/api-client';
+import { transactionViewRoute } from '@bill-book/transaction-view';
 import { SalesOrderListItem, SalesOrderService } from '@bill-book/sales-core';
 import {
   ColumnDef,
@@ -192,6 +193,11 @@ export class SalesOrderListComponent implements OnInit {
 
   protected create(): void {
     void this.router.navigate(['/sales/sales-orders/new']);
+  }
+
+  /** The order number links to the view page, where it reads as its print template lays it out (TK-263). */
+  protected viewRoute(salesOrderId: number): string[] {
+    return transactionViewRoute('sales-orders', salesOrderId);
   }
 }
 

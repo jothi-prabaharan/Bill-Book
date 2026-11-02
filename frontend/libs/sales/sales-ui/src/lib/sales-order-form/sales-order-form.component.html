@@ -13,6 +13,7 @@
     }
 
     @if (isEdit()) {
+      <a class="btn btn-secondary m-0" [routerLink]="viewLink()">View</a>
       <button type="button" class="btn btn-secondary m-0" (click)="openStock()">Stock</button>
     }
 

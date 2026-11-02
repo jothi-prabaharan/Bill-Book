@@ -7,6 +7,10 @@
   (saveDraft)="save()"
 >
   <div createActions class="child-actions m-0">
+    @if (isEdit()) {
+      <a class="btn btn-secondary m-0" [routerLink]="viewLink()">View</a>
+    }
+
     @if (canPost()) {
       <button type="button" class="btn btn-secondary m-0" [disabled]="saving()" (click)="post()">
         Post

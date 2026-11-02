@@ -23,7 +23,7 @@
     (rowClick)="navigateToTransaction($event)"
   >
     <ng-template bbCellTemplate="documentNo" let-row>
-      <bb-doc-number [code]="row.code" [number]="row.documentNo" />
+      <bb-doc-number [code]="row.code" [number]="row.documentNo" [viewRoute]="viewRoute(row)" />
     </ng-template>
 
     <ng-template bbCellTemplate="documentDate" let-row>

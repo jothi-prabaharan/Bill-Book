@@ -43,6 +43,7 @@ import {
   resolveOrgCurrency,
 } from '@bill-book/ui-components';
 import { AuthService } from '@bill-book/auth';
+import { transactionViewRoute } from '@bill-book/transaction-view';
 import { goodsReceiptLabelKind, goodsReceiptLabels } from './goods-receipt-labels';
 
 import {
@@ -60,7 +61,6 @@ import {
   gstinState,
   placeOfSupplyFor,
   supplyIsInterState,
-  purchasePrintRoute,
 } from '@bill-book/purchase-core';
 import { gtinCandidates, matchScannedItem, parseGs1 } from '@bill-book/scan-core';
 import { ReceivingLine, ScannedBatch, receiveScanned, zeroReceived } from './goods-receipt-scan';
@@ -437,10 +437,8 @@ export class GoodsReceiptFormPage {
 
   protected readonly isNew = computed(() => this.goodsReceiptId() === null);
 
-  /** Printing is the branch's to hand out, so the button is shown only to someone who holds the permission. */
-  protected readonly canPrint = computed(() => this.auth.has('purchase.print'));
-
-  protected readonly printLink = computed(() => purchasePrintRoute('goods-receipts', this.goodsReceiptId() ?? 0));
+  /** The view page shows the document as its print template lays it out, and is where it is printed (TK-263). */
+  protected readonly viewLink = computed(() => transactionViewRoute('goods-receipts', this.goodsReceiptId() ?? 0));
 
   protected readonly canDraft = computed(() => this.isNew() || this.status() === 'Draft');
   protected readonly canPost = computed(() => !this.isNew() && !this.readonlyDoc());

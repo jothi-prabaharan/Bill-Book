@@ -15,9 +15,7 @@
     }
 
     @if (isEdit()) {
-      <a class="btn btn-secondary m-0" [routerLink]="['/sales/invoices', invoiceId(), 'print']">
-        Print
-      </a>
+      <a class="btn btn-secondary m-0" [routerLink]="viewLink()">View</a>
     }
 
     @if (canPost()) {

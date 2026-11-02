@@ -61,11 +61,9 @@ export const salesRoutes: Routes = [
     path: 'invoices/new',
     loadComponent: () => import('./invoice-form/invoice-form.component').then(m => m.InvoiceFormComponent), data: { motionIndex: 4, depth: 2 }
   },
-  // Before 'invoices/:id', or the :id route swallows it.
-  {
-    path: 'invoices/:id/print',
-    loadComponent: () => import('./invoice-print/invoice-print.page').then(m => m.InvoicePrintPage), data: { motionIndex: 4, depth: 2 }
-  },
+  // The old print URL opens the view page, which is where an invoice is read as its print template lays it
+  // out and printed (TK-263). Absolute, because the view page's routes are not under this parent.
+  { path: 'invoices/:id/print', redirectTo: '/sales/invoices/:id/view' },
   {
     path: 'invoices/:id',
     loadComponent: () => import('./invoice-form/invoice-form.component').then(m => m.InvoiceFormComponent), data: { motionIndex: 4, depth: 2 }

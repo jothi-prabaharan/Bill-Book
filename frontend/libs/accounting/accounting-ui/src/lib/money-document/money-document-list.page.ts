@@ -33,6 +33,7 @@ import {
   readApiFailure,
 } from '@bill-book/api-client';
 import { FormatSettingsService } from '@bill-book/currency-format';
+import { transactionViewRoute } from '@bill-book/transaction-view';
 
 type Direction = 'spend' | 'receive';
 
@@ -203,6 +204,11 @@ export class MoneyDocumentListPage implements OnInit {
   openDocument(documentId: number): void {
     const basePath = this.direction() === 'spend' ? '/banking/spend-money' : '/banking/receive-money';
     void this.router.navigate([basePath, documentId]);
+  }
+
+  /** The number links to the view page, where the document reads as its print template lays it out (TK-263). */
+  viewRoute(documentId: number): string[] {
+    return transactionViewRoute(this.direction() === 'spend' ? 'spend-money' : 'receive-money', documentId);
   }
 
   contactName(contactId: number | null): string {

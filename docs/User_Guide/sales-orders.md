@@ -84,6 +84,14 @@ Two things about the conversion are worth knowing:
 
 A quote becomes at most one order. Converting the same quote twice is refused, so a double-click cannot raise two.
 
+## Viewing and printing
+
+**View** in a saved order's action bar, and the order's number in the list, open it laid out by the branch's print template for sales
+orders on pages like a PDF (TK-263): the customer, the lines, the tax split by rate and the totals, with the quote it came from and its
+delivery date. The layout is the template's, so a change in **Settings › Print templates** changes every sales order, on the screen and
+on paper. **Print** on that page sends the pages to the browser's print dialog, where they can also be saved as a PDF; it shows only to
+someone who may print sales documents. A draft order is stamped **DRAFT** and a voided one **VOID**.
+
 ## Voiding one
 
 An order is never deleted. Its number was spent when it was created, so abandoning it is a **void with a reason**, and the row stays with its number — a gap in a document series is what an auditor asks about, and a withdrawn order with a reason on it is an answer.

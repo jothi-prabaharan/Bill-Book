@@ -11,6 +11,7 @@ import {
   readApiFailure,
 } from '@bill-book/api-client';
 import { FormatSettingsService } from '@bill-book/currency-format';
+import { transactionViewRoute } from '@bill-book/transaction-view';
 import {
   E_INVOICE_STATUS_LABELS,
   EInvoiceStatus,
@@ -242,6 +243,11 @@ export class InvoiceListComponent implements OnInit {
 
   protected create(): void {
     void this.router.navigate(['/sales/invoices/new']);
+  }
+
+  /** The invoice number links to the view page, where it reads as its print template lays it out (TK-263). */
+  protected viewRoute(invoiceId: number): string[] {
+    return transactionViewRoute('invoices', invoiceId);
   }
 
   /**
