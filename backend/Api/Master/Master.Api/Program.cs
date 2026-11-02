@@ -116,11 +116,28 @@ builder.Services.AddDbContext<ContactsDbContext>((sp, options) =>
 builder.Services.AddScoped<IPasswordHasherRepository, BcryptPasswordHasher>();
 builder.Services.AddScoped<ITokenRepository, JwtTokenRepository>();
 builder.Services.AddScoped<IOtpRepository, OtpService>();
-// WhatsApp and SMS codes (TK-196). No provider is chosen yet (D-66), so
-// Development writes the code to the log and every other environment refuses
-// to send: a trial signup then says it cannot send a code, and a password reset
-// still answers its usual 200. A provider is one more implementation here.
-if (builder.Environment.IsDevelopment())
+// WhatsApp and SMS codes (TK-196). MSG91 is the provider (D-66, owner, 2 November 2026): it is used in any
+// environment that has an auth key (Msg91:AuthKey, a secret from the environment or Key Vault). Without one,
+// Development writes the code to the log and every other environment refuses to send, so a trial signup says
+// it cannot send a code and a password reset still answers its usual 200. Email is the default channel on both
+// flows whatever is configured here; this only decides how a code reaches someone who chose WhatsApp or SMS.
+builder.Services.Configure<Msg91Options>(builder.Configuration.GetSection(Msg91Options.Section));
+if (!string.IsNullOrWhiteSpace(builder.Configuration[$"{Msg91Options.Section}:AuthKey"]))
+{
+    Msg91Options msg91 = builder.Configuration.GetSection(Msg91Options.Section).Get<Msg91Options>() ?? new Msg91Options();
+    var msg91Url = new Uri(msg91.BaseUrl.TrimEnd('/') + "/");
+    if (msg91Url.Scheme != Uri.UriSchemeHttps && !builder.Environment.IsDevelopment())
+    {
+        throw new InvalidOperationException("Msg91:BaseUrl must be https outside Development: the auth key travels in a request header.");
+    }
+
+    builder.Services.AddHttpClient<IMobileMessageClient, Msg91MobileMessageClient>(client =>
+    {
+        client.BaseAddress = msg91Url;
+        client.Timeout = TimeSpan.FromSeconds(15);
+    });
+}
+else if (builder.Environment.IsDevelopment())
 {
     builder.Services.AddScoped<IMobileMessageClient, LoggingMobileMessageClient>();
 }

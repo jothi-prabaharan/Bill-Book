@@ -335,7 +335,26 @@ The invitee follows the link to `/accept-invitation`, sets a password, and the e
 
 > **Signup and reset codes by email come from the platform's own mailbox** (TK-197): the mail settings with no customer, which a platform operator sets. With none set, a signup by email says codes cannot be sent by email and creates nothing.
 >
-> **WhatsApp and SMS codes need a messaging provider, and none is chosen yet (D-66).** Signup and Forgot password both offer WhatsApp and SMS (TK-196). Until a provider is configured, a development install writes each code to the Master service's log, and every other install sends nothing: a signup by WhatsApp or SMS says codes cannot be sent that way and creates nothing, and a reset sends nothing. Email works meanwhile. An invited user's mobile number is not verified by the invitation.
+> **WhatsApp and SMS codes go through MSG91** (D-66, chosen 2 November 2026), and **email stays the default channel** on signup and on a password reset: a request that names no channel gets an email. MSG91 sends both the SMS and the WhatsApp message, from one account, once it is set up as below. Until then a development install writes each code to the Master service's log and every other install sends nothing: a signup by WhatsApp or SMS says codes cannot be sent that way and creates nothing, and a reset sends nothing. Email works meanwhile. An invited user's mobile number is not verified by the invitation.
+>
+> **Setting MSG91 up** (an operator's job, on the Master service). Set the settings below in the service's environment, or in Key Vault with `--` for each `:`. The **auth key is a secret**: set it as `Msg91__AuthKey` and never put it in a file in the repository. With no auth key, MSG91 is not used.
+>
+> | Setting | What it is |
+> |---|---|
+> | `Msg91:AuthKey` | The account's auth key (secret). Its presence switches MSG91 on. |
+> | `Msg91:BaseUrl` | Defaults to `https://control.msg91.com/`. Must be `https` outside development. |
+> | `Msg91:Sms:TrialSignupTemplateId`, `Msg91:Sms:PasswordResetTemplateId` | The MSG91 template ids of the two SMS templates. Both may be the same template. |
+> | `Msg91:Sms:CodeVariable` | The template variable that holds the six digits. Defaults to `OTP`. |
+> | `Msg91:Sms:ValidityVariable` | The variable that holds the minutes the code lasts, only for a template whose text says so. Blank sends none. |
+> | `Msg91:WhatsApp:IntegratedNumber` | The WhatsApp business number connected to MSG91, with its country code and no `+`. |
+> | `Msg91:WhatsApp:Namespace`, `Msg91:WhatsApp:Language` | The template namespace MSG91 shows for the account (blank leaves it out) and the template language, `en` by default. |
+> | `Msg91:WhatsApp:TrialSignupTemplate`, `Msg91:WhatsApp:PasswordResetTemplate` | The names of the two approved WhatsApp templates. |
+> | `Msg91:WhatsApp:CopyCodeButton` | On by default, because an authentication template has a Copy code button that wants the code again. Turn it off for a template without one. |
+>
+> **Before anything can be sent**, India's rules need the templates registered. For SMS, register the sender id and a DLT template in MSG91 whose text holds one variable for the code, for example `{#var#} is your Bill Book code. Do not share it with anyone.`, and use that template's id for both purposes or register one for each. For WhatsApp, have MSG91 submit an **authentication** template for approval. A purpose with no template configured refuses on that channel alone: the other channel and email keep working.
+>
+> **Check it once** after setting it up: sign up (or reset a password) choosing SMS, then WhatsApp, with a mobile number you hold. The Master log says why a code did not go: MSG91 could not be reached, did not answer in time, or refused the message. It never logs the code or the auth key, and it masks the number. A failed send is not retried, because a second attempt could deliver two codes; the person asks for a new one.
+
 
 ## Revoking access
 

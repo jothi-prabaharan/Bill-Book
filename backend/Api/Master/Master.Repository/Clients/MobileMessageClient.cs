@@ -20,13 +20,13 @@ public sealed record MobileOtpMessage(
 /// Sends one-time codes to a mobile number by WhatsApp or SMS: the one place
 /// either flow reaches a messaging provider (TK-196).
 ///
-/// <b>No provider is chosen yet (D-66).</b> Which implementation runs is decided
+/// <b>MSG91 is the provider (D-66).</b> Which implementation runs is decided
 /// in <c>Program.cs</c>, the way <c>IEventPublisher</c> and <c>IFileStorage</c>
-/// are: Development writes the code to the log, and anywhere else every send is
-/// refused with <see cref="OtpDeliveryException.IsUnavailable"/> set, so a trial
+/// are: <see cref="Msg91MobileMessageClient"/> where an auth key is configured;
+/// otherwise Development writes the code to the log, and anywhere else every send
+/// is refused with <see cref="OtpDeliveryException.IsUnavailable"/> set, so a trial
 /// signup says it cannot send a code rather than waiting for one that never
-/// comes. A provider, once chosen, is a third implementation behind the same
-/// interface and nothing else changes.
+/// comes. Email is always the default channel and never comes through here.
 /// </summary>
 public interface IMobileMessageClient
 {
@@ -93,7 +93,7 @@ public static class MobileMessages
 }
 
 /// <summary>
-/// Development only: writes the code to the log so a signup or a reset can be
+/// Development only, and only with no MSG91 auth key: writes the code to the log so a signup or a reset can be
 /// finished on a developer's machine. Never registered outside Development,
 /// because a code in a log is a code anyone reading the log can use.
 /// </summary>
@@ -117,7 +117,7 @@ public sealed class LoggingMobileMessageClient : IMobileMessageClient
 }
 
 /// <summary>
-/// Every environment but Development until a provider is chosen (D-66): each
+/// Every environment but Development that has no MSG91 auth key (D-66): each
 /// send is refused, and logged, so the gap is visible in the logs rather than
 /// as people waiting for codes.
 /// </summary>
@@ -130,7 +130,7 @@ public sealed class UnconfiguredMobileMessageClient : IMobileMessageClient
     public Task SendOtpAsync(MobileOtpMessage message, CancellationToken ct)
     {
         _logger.LogWarning(
-            "A {Channel} code for {Purpose} was not sent: no WhatsApp or SMS provider is configured (D-66).",
+            "A {Channel} code for {Purpose} was not sent: MSG91 is not configured (no Msg91:AuthKey, D-66).",
             message.Channel,
             message.Purpose);
 
