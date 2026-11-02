@@ -7635,6 +7635,25 @@ The queue below is one list in card-number order. Each card names its group.
 - **Done when:** every report page and the generic grid show dates and money in the branch's format, and the docs say what is and is not covered.
 - **Notes:** Not changed, on purpose: the document registers (TK-187), quantity, rate and percent columns, and the Excel and CSV exports.
 
+### TK-263 · One view page for every transaction, laid out by its print template
+- [~] working (Claude Sonnet 5.5) — since 2026-11-02
+- **Issue:** [#252](https://github.com/jothi-prabaharan/Bill-Book/issues/252)
+- **Group:** Z · Owner request of 2 November 2026 (`/goal`): "add one view page for all transactions. the view page must be match the print template for the respective transaction. like PDF."
+- **Lanes:** L-SAL, L-PUR, L-ACC, L-KERNEL (the shared document payload builder), L-UI (`ui-components`), L-SAL-UI, L-PUR-UI, L-ACC-UI, L-DOC (`CLAUDE.md` printing paragraph, `docs/Modules.md`) · **Depends on:** — · **Decision:** the owner's request of 2 November 2026
+- **Where:** `backend/Api/{Sales,Purchase,Accounting}` (a `view` route per document, `*PrintRepository` for the types that had none, Accounting's `PrintingClient`), `backend/shared/Shared.Kernel/Printing`; `frontend/libs/shared/ui-components` (`TransactionViewPage`, its service and kind table), the sales, purchase and accounting route files and the lists and forms that link to it.
+- **State:** checked 2 November 2026. A document opens only in its edit form. The invoice's print page shows the PDF archived at posting (`PdfSharpInvoiceRenderer`, a fixed layout that is not the branch's template) ahead of the template's output, and the purchase print page shows the template's output, so the two disagree. Seven of the twelve transaction types that have a print template (quote, sales order, delivery challan, credit note, receipt, payment, journal voucher) have no print route. The Viewer role holds only `*.view`, so the page cannot sit behind `*.print`.
+- **Sub-tasks:**
+  - [ ] Shared builder: the header, party, item and tax payload that Purchase built for its four documents moves to `Shared.Kernel.Printing` so Sales builds quotes, orders, challans and credit notes the same way; Purchase delegates to it.
+  - [ ] `GET …/{id}/view` (module `view` permission, the laid-out document plus its number, type and status) for the invoice and the four purchase documents, beside their `print` routes.
+  - [ ] Sales: `SalesPrintRepository` for quote, sales order, delivery challan and credit note (the credit note carries its IRN like the invoice), and their `view` routes.
+  - [ ] Accounting: a Printing client, payloads for the receipt and payment (the documents the money was applied to) and the journal voucher (its lines), and their `view` routes.
+  - [ ] One `TransactionViewPage` in `ui-components`, a kind table naming each type's route, label and print permission, and a route per type in the sales, purchase, banking and accounting route files; the invoice and purchase print URLs redirect to it and the two print pages go.
+  - [ ] A View link on every document list and form.
+  - [ ] Verify against the local stack: each type's `view` route with posted, draft and void documents and a document in no branch (404); the page in a browser at 1280px and 360px, in a Viewer's session and an Owner's.
+  - [ ] Docs in the same commits: the module pages under `docs/User_Guide/`, `docs.manifest.ts`, `release-notes.md` and `releases.md`, `CLAUDE.md`'s printing paragraph, `docs/Modules.md`; this card ticked; `python3 scripts/update-task-list.py`; `Closes #252`.
+- **Done when:** every transaction type that has a print template opens in the one view page, laid out by that template, from its list and its form, checked in a browser at 1280px and 360px, and the docs say so.
+- **Notes:** Not changed, on purpose: the print templates and their editor, the PDF archived at posting (TK-22), restaurant bills and kitchen tickets, the POS till receipt, transfer money and opening balances (not printable types).
+
 ## 3. Decisions from the owner
 
 These aren't tasks, and an agent never answers one itself. When a decision is made, record the
