@@ -6,7 +6,7 @@ rewrites and stages it whenever the details file changes. **Never edit it by han
 status, edit the card's first line in the details file; the card there holds the rules, lanes,
 where to start, sub-tasks and notes.
 
-**Summary:** 248 completed, 0 working, 10 open, and 2 blocked (260 cards).
+**Summary:** 248 completed, 1 working, 10 open, and 2 blocked (261 cards).
 
 | Card | Title | Group | Status | Completed by | Completed at | Tests | Issue | Note |
 | :--- | :--- | :--- | :---: | :--- | :--- | :--- | :---: | :--- |
@@ -270,3 +270,4 @@ where to start, sub-tasks and notes.
 | [TK-261](./Task_Details.md#tk-261--backend-shortening-1-remove-the-dead-code-the-audit-found) | Backend shortening 1: remove the dead code the audit found | Z | ✅ completed | Claude Sonnet 5.5 | 2026-10-24 | not needed | [#250](https://github.com/jothi-prabaharan/Bill-Book/issues/250) | no tests needed, nothing behaves differently |
 | [TK-262](./Task_Details.md#tk-262--reports-show-dates-and-money-in-the-branchs-format) | Reports show dates and money in the branch's format | Z | ✅ completed | Claude Sonnet 5.5 | 2026-10-26 | written, not run | [#251](https://github.com/jothi-prabaharan/Bill-Book/issues/251) | — |
 | [TK-263](./Task_Details.md#tk-263--one-view-page-for-every-transaction-laid-out-by-its-print-template) | One view page for every transaction, laid out by its print template | Z | ✅ completed | Claude Sonnet 5.5 | 2026-11-02 | written, not run | [#252](https://github.com/jothi-prabaharan/Bill-Book/issues/252) | — |
+| [TK-264](./Task_Details.md#tk-264--print-template-editor-the-table-tools-lay-out-the-page-and-the-grid-group-goes) | Print-template editor: the Table tools lay out the page, and the Grid group goes | Z | 🔶 working | Claude Sonnet 5.5 (working) | since 2026-11-11 | — | [#253](https://github.com/jothi-prabaharan/Bill-Book/issues/253) | — |

@@ -7659,6 +7659,23 @@ The queue below is one list in card-number order. Each card names its group.
   - **Found on the way, local only:** sample rows with `LineType = 'Item'` in `sal.SalesOrderDetails` and `sal.CreditNoteDetails` (not a value of `DocumentLineType`) make any full read of those documents throw, `GET api/sales/credit-notes/{id}` included; they were corrected in the local database to run the check. If the same rows exist on a shared environment, the same documents will not open there.
   - The Viewer check changed a local role row and restored it; the local sample user holds Owner everywhere again.
 
+### TK-264 · Print-template editor: the Table tools lay out the page, and the Grid group goes
+- [~] working (Claude Sonnet 5.5) — since 2026-11-11
+- **Issue:** [#253](https://github.com/jothi-prabaharan/Bill-Book/issues/253)
+- **Group:** Z · Owner request of 11 November 2026: "Check the left side options like table and grid. I don't want a grid settings. I want a full page like handled by using table options like exactly the first tables. So change the designs implementations on all print templates." Asked which of three readings was meant, the owner chose **Table tools only**: the Grid group goes, every band keeps its starting tables, and the page is laid out with the Table group.
+- **Lanes:** L-UI (`frontend/libs/settings/print-templates`), L-DOC (`docs/User_Guide/masters.md`, `releases.md`) · **Depends on:** — · **Decision:** the owner's answer of 11 November 2026
+- **Where:** `frontend/libs/settings/print-templates/src/lib/print-templates.page.{html,ts,scss}`: the Grid group (`pt-section-grid-group`), `applySectionSplit`, `applyCustomSplit`, `addSectionRow`, `removeSectionRow`, `addSectionCol`, `removeSectionCol`, `customRows`, `customCols`; `insertTable`; the Splits toggle.
+- **State:** checked 11 November 2026. The ribbon's Table group has insert table (a fixed 2×2), rows above and below, columns left and right, add cell, merge, split, delete row, column and cell, borders, shading, column width, row height, and Auto and Equal. Below it a **Grid** group acts on the active band: seven presets, Rows and Cols steppers with **Apply Grid**, and + Row, − Row, + Col, − Col. Apply Grid replaces the band's whole content with a new table and pours the old cells back in order, nested cells included, and **drops whatever does not fit the new size**, so it can empty a band; the cells it makes carry a dashed border that prints. One editor serves every document type, so a change to it changes every template. The starting layouts in `DefaultLayoutGenerator` are already tables in every band and are **not** changed by this card.
+- **Sub-tasks:**
+  - [ ] Remove the Grid group: its markup, its seven presets, the steppers, Apply Grid and + Row, − Row, + Col, − Col, the methods and signals behind them and the styles only they used.
+  - [ ] **Insert table** takes a size: Rows and Columns steppers beside it, and the table it inserts is full width with equal columns. If the caret is not in the band, or the band is empty, the table goes into the band that is picked, so an empty band can be built from scratch with the Table group alone. The builder is a pure function.
+  - [ ] The Splits toggle becomes **Cell guides** (it draws the cells' outlines and nothing else).
+  - [ ] Test: written, never run by an AI (section 0.5): the pure table builder.
+  - [ ] Docs and release notes in the same commit: the editor section of `docs/User_Guide/masters.md` and the Unreleased block of `releases.md`.
+  - [ ] Verify: typecheck, eslint on the touched files, `nx build web`, and the editor in Chromium at 1280px and 360px against a stubbed API.
+- **Done when:** the editor has no Grid group, and an empty band of any template can be given a table of a chosen size and shaped with the Table group alone.
+- **Notes:** Not changed: `DefaultLayoutGenerator` and the seeded templates, the five-band model, the printing service.
+
 ## 3. Decisions from the owner
 
 These aren't tasks, and an agent never answers one itself. When a decision is made, record the
