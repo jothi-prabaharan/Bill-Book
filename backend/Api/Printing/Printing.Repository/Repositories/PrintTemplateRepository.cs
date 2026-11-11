@@ -505,6 +505,7 @@ public sealed class PrintTemplateRepository
             PageCount = rendered.PageCount,
             UnknownTags = rendered.UnknownTags,
             PrintTemplateId = layout.PrintTemplateId,
+            PrintTemplateName = layout.TemplateName,
             Source = layout.Source,
         });
     }
@@ -617,6 +618,7 @@ public sealed class PrintTemplateRepository
     {
         Source = source,
         PrintTemplateId = template.PrintTemplateId,
+        TemplateName = template.TemplateName,
         DocumentTypeCode = template.DocumentTypeCode.Trim(),
         Settings = template.Settings,
         Content = template.Content,

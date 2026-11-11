@@ -11,6 +11,7 @@ import {
   statusLabel,
   statusNotice,
   statusTone,
+  templateNote,
   viewerDocument,
   zoomPercent,
 } from './transaction-view.model';
@@ -135,5 +136,43 @@ describe('status', () => {
     expect(documentHeading('goods receipt', 'GRN-0007')).toBe('Goods receipt GRN-0007');
     expect(documentHeading('receipt', null)).toBe('Receipt (no number yet)');
     expect(documentHeading('journal voucher', '')).toBe('Journal voucher (no number yet)');
+  });
+});
+
+describe('templateNote (TK-265)', () => {
+  it('TXV-40: names the template a document was laid out with, when it is the one the document chose', () => {
+    expect(templateNote('invoice', { printTemplateId: 7, printTemplateName: 'Tax invoice · A4', chosenPrintTemplateId: 7 })).toEqual({
+      warning: false,
+      text: 'Template: Tax invoice · A4.',
+    });
+  });
+
+  it('TXV-41: says the branch default was used when the document chose none', () => {
+    const note = templateNote('bill', { printTemplateId: 3, printTemplateName: 'Bill · A4', chosenPrintTemplateId: null });
+
+    expect(note.warning).toBe(false);
+    expect(note.text).toBe('Template: Bill · A4, the branch default. No template was chosen for this bill.');
+  });
+
+  it('TXV-42: warns, naming the stand-in, when the template the document chose could not be used', () => {
+    const note = templateNote('quote', { printTemplateId: 3, printTemplateName: 'Quote · A4', chosenPrintTemplateId: 9 });
+
+    expect(note.warning).toBe(true);
+    expect(note.text).toBe('The template chosen for this quote is no longer available, so it is laid out with “Quote · A4”, the branch default.');
+  });
+
+  it('TXV-43: warns that the standard layout was used when no stored template could be found at all', () => {
+    expect(templateNote('receipt', { printTemplateId: null, printTemplateName: null, chosenPrintTemplateId: null })).toEqual({
+      warning: true,
+      text: 'No print template is set up for this kind of document, so this receipt is laid out in the standard layout.',
+    });
+
+    expect(templateNote('receipt', { printTemplateId: null, chosenPrintTemplateId: 4 }).text).toContain('is no longer available, and none is set as the default');
+  });
+
+  it('TXV-44: tolerates a service that does not send the new fields yet, and still names the layout', () => {
+    expect(templateNote('journal voucher', { printTemplateId: 2 }).text).toBe(
+      'Template: its template, the branch default. No template was chosen for this journal voucher.',
+    );
   });
 });

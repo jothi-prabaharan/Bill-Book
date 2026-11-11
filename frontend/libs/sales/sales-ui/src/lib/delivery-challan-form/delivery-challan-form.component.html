@@ -62,6 +62,16 @@
         </div>
 
         <div class="field">
+          <bb-print-template-select
+            id="dlc-print-template"
+            module="sales"
+            documentType="DLC"
+            [isNew]="!isEdit()"
+            formControlName="printTemplateId"
+          />
+        </div>
+
+        <div class="field">
           <bb-form-field
             label="Customer"
             controlId="dlc-contact"

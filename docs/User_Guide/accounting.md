@@ -304,6 +304,10 @@ A number is taken at **post**, not at save, so drafts you abandon leave the sequ
 
 ## Viewing and printing
 
+The **Print template** field on the spend money and receive money screens, beside the date, picks the layout the document prints
+with. A new document starts on the branch's default template for payments or receipts and the choice is saved with it (TK-265); the
+list is read through Banking, so it does not need access to Settings.
+
 **View** on a saved spend money or receive money document, and its number in the list, open it laid out by the branch's print template for
 payments or receipts on pages like a PDF (TK-263): who was paid or who paid, how (cash, cheque, UPI and so on) and the reference, the bank
 account, and a line for each document the money was applied to with that document's number, date and total. A line that settles no
@@ -589,6 +593,9 @@ It is the only screen in the product that names two accounts directly. Everythin
 **A posted entry is never edited.** It is corrected by a reversing entry that stands beside it — both stay in the ledger, and both are visible.
 
 ### Viewing and printing
+
+The **Print template** field on the journal entry screen, beside the date, picks the layout the voucher prints with. A new entry
+starts on the branch's default template for journal vouchers and the choice is saved with it (TK-265).
 
 **View** on a saved journal entry, and its number in the list, open it laid out by the branch's print template for journal vouchers on
 pages like a PDF (TK-263): the reference and memo, and each line's account (with the sub-account beneath it where it has one, such as a

@@ -53,6 +53,7 @@ import {
   MessageBoxComponent,
   NumberInputComponent,
   ProjectOption,
+  PrintTemplateSelectComponent,
   ProjectOptionsService,
   SelectComponent,
   AddressSummaryComponent,
@@ -70,7 +71,6 @@ import {
   totalsOf,
 } from '@bill-book/ui-components';
 import { AuthService } from '@bill-book/auth';
-import { PrintTemplateChoice, PrintTemplateService } from '@bill-book/master-core';
 import { OrderToInvoiceDialogComponent } from '../order-to-invoice/order-to-invoice.dialog';
 import { ProjectItemsDialogComponent } from '../project-items/project-items.dialog';
 import { EwayBillPanel } from '../eway-bill/eway-bill.panel';
@@ -124,6 +124,7 @@ import { EwayBillPanel } from '../eway-bill/eway-bill.panel';
     EwayBillPanel,
     NumberInputComponent,
     SelectComponent,
+    PrintTemplateSelectComponent,
     AddressSummaryComponent,
     TextInputComponent,
     TextareaComponent,
@@ -162,7 +163,6 @@ export class InvoiceFormComponent implements OnInit {
 
   private readonly fb = inject(FormBuilder);
   private readonly invoices = inject(InvoiceService);
-  private readonly printTemplatesService = inject(PrintTemplateService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -181,15 +181,6 @@ export class InvoiceFormComponent implements OnInit {
   protected readonly glPreview = signal<GlPreviewResult | null>(null);
 
   protected readonly status = signal('Draft');
-
-  /** Available print templates for this transaction type */
-  protected readonly printTemplates = signal<PrintTemplateChoice[]>([]);
-  protected readonly printTemplateOptions = computed<BbSelectOption<number>[]>(() =>
-    this.printTemplates().map((t) => ({
-      value: t.printTemplateId,
-      label: `${t.templateName}${t.isDefault ? ' (Default)' : ''} [${t.paperSizeName || 'A4'}]`,
-    }))
-  );
 
   /** Set when a save was refused at the credit or discount limit and may be sent to an approver (TK-102). */
   protected readonly approvalOffered = signal(false);
@@ -486,28 +477,12 @@ export class InvoiceFormComponent implements OnInit {
 
   ngOnInit(): void {
     void this.projectSource.load().then((options) => this.projectOptions.set(options));
-    void this.loadPrintTemplates();
     const id = this.route.snapshot.paramMap.get('id');
 
     if (id && id !== 'new') {
       this.isEdit.set(true);
       this.invoiceId.set(Number(id));
       void this.load();
-    }
-  }
-
-  private async loadPrintTemplates(): Promise<void> {
-    try {
-      const choices = await this.printTemplatesService.choices('INV');
-      this.printTemplates.set(choices);
-      if (!this.isEdit()) {
-        const defaultTmpl = choices.find((t) => t.isDefault) ?? choices[0];
-        if (defaultTmpl && !this.form.controls.printTemplateId.value) {
-          this.form.controls.printTemplateId.setValue(defaultTmpl.printTemplateId);
-        }
-      }
-    } catch {
-      // ignore
     }
   }
 
@@ -561,12 +536,6 @@ export class InvoiceFormComponent implements OnInit {
       transporterName: invoice.transporterName ?? '',
       transportDistanceKm: invoice.transportDistanceKm ?? 0,
     });
-    if (!invoice.printTemplateId && this.printTemplates().length > 0) {
-      const defaultTmpl = this.printTemplates().find((t) => t.isDefault) ?? this.printTemplates()[0];
-      if (defaultTmpl) {
-        this.form.controls.printTemplateId.setValue(defaultTmpl.printTemplateId);
-      }
-    }
     if (invoice.contactId) {
       void this.loadContactAddresses(invoice.contactId, true);
     }

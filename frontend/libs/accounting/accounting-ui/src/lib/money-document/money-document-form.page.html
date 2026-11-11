@@ -104,6 +104,15 @@
       <div class="field">
         <bb-branch-date-input label="Date" [(ngModel)]="transactionDate" name="transactionDate" />
       </div>
+      <div class="field">
+        <bb-print-template-select
+          module="banking"
+          [documentType]="direction() === 'spend' ? 'SPM' : 'RCM'"
+          [isNew]="editingId === null"
+          [(ngModel)]="printTemplateId"
+          name="printTemplateId"
+        />
+      </div>
       <div class="field wide">
         <bb-select
           [label]="direction() === 'spend' ? 'Paid from' : 'Received into'"

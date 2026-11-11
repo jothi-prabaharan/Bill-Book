@@ -94,6 +94,18 @@
         </div>
 
         <div class="field">
+          <bb-print-template-select
+            id="grn-print-template"
+            module="purchase"
+            documentType="GRN"
+            [isNew]="isNew()"
+            [disabled]="readonlyDoc()"
+            [ngModel]="printTemplateId()"
+            (ngModelChange)="printTemplateId.set($event ?? null)"
+          />
+        </div>
+
+        <div class="field">
           <bb-text-input
             id="grn-delnote"
             label="Vendor delivery note"

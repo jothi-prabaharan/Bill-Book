@@ -1383,6 +1383,16 @@ an empty band, and shape them.
 All document types share this editor, so every template is laid out the same way. Templates you
 have already saved are not changed.
 
+## Choosing the template a document prints with
+
+A branch has several templates for each kind of document: the protected **samples** it starts with (one per paper size, marked **Sample**) and any it designs itself. One of them is the **default** for the kind, set with **Set default** in the editor.
+
+The create and edit screen of every document that prints has a **Print template** field (TK-265): the quote, sales order, delivery challan, invoice, credit note, purchase order, goods receipt, bill, debit note, receipt, payment and journal voucher. It lists the templates for that kind, the default first, each with its paper size, **Sample** and **Default** shown beside its name. A new document starts on the default and you can pick any other. The choice is saved with the document, and **View** and **Print** use it for that document and no other.
+
+The list is read through the document's own module, so someone who raises invoices sees the invoice templates without being allowed into Settings. **Branch default**, at the top of the list, means no choice was made: the document prints with whatever the default is when it is printed.
+
+If the template a document chose is later deleted or switched off, the document still prints, with the branch default, and the view page says so in a warning under its heading. An edit screen shows such a template as **The template chosen earlier is no longer available**. If the list cannot be loaded, the field says so beneath itself instead of staying empty.
+
 ## Paper
 
 A4, A5, Letter or Legal for a laser or inkjet printer, with margins in millimetres. Or a thermal

@@ -36,6 +36,7 @@ import {
   DocumentCustomFieldsComponent,
   compactValues,
   SelectComponent,
+  PrintTemplateSelectComponent,
   AddressSummaryComponent,
   BbSelectOption,
   GST_STATE_OPTIONS,
@@ -44,7 +45,6 @@ import {
   resolveOrgCurrency,
 } from '@bill-book/ui-components';
 import { AuthService } from '@bill-book/auth';
-import { PrintTemplateChoice, PrintTemplateService } from '@bill-book/master-core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { transactionViewRoute } from '@bill-book/transaction-view';
 import { SalesPicker } from '../sales-picker';
@@ -65,6 +65,7 @@ import { SalesPicker } from '../sales-picker';
     DocumentLineGridComponent,
     RouterModule,
     SelectComponent,
+    PrintTemplateSelectComponent,
     AddressSummaryComponent,
     TextareaComponent,
     CheckboxComponent,
@@ -108,7 +109,6 @@ export class QuoteFormComponent implements OnInit {
 
   private fb = inject(FormBuilder);
   private quoteService = inject(QuoteService);
-  private printTemplatesService = inject(PrintTemplateService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
@@ -119,15 +119,6 @@ export class QuoteFormComponent implements OnInit {
   viewLink(): string[] {
     return transactionViewRoute('quotes', this.quoteId ?? 0);
   }
-
-  /** Available print templates for this transaction type */
-  protected readonly printTemplates = signal<PrintTemplateChoice[]>([]);
-  protected readonly printTemplateOptions = computed<BbSelectOption<number>[]>(() =>
-    this.printTemplates().map((t) => ({
-      value: t.printTemplateId,
-      label: `${t.templateName}${t.isDefault ? ' (Default)' : ''} [${t.paperSizeName || 'A4'}]`,
-    }))
-  );
 
   form = this.fb.group({
     documentDate: [new Date().toISOString().split('T')[0], Validators.required],
@@ -366,27 +357,11 @@ export class QuoteFormComponent implements OnInit {
 
   ngOnInit() {
     void this.projectSource.load().then((options) => this.projectOptions.set(options));
-    void this.loadPrintTemplates();
     const id = this.route.snapshot.paramMap.get('id');
     if (id && id !== 'new') {
       this.isEdit = true;
       this.quoteId = +id;
       this.loadQuote();
-    }
-  }
-
-  private async loadPrintTemplates(): Promise<void> {
-    try {
-      const choices = await this.printTemplatesService.choices('QTE');
-      this.printTemplates.set(choices);
-      if (!this.isEdit) {
-        const defaultTmpl = choices.find((t) => t.isDefault) ?? choices[0];
-        if (defaultTmpl && !this.form.controls.printTemplateId.value) {
-          this.form.controls.printTemplateId.setValue(defaultTmpl.printTemplateId);
-        }
-      }
-    } catch {
-      // ignore
     }
   }
 

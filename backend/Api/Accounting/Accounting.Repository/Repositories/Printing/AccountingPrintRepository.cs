@@ -272,6 +272,7 @@ public sealed class AccountingPrintRepository
 
         // Which document this is, for the page that shows it (the view page's heading).
         printed.DocumentNo = documentNo;
+        printed.ChosenPrintTemplateId = printTemplateId;
         printed.DocumentTypeCode = typeCode;
         printed.Status = status;
         return printed;

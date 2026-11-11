@@ -69,6 +69,9 @@ Posting also files a PDF of the challan, naming its sales order if it has one. `
 
 ## Viewing and printing
 
+The **Print template** field on the challan screen, beside the dispatch date, picks the layout the challan prints with. A new
+challan starts on the branch's default template and the choice is saved with it (TK-265); the list does not need access to Settings.
+
 **View** in a saved challan's action bar, and the challan's number in the list, open it laid out by the branch's print template for
 delivery challans on pages like a PDF (TK-263): the customer, the lines, the dispatch date, the vehicle and transporter, the e-way bill
 number and date, and the sales order it was raised against. The layout is the template's, so a change in **Settings › Print templates**

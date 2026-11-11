@@ -73,13 +73,12 @@
         </div>
 
         <div class="field">
-          <bb-select
+          <bb-print-template-select
             id="sor-print-template"
-            label="Print template"
-            placeholder="Choose template…"
-            [options]="printTemplateOptions()"
+            module="sales"
+            documentType="SOR"
+            [isNew]="!isEdit()"
             formControlName="printTemplateId"
-            hint="Print and PDF paper layout"
           />
         </div>
 

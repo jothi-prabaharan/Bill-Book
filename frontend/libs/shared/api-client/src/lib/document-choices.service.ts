@@ -43,9 +43,15 @@ export interface NextNumberChoice {
   number: string | null;
 }
 
+/** One layout a document type can print with: the branch's own, or one of the protected samples. */
 export interface PrintTemplateChoice {
   printTemplateId: number;
   templateName: string;
+  /** A4, A5, Letter, Thermal3Inch or Thermal4Inch. */
+  paperSizeName?: string;
+  /** A protected platform sample, not one the branch designed. */
+  isSample?: boolean;
+  /** The branch's preselected layout for the type. */
   isDefault: boolean;
 }
 

@@ -80,6 +80,8 @@ export * from './lib/forms/datetime/month-input.component';
 export * from './lib/forms/checkbox/checkbox.component';
 export * from './lib/forms/radio/radio-group.component';
 export * from './lib/forms/select/select.component';
+export * from './lib/forms/print-template-select/print-template-field';
+export * from './lib/forms/print-template-select/print-template-select.component';
 export * from './lib/forms/textarea/textarea.component';
 export * from './lib/forms/file/file-input.component';
 export * from './lib/forms/rich-text/sanitize-html';

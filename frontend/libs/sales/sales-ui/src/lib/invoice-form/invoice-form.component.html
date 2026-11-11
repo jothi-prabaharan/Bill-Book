@@ -71,13 +71,12 @@
         </div>
 
         <div class="field">
-          <bb-select
+          <bb-print-template-select
             id="inv-print-template"
-            label="Print template"
-            placeholder="Choose template…"
-            [options]="printTemplateOptions()"
+            module="sales"
+            documentType="INV"
+            [isNew]="!isEdit()"
             formControlName="printTemplateId"
-            hint="Print and PDF paper layout"
           />
         </div>
 

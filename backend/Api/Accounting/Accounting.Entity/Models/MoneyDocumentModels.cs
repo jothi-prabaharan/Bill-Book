@@ -41,6 +41,15 @@ public class SaveMoneyDocumentRequest
     public string? Memo { get; set; }
 
     /// <summary>
+    /// The print template this receipt or payment prints with, chosen on its create
+    /// page from the layouts for its type. Null means the branch's default. Printing
+    /// checks that the layout exists and is for this type when the document prints,
+    /// falling back to the default if it does not, so a template going away never
+    /// makes a document unprintable.
+    /// </summary>
+    public long? PrintTemplateId { get; set; }
+
+    /// <summary>
     /// The document this is about, when it is about exactly one. Left null when
     /// the payment is split across several — the lines say which.
     ///
@@ -285,6 +294,9 @@ public class MoneyDocumentListItem
     public string? ReferenceNo { get; set; }
 
     public string? Memo { get; set; }
+
+    /// <summary>The print template the document prints with. Null means the branch's default.</summary>
+    public long? PrintTemplateId { get; set; }
 
     public string Status { get; set; } = null!;
 

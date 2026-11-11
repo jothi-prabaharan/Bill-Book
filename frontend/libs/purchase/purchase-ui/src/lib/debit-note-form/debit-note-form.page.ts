@@ -23,6 +23,7 @@ import {
   QuantityInputComponent,
   CheckboxComponent,
   SelectComponent,
+  PrintTemplateSelectComponent,
   AddressSummaryComponent,
   TextareaComponent,
   ApprovalPanelComponent,
@@ -115,6 +116,7 @@ interface ReturnLine {
     QuantityInputComponent,
     CheckboxComponent,
     SelectComponent,
+    PrintTemplateSelectComponent,
     AddressSummaryComponent,
     TextareaComponent,
     MessageBoxComponent,
@@ -398,6 +400,9 @@ export class DebitNoteFormPage {
   protected readonly voidReason = signal('');
   protected readonly notes_ = signal('');
 
+  /** The print template this debit note prints with, chosen in the Print template field; null is the branch default. */
+  protected readonly printTemplateId = signal<number | null>(null);
+
   protected readonly lines = signal<readonly ReturnLine[]>([]);
 
   protected readonly saving = signal(false);
@@ -512,6 +517,7 @@ export class DebitNoteFormPage {
       this.exchangeRate.set(view.exchangeRate ?? 1);
       this.savedInterState.set(view.isInterState);
       this.notes_.set(view.notes ?? '');
+      this.printTemplateId.set(view.printTemplateId ?? null);
       this.voidReason.set(view.voidReason ?? '');
       this.customValues.set(view.customFields ?? {});
 
@@ -878,6 +884,7 @@ export class DebitNoteFormPage {
       currencyCode: this.currencyCode() || 'INR',
       exchangeRate: this.exchangeRate() || 1,
       notes: this.notes_() || null,
+      printTemplateId: this.printTemplateId(),
       customFields: compactValues(this.customValues()),
       lines,
     };

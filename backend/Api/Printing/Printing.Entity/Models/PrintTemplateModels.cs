@@ -259,6 +259,9 @@ public sealed class PrintTemplateResolution
     /// <summary>Null when the layout is the platform seed rather than a stored row.</summary>
     public long? PrintTemplateId { get; init; }
 
+    /// <summary>The stored template's name; null with the platform seed, which has no row.</summary>
+    public string? TemplateName { get; init; }
+
     public string DocumentTypeCode { get; init; } = string.Empty;
 
     public PrintSettings Settings { get; init; } = new();

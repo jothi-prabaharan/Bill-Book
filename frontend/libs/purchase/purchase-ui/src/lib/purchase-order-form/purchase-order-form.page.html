@@ -90,12 +90,11 @@
         </div>
 
         <div class="field">
-          <bb-select
+          <bb-print-template-select
             id="po-print-template"
-            label="Print template"
-            hint="Print and PDF paper layout"
-            [clearable]="false"
-            [options]="printTemplateOptions()"
+            module="purchase"
+            documentType="POR"
+            [isNew]="isNew()"
             [disabled]="readonlyDoc()"
             [ngModel]="printTemplateId()"
             (ngModelChange)="printTemplateId.set($event ?? null)"

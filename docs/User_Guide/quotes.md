@@ -97,6 +97,9 @@ A posted quote shows on the [customer portal](portal#quotes). The customer can *
 
 ## Viewing and printing
 
+The **Print template** field on the quote screen picks the layout the quote prints with. A new quote starts on the branch's default
+template and the choice is saved with it (TK-265); the list does not need access to Settings.
+
 **View** in a saved quote's action bar, and the quote's number in the list, open it laid out by the branch's print template for quotes
 on pages like a PDF (TK-263): the letterhead, the customer, the lines, the tax split by rate and the totals. The layout is the template's,
 so a change in **Settings › Print templates** changes every quote, on the screen and on paper. **Print** on that page sends the pages to

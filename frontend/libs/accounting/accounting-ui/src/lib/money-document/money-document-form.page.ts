@@ -17,6 +17,7 @@ import {
   InfoTooltipComponent,
   BranchDateInputComponent,
   NumberInputComponent,
+  PrintTemplateSelectComponent,
   SelectComponent,
   TextInputComponent,
 } from '@bill-book/ui-components';
@@ -89,6 +90,8 @@ interface MoneyDocumentView {
   paymentMethod: string;
   referenceNo: string | null;
   memo: string | null;
+  /** The print template the receipt or payment prints with; null or absent is the branch default (TK-265). */
+  printTemplateId?: number | null;
   status: 'Draft' | 'Posted' | 'Void';
   lines: MoneyLineView[];
   tdsAmount?: number;
@@ -137,6 +140,7 @@ const SUPPLIER_ADVANCE_SOURCE = 8;
     NumberInputComponent,
     AllocationFormComponent,
     SelectComponent,
+    PrintTemplateSelectComponent,
     ApprovalPanelComponent,
     CheckboxComponent,
     IconButtonComponent,
@@ -216,6 +220,9 @@ export class MoneyDocumentFormPage implements OnInit {
   referenceNo = '';
   referenceDate = '';
   memo = '';
+
+  /** The print template this document prints with, chosen in the Print template field; null is the branch default. */
+  printTemplateId: number | null = null;
 
   tdsAmount = '';
   tdsSectionCode = '';
@@ -358,6 +365,7 @@ export class MoneyDocumentFormPage implements OnInit {
     this.referenceNo = '';
     this.referenceDate = '';
     this.memo = '';
+    this.printTemplateId = null;
     this.resetTds();
     this.lines.set([this.blankLine()]);
     this.cdr.markForCheck();
@@ -384,6 +392,7 @@ export class MoneyDocumentFormPage implements OnInit {
       this.referenceNo = document.referenceNo ?? '';
       this.referenceDate = '';
       this.memo = document.memo ?? '';
+      this.printTemplateId = document.printTemplateId ?? null;
       this.tdsAmount = document.tdsAmount ? String(document.tdsAmount) : '';
       this.tdsSectionCode = document.tdsSectionCode ?? '';
       this.deductorTan = document.deductorTan ?? '';
@@ -583,6 +592,7 @@ export class MoneyDocumentFormPage implements OnInit {
         referenceNo: this.referenceNo || null,
         referenceDate: this.referenceDate || null,
         memo: this.memo || null,
+        printTemplateId: this.printTemplateId,
         tdsAmount: this.direction() === 'receive' ? this.money(this.tdsAmount) : 0,
         tdsSectionCode: this.direction() === 'receive' ? this.tdsSectionCode.trim() || null : null,
         deductorTan: this.direction() === 'receive' ? this.deductorTan.trim().toUpperCase() || null : null,

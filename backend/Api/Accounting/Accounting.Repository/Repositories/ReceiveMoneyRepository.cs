@@ -165,6 +165,7 @@ public sealed class ReceiveMoneyRepository
             ReferenceNo = request.ReferenceNo,
             ReferenceDate = request.ReferenceDate,
             Memo = request.Memo,
+            PrintTemplateId = request.PrintTemplateId,
             MappingTransactionTypeCode = header.TypeCode,
             MappingTransactionId = header.TransactionId,
             Status = MoneyDocumentStatus.Draft,
@@ -228,6 +229,7 @@ public sealed class ReceiveMoneyRepository
         document.ReferenceNo = request.ReferenceNo;
         document.ReferenceDate = request.ReferenceDate;
         document.Memo = request.Memo;
+        document.PrintTemplateId = request.PrintTemplateId;
         (string? headerType, long? headerId) = MoneyAllocationRepository.HeaderMapping(request.Lines);
         document.MappingTransactionTypeCode = headerType;
         document.MappingTransactionId = headerId;
@@ -620,6 +622,7 @@ public sealed class ReceiveMoneyRepository
             PaymentMethod = d.PaymentMethod.ToString(),
             ReferenceNo = d.ReferenceNo,
             Memo = d.Memo,
+            PrintTemplateId = d.PrintTemplateId,
             Status = d.Status.ToString(),
             PostedAt = d.PostedAt,
             MappingTransactionTypeCode = d.MappingTransactionTypeCode,

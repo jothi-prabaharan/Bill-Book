@@ -1,0 +1,16 @@
+<bb-select
+  [id]="controlId()"
+  [label]="label() || 'Print template'"
+  [hint]="shownHint()"
+  [error]="shownError()"
+  [required]="required()"
+  [disabled]="effectiveDisabled() || readonly()"
+  [placeholder]="placeholder"
+  [clearable]="true"
+  [loading]="loading()"
+  emptyText="No print templates are set up for this document type"
+  [options]="options()"
+  [ngModel]="selected()"
+  [ngModelOptions]="{ standalone: true }"
+  (valueChange)="choose($event)"
+/>

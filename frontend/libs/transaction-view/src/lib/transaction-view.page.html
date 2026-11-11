@@ -46,6 +46,10 @@
 } @else if (srcdoc(); as document) {
   <p class="view-note">{{ pages() }}</p>
 
+  @if (template(); as info) {
+    <p [class]="info.warning ? 'view-notice' : 'view-note'" data-testid="template-note">{{ info.text }}</p>
+  }
+
   <div class="desk" [style.background]="desk">
     <div #viewer class="viewer">
       <div

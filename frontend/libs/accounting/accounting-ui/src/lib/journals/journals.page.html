@@ -43,6 +43,15 @@
       <div class="field">
         <bb-branch-date-input label="Date" [(ngModel)]="journalDate" name="journalDate" [required]="true" />
       </div>
+      <div class="field">
+        <bb-print-template-select
+          module="accounting"
+          documentType="JRN"
+          [isNew]="editingId === null"
+          [(ngModel)]="printTemplateId"
+          name="printTemplateId"
+        />
+      </div>
       <div class="field wide">
         <bb-text-input label="Reference" [(ngModel)]="reference" name="reference" maxlength="200" />
       </div>

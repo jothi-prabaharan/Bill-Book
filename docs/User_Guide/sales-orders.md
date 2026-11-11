@@ -86,6 +86,9 @@ A quote becomes at most one order. Converting the same quote twice is refused, s
 
 ## Viewing and printing
 
+The **Print template** field on the sales order screen picks the layout the order prints with. A new order starts on the branch's
+default template and the choice is saved with it (TK-265); the list does not need access to Settings.
+
 **View** in a saved order's action bar, and the order's number in the list, open it laid out by the branch's print template for sales
 orders on pages like a PDF (TK-263): the customer, the lines, the tax split by rate and the totals, with the quote it came from and its
 delivery date. The layout is the template's, so a change in **Settings › Print templates** changes every sales order, on the screen and

@@ -174,12 +174,11 @@
         </div>
 
         <div class="field">
-          <bb-select
+          <bb-print-template-select
             id="bil-print-template"
-            label="Print template"
-            hint="Print and PDF paper layout"
-            [clearable]="false"
-            [options]="printTemplateOptions()"
+            module="purchase"
+            documentType="BIL"
+            [isNew]="isNew()"
             [disabled]="readonlyDoc()"
             [ngModel]="printTemplateId()"
             (ngModelChange)="printTemplateId.set($event ?? null)"

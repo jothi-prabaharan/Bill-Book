@@ -129,6 +129,8 @@ Workflows are set up under **Settings › Approval workflows**, and an approver 
 
 ## Viewing and printing
 
+The **Print template** field on the purchase order screen picks the layout the order prints with. A new order starts on the branch's default template and the choice is saved with it (TK-265); the list is read through Purchase, so it does not need access to Settings.
+
 Once an order is saved, **View** in the action bar, and the order's number in the list, open it laid out by the branch's print template on pages like a PDF (TK-263), with the vendor, the lines, the tax split by rate and the totals. **Print** on that page sends it to the printer or saves it as a PDF from the browser's own dialog; **Edit** (while it is a draft) or **Open** goes back to the order's own screen. A draft order is stamped **DRAFT** across every page and a voided one **VOID**, so one that was never issued is not mistaken for one the vendor holds.
 
 The layout is the template's, so a change in **Settings › Print templates** changes every document of that kind, on the screen and on paper. Anyone who can see purchase documents can view one; **Print** shows only to someone who holds **purchase.print**, the permission for handing a document to somebody outside the business.
@@ -246,6 +248,8 @@ recorded against the wrong lot.
 
 ## Viewing and printing
 
+The **Print template** field on the goods receipt screen, beside the receipt date, picks the layout the receipt prints with. A new receipt starts on the branch's default template and the choice is saved with it (TK-265).
+
 Once a receipt is saved, **View** in the action bar, and the receipt's number in the list, open it laid out by the branch's print template on pages like a PDF (TK-263), with the vendor, the lines, the tax split by rate and the totals. **Print** on that page sends it to the printer or saves it as a PDF from the browser's own dialog. It shows what was delivered; a line that was not all kept says how much was accepted and rejected, and why. The vendor's delivery note and the order it was received against are on it. A draft receipt is stamped **DRAFT** and a voided one **VOID**.
 
 The layout is the template's, so a change in **Settings › Print templates** changes every document of that kind, on the screen and on paper. Anyone who can see purchase documents can view one; **Print** shows only to someone who holds **purchase.print**, the permission for handing a document to somebody outside the business.
@@ -343,7 +347,9 @@ The bill keeps the answer the server worked out when it was saved, and a saved
 draft reopens with the vendor's state again.
 
 A bill opens with its own print template, and keeps it when the draft is saved
-again.
+again. The **Print template** field lists the bill templates the branch has, with the default
+chosen for a new bill, and it is read through Purchase, so a clerk who raises bills sees it
+without access to Settings (TK-265).
 
 ## Viewing and printing
 
@@ -510,6 +516,8 @@ credit back twice over.
   came from were carrying.
 
 ## Viewing and printing
+
+The **Print template** field on the debit note screen, beside the date, picks the layout the note prints with. A new debit note starts on the branch's default template and the choice is saved with it (TK-265).
 
 Once a debit note is saved, **View** in the action bar, and the note's number in the list, open it laid out by the branch's print template on pages like a PDF (TK-263), with the vendor, the lines, the tax split by rate and the totals. **Print** on that page sends it to the printer or saves it as a PDF from the browser's own dialog. It names the reason it was raised and the bill it is against. A draft debit note is stamped **DRAFT** and a voided one **VOID**.
 

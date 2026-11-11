@@ -28,6 +28,13 @@ public class SaveJournalRequest
 
     public string? Memo { get; set; }
 
+    /// <summary>
+    /// The print template this voucher prints with, chosen on its entry page from the
+    /// layouts for a journal voucher. Null means the branch's default; Printing falls
+    /// back to the default if the layout is gone, so the voucher always prints.
+    /// </summary>
+    public long? PrintTemplateId { get; set; }
+
     public List<SaveJournalLineRequest> Lines { get; set; } = [];
 }
 
@@ -75,6 +82,9 @@ public class JournalListItem
     public string? Reference { get; set; }
 
     public string? Memo { get; set; }
+
+    /// <summary>The print template the voucher prints with. Null means the branch's default.</summary>
+    public long? PrintTemplateId { get; set; }
 
     public string Status { get; set; } = null!;
 

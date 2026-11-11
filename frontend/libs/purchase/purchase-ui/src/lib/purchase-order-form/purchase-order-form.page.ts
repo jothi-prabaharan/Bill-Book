@@ -31,6 +31,7 @@ import {
   DocumentCustomFieldsComponent,
   compactValues,
   SelectComponent,
+  PrintTemplateSelectComponent,
   AddressSummaryComponent,
   BbSelectOption,
   GST_STATE_OPTIONS,
@@ -40,7 +41,6 @@ import {
 } from '@bill-book/ui-components';
 import { AuthService } from '@bill-book/auth';
 import { transactionViewRoute } from '@bill-book/transaction-view';
-import { PrintTemplateChoice, PrintTemplateService } from '@bill-book/master-core';
 import {
   ItemOption,
   PurchaseLookupService,
@@ -102,6 +102,7 @@ type Picker = 'none' | 'vendor' | 'item';
     BranchDateInputComponent,
     TextInputComponent,
     SelectComponent,
+    PrintTemplateSelectComponent,
     AddressSummaryComponent,
     TextareaComponent,
     CheckboxComponent,
@@ -130,7 +131,6 @@ export class PurchaseOrderFormPage {
 
   private readonly orders = inject(PurchaseOrderService);
   private readonly lookups = inject(PurchaseLookupService);
-  private readonly printTemplatesService = inject(PrintTemplateService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -140,15 +140,8 @@ export class PurchaseOrderFormPage {
   protected readonly fulfilmentStatus = signal('Open');
   protected readonly receiptCount = signal(0);
 
-  /** Available print templates for this transaction type */
-  protected readonly printTemplates = signal<PrintTemplateChoice[]>([]);
+  /** The print template this order prints with, chosen in the Print template field; null is the branch default. */
   protected readonly printTemplateId = signal<number | null>(null);
-  protected readonly printTemplateOptions = computed<BbSelectOption<number>[]>(() =>
-    this.printTemplates().map((t) => ({
-      value: t.printTemplateId,
-      label: `${t.templateName}${t.isDefault ? ' (Default)' : ''} [${t.paperSizeName || 'A4'}]`,
-    })),
-  );
 
   protected readonly documentDate = signal(this.today());
   protected readonly expectedDate = signal<string>('');
@@ -452,28 +445,12 @@ export class PurchaseOrderFormPage {
   constructor() {
     void this.projectSource.load().then((options) => this.projectOptions.set(options));
     void this.loadReferenceData();
-    void this.loadPrintTemplates();
 
     const id = this.route.snapshot.paramMap.get('id');
     if (id !== null && id !== 'new') {
       void this.load(Number(id));
     } else {
       void this.loadOrganizationAddresses(false);
-    }
-  }
-
-  private async loadPrintTemplates(): Promise<void> {
-    try {
-      const choices = await this.printTemplatesService.choices('POR');
-      this.printTemplates.set(choices);
-      if (this.isNew()) {
-        const defaultTmpl = choices.find((t) => t.isDefault) ?? choices[0];
-        if (defaultTmpl && !this.printTemplateId()) {
-          this.printTemplateId.set(defaultTmpl.printTemplateId);
-        }
-      }
-    } catch {
-      // ignore
     }
   }
 

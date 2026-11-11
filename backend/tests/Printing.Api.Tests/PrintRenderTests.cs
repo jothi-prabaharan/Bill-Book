@@ -52,6 +52,7 @@ public sealed class PrintRenderTests
         Assert.Equal(PrintTemplateOutcome.Ok, result.Outcome);
         Assert.Equal(PrintTemplateSource.PlatformSeed, result.Value!.Source);
         Assert.Null(result.Value.PrintTemplateId);
+        Assert.Null(result.Value.PrintTemplateName);
         Assert.True(result.Value.PageCount >= 1);
         Assert.Contains("Sample Traders", result.Value.Html, StringComparison.Ordinal);
         Assert.Contains("SAMPLE-0001", result.Value.Html, StringComparison.Ordinal);
@@ -77,6 +78,48 @@ public sealed class PrintRenderTests
         // Indian grouping, two decimals — the mask, not the raw digits.
         Assert.Contains("12,34,567.50", result.Value!.Html, StringComparison.Ordinal);
         Assert.DoesNotContain("1234567.5", result.Value.Html, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// TK-265: the template a document names is the one used, and its name comes back so the page can
+    /// say so. One that no longer resolves falls back to the branch default, and the answer names the
+    /// template that stood in rather than leaving the fallback silent.
+    /// </summary>
+    [SkippableFact]
+    public async Task The_template_a_document_names_is_used_and_its_name_comes_back()
+    {
+        Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
+
+        await using PrintingDbContext db = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
+        PrintTemplateRepository service = Service(db);
+
+        PrintTemplateDetail branch = (await service.CreateAsync(
+            new CreatePrintTemplateRequest { DocumentTypeCode = "INV", TemplateName = "Branch layout" }, Ct)).Value!;
+        PrintTemplateDetail letterhead = (await service.CreateAsync(
+            new CreatePrintTemplateRequest { DocumentTypeCode = "INV", TemplateName = "Letterhead layout" }, Ct)).Value!;
+        await service.SetDefaultAsync(branch.PrintTemplateId, Ct);
+
+        PrintTemplateResult<RenderPrintResponse> named = await service.RenderAsync(new RenderPrintRequest
+        {
+            DocumentTypeCode = "INV",
+            PrintTemplateId = letterhead.PrintTemplateId,
+            Payload = OverTheWire(SamplePayloadRepository.For("INV")),
+        }, Ct);
+
+        Assert.Equal(PrintTemplateSource.Explicit, named.Value!.Source);
+        Assert.Equal(letterhead.PrintTemplateId, named.Value.PrintTemplateId);
+        Assert.Equal("Letterhead layout", named.Value.PrintTemplateName);
+
+        PrintTemplateResult<RenderPrintResponse> gone = await service.RenderAsync(new RenderPrintRequest
+        {
+            DocumentTypeCode = "INV",
+            PrintTemplateId = 999_999,
+            Payload = OverTheWire(SamplePayloadRepository.For("INV")),
+        }, Ct);
+
+        Assert.Equal(PrintTemplateSource.BranchDefault, gone.Value!.Source);
+        Assert.Equal(branch.PrintTemplateId, gone.Value.PrintTemplateId);
+        Assert.Equal("Branch layout", gone.Value.PrintTemplateName);
     }
 
     [SkippableFact]

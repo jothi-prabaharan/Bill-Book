@@ -241,6 +241,32 @@ public class JournalServiceTests
         Assert.Contains("subledger", result.Detail);
     }
 
+    /// <summary>
+    /// TK-265: the voucher keeps the print template it was saved with, on create and on edit, and
+    /// reads it back for the entry screen. Printing checks the id at print time, so the journal
+    /// stores whatever the screen sent, including nothing.
+    /// </summary>
+    [SkippableFact]
+    public async Task A_journal_keeps_the_print_template_it_was_saved_with()
+    {
+        await using Harness h = await Harness.CreateAsync(_postgres);
+        CancellationToken ct = CancellationToken.None;
+
+        SaveJournalRequest request = Entry(h, 500m, 500m);
+        request.PrintTemplateId = 41;
+        SaveJournalResult draft = await h.Journals.CreateAsync(request, ct);
+
+        Assert.Equal(41, (await h.Journals.GetAsync(draft.JournalId, ct))!.PrintTemplateId);
+
+        request.PrintTemplateId = 42;
+        Assert.Equal(SaveJournalOutcome.Ok, (await h.Journals.UpdateAsync(draft.JournalId, request, ct)).Outcome);
+        Assert.Equal(42, (await h.Journals.GetAsync(draft.JournalId, ct))!.PrintTemplateId);
+
+        request.PrintTemplateId = null;
+        await h.Journals.UpdateAsync(draft.JournalId, request, ct);
+        Assert.Null((await h.Journals.GetAsync(draft.JournalId, ct))!.PrintTemplateId);
+    }
+
     [SkippableFact]
     public async Task A_draft_can_be_edited_and_deleted()
     {

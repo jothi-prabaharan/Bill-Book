@@ -38,6 +38,7 @@ import {
   LookupRow,
   NumberInputComponent,
   SelectComponent,
+  PrintTemplateSelectComponent,
   AddressSummaryComponent,
   TextareaComponent,
   TextInputComponent,
@@ -108,6 +109,7 @@ type ChallanGridLine = DocumentLine & { salesOrderDetailId?: number | null };
     CheckboxComponent,
     NumberInputComponent,
     SelectComponent,
+    PrintTemplateSelectComponent,
     AddressSummaryComponent,
     EwayBillPanel,
   ],
@@ -166,6 +168,7 @@ export class DeliveryChallanFormComponent implements OnInit {
     exchangeRate: [1, [Validators.required, Validators.min(0.00000001)]],
     billingAddress: [''],
     shippingAddress: [''],
+    printTemplateId: [null as number | null],
     notes: ['', [Validators.maxLength(500)]],
   });
 
@@ -460,6 +463,7 @@ export class DeliveryChallanFormComponent implements OnInit {
       exchangeRate: challan.exchangeRate,
       billingAddress: challan.billingAddress ?? '',
       shippingAddress: challan.shippingAddress ?? '',
+      printTemplateId: challan.printTemplateId ?? null,
       notes: challan.notes ?? '',
     });
     if (challan.contactId) {
@@ -647,6 +651,7 @@ export class DeliveryChallanFormComponent implements OnInit {
       exchangeRate: value.exchangeRate,
       billingAddress: value.billingAddress || undefined,
       shippingAddress: value.shippingAddress || undefined,
+      printTemplateId: value.printTemplateId ?? undefined,
       notes: value.notes || undefined,
       customFields: compactValues(this.customValues()),
       lines: priced.map((line) => ({

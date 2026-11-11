@@ -48,6 +48,7 @@ import {
   DocumentCustomFieldsComponent,
   compactValues,
   SelectComponent,
+  PrintTemplateSelectComponent,
   AddressSummaryComponent,
   GST_STATE_OPTIONS,
   TRANSACTION_CURRENCY_OPTIONS,
@@ -55,7 +56,6 @@ import {
   resolveOrgCurrency,
 } from '@bill-book/ui-components';
 import { AuthService } from '@bill-book/auth';
-import { PrintTemplateChoice, PrintTemplateService } from '@bill-book/master-core';
 import { QuoteToOrderDialogComponent } from '../quote-to-order/quote-to-order.dialog';
 import { StockAvailabilityDrawerComponent } from '../stock-availability/stock-availability.drawer';
 
@@ -103,6 +103,7 @@ import { StockAvailabilityDrawerComponent } from '../stock-availability/stock-av
     DocumentLineGridComponent,
     TextInputComponent,
     SelectComponent,
+    PrintTemplateSelectComponent,
     AddressSummaryComponent,
     TextareaComponent,
     CheckboxComponent,
@@ -134,7 +135,6 @@ export class SalesOrderFormComponent implements OnInit {
 
   private readonly fb = inject(FormBuilder);
   private readonly orders = inject(SalesOrderService);
-  private readonly printTemplatesService = inject(PrintTemplateService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -149,15 +149,6 @@ export class SalesOrderFormComponent implements OnInit {
   protected readonly showStock = signal(false);
   protected readonly stockLoading = signal(false);
   protected readonly stock = signal<StockAvailability[]>([]);
-
-  /** Available print templates for this transaction type */
-  protected readonly printTemplates = signal<PrintTemplateChoice[]>([]);
-  protected readonly printTemplateOptions = computed<BbSelectOption<number>[]>(() =>
-    this.printTemplates().map((t) => ({
-      value: t.printTemplateId,
-      label: `${t.templateName}${t.isDefault ? ' (Default)' : ''} [${t.paperSizeName || 'A4'}]`,
-    }))
-  );
 
   /** Draft / ReadyToPost / Posted / Void, as the server last said. */
   protected readonly status = signal('Draft');
@@ -495,28 +486,12 @@ export class SalesOrderFormComponent implements OnInit {
 
   ngOnInit(): void {
     void this.projectSource.load().then((options) => this.projectOptions.set(options));
-    void this.loadPrintTemplates();
     const id = this.route.snapshot.paramMap.get('id');
 
     if (id && id !== 'new') {
       this.isEdit.set(true);
       this.salesOrderId.set(Number(id));
       void this.load();
-    }
-  }
-
-  private async loadPrintTemplates(): Promise<void> {
-    try {
-      const choices = await this.printTemplatesService.choices('SOR');
-      this.printTemplates.set(choices);
-      if (!this.isEdit()) {
-        const defaultTmpl = choices.find((t) => t.isDefault) ?? choices[0];
-        if (defaultTmpl && !this.form.controls.printTemplateId.value) {
-          this.form.controls.printTemplateId.setValue(defaultTmpl.printTemplateId);
-        }
-      }
-    } catch {
-      // ignore
     }
   }
 

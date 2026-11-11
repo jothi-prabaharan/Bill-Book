@@ -37,6 +37,7 @@ import {
   LabelKind,
   LabelPrintDialog,
   SelectComponent,
+  PrintTemplateSelectComponent,
   AddressSummaryComponent,
   BbSelectOption,
   resolveOrgStateCode,
@@ -105,6 +106,7 @@ type Picker = 'none' | 'vendor' | 'item' | 'order';
     TextareaComponent,
     CheckboxComponent,
     SelectComponent,
+    PrintTemplateSelectComponent,
     AddressSummaryComponent,
     MessageBoxComponent,
     LabelPrintDialog,
@@ -358,6 +360,9 @@ export class GoodsReceiptFormPage {
   protected readonly currencyCode = signal(this.getOrgCurrency());
   protected readonly exchangeRate = signal(1);
   protected readonly notes = signal('');
+
+  /** The print template this receipt prints with, chosen in the Print template field; null is the branch default. */
+  protected readonly printTemplateId = signal<number | null>(null);
   protected readonly termsAndConditions = signal('');
   protected readonly voidOpen = signal(false);
   protected readonly voidReason = signal('');
@@ -555,6 +560,7 @@ export class GoodsReceiptFormPage {
       this.currencyCode.set(view.currencyCode ?? 'INR');
       this.exchangeRate.set(view.exchangeRate ?? 1);
       this.notes.set(view.notes ?? '');
+      this.printTemplateId.set(view.printTemplateId ?? null);
       this.termsAndConditions.set(view.termsAndConditions ?? '');
       this.voidReason.set(view.voidReason ?? '');
       this.customValues.set(view.customFields ?? {});
@@ -1164,6 +1170,7 @@ export class GoodsReceiptFormPage {
       currencyCode: this.currencyCode() || 'INR',
       exchangeRate: this.exchangeRate() || 1,
       notes: this.notes() || null,
+      printTemplateId: this.printTemplateId(),
       termsAndConditions: this.termsAndConditions() || null,
       customFields: compactValues(this.customValues()),
       lines,

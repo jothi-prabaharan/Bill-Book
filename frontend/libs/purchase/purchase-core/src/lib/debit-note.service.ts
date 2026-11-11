@@ -20,6 +20,8 @@ export interface SaveDebitNoteRequest {
   currencyCode?: string | null;
   exchangeRate?: number | null;
   notes?: string | null;
+  /** The print template to print with; null or left out means the branch default (TK-265). */
+  printTemplateId?: number | null;
   lines: SaveDebitNoteLineRequest[];
   /** Custom field values (TK-112); left out on an update, what is stored stays. */
   customFields?: Record<string, unknown>;
@@ -86,6 +88,8 @@ export interface DebitNoteView extends DebitNoteListItem {
   roundOffAmount: number;
   totalAmountBase: number;
   notes?: string | null;
+  /** The print template the debit note prints with; null or absent is the branch default (TK-265). */
+  printTemplateId?: number | null;
   postedAt?: string | null;
   voidedAt?: string | null;
   voidReason?: string | null;

@@ -73,6 +73,12 @@ public class RenderPrintResponse
     /// <summary>Null when the layout was the platform's generated one, not a stored row.</summary>
     public long? PrintTemplateId { get; set; }
 
+    /// <summary>
+    /// The name of the template the layout came from, so the page that shows the document can say
+    /// which one it printed with. Null when the layout was the platform's generated one.
+    /// </summary>
+    public string? PrintTemplateName { get; set; }
+
     /// <summary>Which step of the resolution chain supplied the layout.</summary>
     public PrintTemplateSource Source { get; set; }
 }

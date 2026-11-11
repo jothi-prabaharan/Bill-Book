@@ -86,8 +86,8 @@ The **total** beside the period covers every invoice that matches, in base curre
 ## Viewing and printing
 
 **View** in an invoice's action bar, and the invoice number in the list, open the invoice laid out by
-the branch's print template for invoices — the one marked default in Settings › Print templates, or
-the one the invoice names — on pages like a PDF (TK-263). Changing the template changes how every
+the branch's print template for invoices — the one chosen in the invoice's **Print template** field, which starts on the
+default marked in Settings › Print templates (TK-265) — on pages like a PDF (TK-263). Changing the template changes how every
 invoice reads on the screen and on paper, because it is the same layout: what you see is what prints.
 
 The same page opens every kind of sales and purchase document, and a receipt, a payment or a journal

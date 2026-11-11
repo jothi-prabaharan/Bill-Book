@@ -111,6 +111,18 @@
         </div>
 
         <div class="field">
+          <bb-print-template-select
+            id="dbn-print-template"
+            module="purchase"
+            documentType="DBN"
+            [isNew]="isNew()"
+            [disabled]="readonlyDoc()"
+            [ngModel]="printTemplateId()"
+            (ngModelChange)="printTemplateId.set($event ?? null)"
+          />
+        </div>
+
+        <div class="field">
           <bb-select
             id="dbn-reason"
             label="Reason"

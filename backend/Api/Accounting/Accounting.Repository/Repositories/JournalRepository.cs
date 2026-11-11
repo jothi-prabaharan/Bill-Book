@@ -155,6 +155,7 @@ public sealed class JournalRepository
             ExchangeRate = header.ExchangeRate,
             Reference = header.Reference,
             Memo = header.Memo,
+            PrintTemplateId = header.PrintTemplateId,
             Status = header.Status,
             PostedAt = header.PostedAt,
             LineCount = header.LineCount,
@@ -234,6 +235,7 @@ public sealed class JournalRepository
             ExchangeRate = rate,
             Reference = request.Reference,
             Memo = request.Memo,
+            PrintTemplateId = request.PrintTemplateId,
             TransactionTypeCode = JournalTypeCode,
             Status = JournalStatus.Draft,
         };
@@ -287,6 +289,7 @@ public sealed class JournalRepository
         journal.ExchangeRate = rate;
         journal.Reference = request.Reference;
         journal.Memo = request.Memo;
+        journal.PrintTemplateId = request.PrintTemplateId;
 
         await _db.JournalDetails
             .Where(d => d.JournalId == journalId)
@@ -813,6 +816,7 @@ public sealed class JournalRepository
             ExchangeRate = j.ExchangeRate,
             Reference = j.Reference,
             Memo = j.Memo,
+            PrintTemplateId = j.PrintTemplateId,
             Status = j.Status.ToString(),
             PostedAt = j.PostedAt,
             LineCount = _db.JournalDetails.Count(d => d.JournalId == j.JournalId),

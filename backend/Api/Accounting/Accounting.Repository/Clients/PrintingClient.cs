@@ -33,6 +33,15 @@ public sealed class PrintedDocument
     /// <summary>Null when the layout was the platform's generated one, not a stored template.</summary>
     public long? PrintTemplateId { get; set; }
 
+    /// <summary>The name of the template the layout came from. Null with the generated layout.</summary>
+    public string? PrintTemplateName { get; set; }
+
+    /// <summary>
+    /// The template the document itself names, or null when it names none. When it is set and differs
+    /// from <see cref="PrintTemplateId"/>, the one it names could not be used and the page says so.
+    /// </summary>
+    public long? ChosenPrintTemplateId { get; set; }
+
     /// <summary>The document's own number. Null while a receipt, payment or journal is a draft: none is issued until it posts.</summary>
     public string? DocumentNo { get; set; }
 

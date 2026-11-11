@@ -234,6 +234,7 @@ public static class MoneyDocumentMapping
         PaymentMethod = header.PaymentMethod,
         ReferenceNo = header.ReferenceNo,
         Memo = header.Memo,
+        PrintTemplateId = header.PrintTemplateId,
         Status = header.Status,
         PostedAt = header.PostedAt,
         MappingTransactionTypeCode = header.MappingTransactionTypeCode,

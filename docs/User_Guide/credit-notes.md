@@ -48,6 +48,9 @@ Lower a quantity or a price to credit part of a line; remove a line to leave it 
 
 ## Viewing and printing
 
+The **Print template** field on the credit note screen, under the reason, picks the layout the note prints with. A new note starts
+on the branch's default template and the choice is saved with it (TK-265); the list does not need access to Settings.
+
 **View** in a saved credit note's action bar, and the note's number in the list, open it laid out by the branch's print template for
 credit notes on pages like a PDF (TK-263): the customer, the lines, the tax split by rate and the totals, with the reason it was raised
 and the invoice it is against. A note registered with the IRP shows its IRN and signed QR code even if the template does not place them;

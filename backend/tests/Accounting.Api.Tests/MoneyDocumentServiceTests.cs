@@ -147,6 +147,38 @@ public class MoneyDocumentServiceTests
         Assert.Equal(2_000m, control.CreditAmount);
     }
 
+    /// <summary>
+    /// TK-265: a payment and a receipt keep the print template they were saved with, on create and
+    /// on edit, and read it back for the screen. Printing checks the id when the document prints,
+    /// so what is stored is whatever the screen sent, including nothing.
+    /// </summary>
+    [SkippableFact]
+    public async Task A_payment_and_a_receipt_keep_the_print_template_they_were_saved_with()
+    {
+        await using Harness h = await Harness.CreateAsync(_postgres);
+        CancellationToken ct = CancellationToken.None;
+
+        SaveMoneyDocumentRequest payment = h.Payment(100m, BillPayment);
+        payment.PrintTemplateId = 51;
+        MoneyDocumentResult spend = await h.Spend.CreateAsync(payment, ct);
+
+        Assert.Equal(51, (await h.Spend.GetAsync(spend.DocumentId, ct))!.PrintTemplateId);
+
+        payment.PrintTemplateId = 52;
+        await h.Spend.UpdateAsync(spend.DocumentId, payment, ct);
+        Assert.Equal(52, (await h.Spend.GetAsync(spend.DocumentId, ct))!.PrintTemplateId);
+
+        SaveMoneyDocumentRequest receipt = h.Payment(100m, InvoicePayment);
+        receipt.PrintTemplateId = 61;
+        MoneyDocumentResult receive = await h.Receive.CreateAsync(receipt, ct);
+
+        Assert.Equal(61, (await h.Receive.GetAsync(receive.DocumentId, ct))!.PrintTemplateId);
+
+        receipt.PrintTemplateId = null;
+        await h.Receive.UpdateAsync(receive.DocumentId, receipt, ct);
+        Assert.Null((await h.Receive.GetAsync(receive.DocumentId, ct))!.PrintTemplateId);
+    }
+
     /// <summary>Money in reverses every leg: the bank is debited, the control credited.</summary>
     [SkippableFact]
     public async Task A_receipt_debits_the_bank_and_credits_the_contact()

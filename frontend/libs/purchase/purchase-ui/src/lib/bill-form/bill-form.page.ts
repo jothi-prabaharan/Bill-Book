@@ -24,6 +24,7 @@ import {
   LookupRow,
   MessageBoxComponent,
   ProjectOption,
+  PrintTemplateSelectComponent,
   ProjectOptionsService,
   SelectComponent,
   AddressSummaryComponent,
@@ -45,7 +46,6 @@ import {
 } from '@bill-book/ui-components';
 import { AuthService } from '@bill-book/auth';
 import { transactionViewRoute } from '@bill-book/transaction-view';
-import { PrintTemplateChoice, PrintTemplateService } from '@bill-book/master-core';
 import { goodsReceiptLabelKind, goodsReceiptLabels } from '../goods-receipt-form/goods-receipt-labels';
 import {
   ItemOption,
@@ -103,6 +103,7 @@ type Picker = 'none' | 'vendor' | 'item' | 'receipt';
     TextareaComponent,
     CheckboxComponent,
     SelectComponent,
+    PrintTemplateSelectComponent,
     AddressSummaryComponent,
     MessageBoxComponent,
     LabelPrintDialog,
@@ -147,7 +148,6 @@ export class BillFormPage {
   protected readonly formats = inject(FormatSettingsService);
   private readonly receipts = inject(GoodsReceiptService);
   private readonly lookups = inject(PurchaseLookupService);
-  private readonly printTemplatesService = inject(PrintTemplateService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -156,15 +156,8 @@ export class BillFormPage {
   protected readonly status = signal('Draft');
   protected readonly daysOverdue = signal(0);
 
-  /** Available print templates for this transaction type */
-  protected readonly printTemplates = signal<PrintTemplateChoice[]>([]);
+  /** The print template this bill prints with, chosen in the Print template field; null is the branch default. */
   protected readonly printTemplateId = signal<number | null>(null);
-  protected readonly printTemplateOptions = computed<BbSelectOption<number>[]>(() =>
-    this.printTemplates().map((t) => ({
-      value: t.printTemplateId,
-      label: `${t.templateName}${t.isDefault ? ' (Default)' : ''} [${t.paperSizeName || 'A4'}]`,
-    })),
-  );
 
   protected readonly documentDate = signal(this.today());
   protected readonly contactId = signal<number | null>(null);
@@ -506,28 +499,12 @@ export class BillFormPage {
   constructor() {
     void this.projectSource.load().then((options) => this.projectOptions.set(options));
     void this.loadReferenceData();
-    void this.loadPrintTemplates();
 
     const id = this.route.snapshot.paramMap.get('id');
     if (id !== null && id !== 'new') {
       void this.load(Number(id));
     } else {
       void this.loadOrganizationAddresses(false);
-    }
-  }
-
-  private async loadPrintTemplates(): Promise<void> {
-    try {
-      const choices = await this.printTemplatesService.choices('BIL');
-      this.printTemplates.set(choices);
-      if (this.isNew()) {
-        const defaultTmpl = choices.find((t) => t.isDefault) ?? choices[0];
-        if (defaultTmpl && !this.printTemplateId()) {
-          this.printTemplateId.set(defaultTmpl.printTemplateId);
-        }
-      }
-    } catch {
-      // ignore
     }
   }
 

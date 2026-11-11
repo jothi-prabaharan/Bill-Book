@@ -20,6 +20,16 @@ export interface TransactionView {
   /** Null when the layout was the platform's own, not a stored template. */
   printTemplateId: number | null;
 
+  /** The name of the template the document was laid out with. Null with the platform's own layout (TK-265). */
+  printTemplateName?: string | null;
+
+  /**
+   * The template the document itself names, set on its create screen. Null when it names none, and then the
+   * branch's default is used. When it is set and differs from `printTemplateId`, the one it names could not
+   * be used (TK-265).
+   */
+  chosenPrintTemplateId?: number | null;
+
   /** Null while a receipt, payment or journal is a draft: none is issued until it posts. */
   documentNo: string | null;
 
@@ -146,6 +156,56 @@ export function statusNotice(label: string, status: string | null | undefined): 
     default:
       return null;
   }
+}
+
+/** What the page says about the template a document was laid out with. */
+export interface TemplateNote {
+  text: string;
+
+  /** True when the layout is not the one the document asked for, or is no stored template at all. */
+  warning: boolean;
+}
+
+/**
+ * Names the template a document printed with, and says so plainly when it is not the one the document names
+ * (TK-265). Printing falls back from the template a document names to the branch's default and then to its
+ * own generated layout, so that a document never becomes unprintable; the fallback stays, but it is never
+ * silent: a person who chose a design and sees another is told why.
+ */
+export function templateNote(
+  label: string,
+  view: Pick<TransactionView, 'printTemplateId' | 'printTemplateName' | 'chosenPrintTemplateId'>,
+): TemplateNote {
+  const used = view.printTemplateId ?? null;
+  const chosen = view.chosenPrintTemplateId ?? null;
+  const name = view.printTemplateName?.trim() || null;
+
+  if (used === null) {
+    return {
+      warning: true,
+      text:
+        chosen === null
+          ? `No print template is set up for this kind of document, so this ${label} is laid out in the standard layout.`
+          : `The template chosen for this ${label} is no longer available, and none is set as the default, so it is laid out in the standard layout.`,
+    };
+  }
+
+  const shown = name ?? 'its template';
+
+  if (chosen !== null && chosen !== used) {
+    return {
+      warning: true,
+      text: `The template chosen for this ${label} is no longer available, so it is laid out with “${shown}”, the branch default.`,
+    };
+  }
+
+  return {
+    warning: false,
+    text:
+      chosen === null
+        ? `Template: ${shown}, the branch default. No template was chosen for this ${label}.`
+        : `Template: ${shown}.`,
+  };
 }
 
 /** The heading: the document's name and number, or a plain note while it has no number yet. */

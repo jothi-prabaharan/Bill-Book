@@ -186,6 +186,24 @@ public sealed class PrintingClientTests
         Assert.Equal(1, printed.PageCount);
     }
 
+    /// <summary>
+    /// TK-265: which template Printing laid the document out with comes back with it, so the page can
+    /// say so. The id the document itself names is the calling service's to add, not Printing's.
+    /// </summary>
+    [Fact]
+    public async Task Carries_the_id_and_name_of_the_template_printing_used()
+    {
+        var client = new PrintingClient(
+            new HttpClient(new RecordingHandler()) { BaseAddress = new Uri("http://printing/") },
+            new HttpContextAccessor { HttpContext = new DefaultHttpContext() });
+
+        PrintedDocument printed = await client.RenderAsync("INV", 9, new PrintPayload(), null, CancellationToken.None);
+
+        Assert.Equal(5, printed.PrintTemplateId);
+        Assert.Equal("Tax invoice · A4", printed.PrintTemplateName);
+        Assert.Null(printed.ChosenPrintTemplateId);
+    }
+
     [Fact]
     public async Task A_refusal_from_printing_is_an_error_not_an_empty_document()
     {
@@ -218,7 +236,7 @@ public sealed class PrintingClientTests
             return new HttpResponseMessage(Status)
             {
                 Content = new StringContent(
-                    """{"html":"<p>printed</p>","pageCount":1,"unknownTags":[],"printTemplateId":5}""",
+                    """{"html":"<p>printed</p>","pageCount":1,"unknownTags":[],"printTemplateId":5,"printTemplateName":"Tax invoice · A4","source":0}""",
                     Encoding.UTF8,
                     "application/json"),
             };

@@ -27,6 +27,7 @@ import {
   registerStatusTone,
   BranchDateInputComponent,
   MoneyInputComponent,
+  PrintTemplateSelectComponent,
   SelectComponent,
   TextInputComponent,
   ApprovalPanelComponent,
@@ -41,6 +42,8 @@ interface JournalListItem {
   exchangeRate: number;
   reference: string | null;
   memo: string | null;
+  /** The print template the voucher prints with; null or absent is the branch default (TK-265). */
+  printTemplateId?: number | null;
   status: 'Draft' | 'Posted' | 'Reversed';
   postedAt: string | null;
   lineCount: number;
@@ -135,6 +138,7 @@ import { InfoTooltipComponent } from '@bill-book/ui-components';
     TextInputComponent,
     MoneyInputComponent,
     SelectComponent,
+    PrintTemplateSelectComponent,
     ApprovalPanelComponent,
     IconButtonComponent,
   ],
@@ -274,6 +278,9 @@ export class JournalsPage implements OnInit {
   reference = '';
   memo = '';
 
+  /** The print template this voucher prints with, chosen in the Print template field; null is the branch default. */
+  printTemplateId: number | null = null;
+
   /**
    * A signal, not a plain array, and that is the difference between a running
    * total and a total computed once. `computed` tracks signals; a field it can
@@ -375,6 +382,7 @@ export class JournalsPage implements OnInit {
     this.journalDate = new Date().toISOString().slice(0, 10);
     this.reference = '';
     this.memo = '';
+    this.printTemplateId = null;
     // Two lines to begin with, because the smallest entry that means anything
     // is a debit and a credit.
     this.lines.set([this.blankLine(), this.blankLine()]);
@@ -395,6 +403,7 @@ export class JournalsPage implements OnInit {
       this.journalDate = journal.journalDate;
       this.reference = journal.reference ?? '';
       this.memo = journal.memo ?? '';
+      this.printTemplateId = journal.printTemplateId ?? null;
       this.lines.set(
         journal.lines.map((l) => ({
           accountId: l.accountId,
@@ -469,6 +478,7 @@ export class JournalsPage implements OnInit {
         journalDate: this.journalDate,
         reference: this.reference || null,
         memo: this.memo || null,
+        printTemplateId: this.printTemplateId,
         // An empty row left behind by "add line" is not an error to complain
         // about, it is a row the user did not fill in.
         lines: this.lines()

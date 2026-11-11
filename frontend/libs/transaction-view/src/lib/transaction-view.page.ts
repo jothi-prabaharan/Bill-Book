@@ -33,6 +33,7 @@ import {
   statusLabel,
   statusNotice,
   statusTone,
+  templateNote,
   viewerDocument,
   zoomPercent,
 } from './transaction-view.model';
@@ -112,6 +113,12 @@ export class TransactionViewPage {
   protected readonly heading = computed(() => documentHeading(this.label(), this.view()?.documentNo));
   protected readonly status = computed(() => this.view()?.status ?? null);
   protected readonly notice = computed(() => statusNotice(this.label(), this.status()));
+
+  /** Which template laid the document out, and a warning when it is not the one the document names (TK-265). */
+  protected readonly template = computed(() => {
+    const view = this.view();
+    return view ? templateNote(this.label(), view) : null;
+  });
 
   protected readonly pages = computed(() => {
     const count = this.view()?.pageCount ?? 0;

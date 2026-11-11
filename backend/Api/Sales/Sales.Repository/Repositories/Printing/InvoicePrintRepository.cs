@@ -120,6 +120,7 @@ public sealed class InvoicePrintRepository
 
         // Which document this is, for the page that shows it (the view page's heading).
         printed.DocumentNo = invoice.DocumentNo;
+        printed.ChosenPrintTemplateId = invoice.PrintTemplateId;
         printed.DocumentTypeCode = typeCode;
         printed.Status = invoice.Status.ToString();
         return printed;

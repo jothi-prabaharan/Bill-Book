@@ -87,6 +87,8 @@ export interface DeliveryChallanView {
   currencyCode: string;
   exchangeRate: number;
   notes?: string | null;
+  /** The print template the challan prints with; null or absent is the branch default (TK-265). */
+  printTemplateId?: number | null;
   billingAddress?: string | null;
   shippingAddress?: string | null;
   voidReason?: string | null;

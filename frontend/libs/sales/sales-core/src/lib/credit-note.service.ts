@@ -42,6 +42,8 @@ export interface CreditNoteView {
   currencyCode: string;
   exchangeRate: number;
   notes?: string | null;
+  /** The print template the credit note prints with; null or absent is the branch default (TK-265). */
+  printTemplateId?: number | null;
   billingAddress?: string | null;
   shippingAddress?: string | null;
   voidReason?: string | null;
@@ -80,6 +82,8 @@ export interface SaveCreditNoteRequest {
   currencyCode?: string;
   exchangeRate: number;
   notes?: string;
+  /** The print template to print with; left out means the branch default (TK-265). */
+  printTemplateId?: number | null;
   billingAddress?: string;
   shippingAddress?: string;
   lines: SaveCreditNoteLineRequest[];

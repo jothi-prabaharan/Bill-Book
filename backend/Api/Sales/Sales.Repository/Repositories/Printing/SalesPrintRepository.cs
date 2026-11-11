@@ -209,6 +209,7 @@ public sealed class SalesPrintRepository
 
         // Which document this is, for the page that shows it (the view page's heading).
         printed.DocumentNo = document.DocumentNo;
+        printed.ChosenPrintTemplateId = document.PrintTemplateId;
         printed.DocumentTypeCode = typeCode;
         printed.Status = document.Status.ToString();
         return printed;

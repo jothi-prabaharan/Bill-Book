@@ -59,6 +59,16 @@
         </div>
 
         <div class="field">
+          <bb-print-template-select
+            id="crn-print-template"
+            module="sales"
+            documentType="CRN"
+            [isNew]="!isEdit()"
+            formControlName="printTemplateId"
+          />
+        </div>
+
+        <div class="field">
           <bb-form-field
             label="Invoice"
             controlId="crn-invoice"

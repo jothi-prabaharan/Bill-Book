@@ -45,6 +45,7 @@ import {
   NumberInputComponent,
   CheckboxComponent,
   SelectComponent,
+  PrintTemplateSelectComponent,
   AddressSummaryComponent,
   TextareaComponent,
   TextInputComponent,
@@ -107,6 +108,7 @@ type CreditNoteGridLine = ReturnLine;
     NumberInputComponent,
     CheckboxComponent,
     SelectComponent,
+    PrintTemplateSelectComponent,
     AddressSummaryComponent,
   ],
   templateUrl: './credit-note-form.component.html',
@@ -160,6 +162,7 @@ export class CreditNoteFormComponent implements OnInit {
     exchangeRate: [1, [Validators.required, Validators.min(0.00000001)]],
     billingAddress: [''],
     shippingAddress: [''],
+    printTemplateId: [null as number | null],
     notes: ['', [Validators.maxLength(500)]],
   });
 
@@ -450,6 +453,7 @@ export class CreditNoteFormComponent implements OnInit {
       exchangeRate: note.exchangeRate,
       billingAddress: note.billingAddress ?? '',
       shippingAddress: note.shippingAddress ?? '',
+      printTemplateId: note.printTemplateId ?? null,
       notes: note.notes ?? '',
     });
     if (note.contactId) {
@@ -709,6 +713,7 @@ export class CreditNoteFormComponent implements OnInit {
       exchangeRate: value.exchangeRate,
       billingAddress: value.billingAddress || undefined,
       shippingAddress: value.shippingAddress || undefined,
+      printTemplateId: value.printTemplateId ?? undefined,
       notes: value.notes || undefined,
       customFields: compactValues(this.customValues()),
       lines: priced.map((line) => {
