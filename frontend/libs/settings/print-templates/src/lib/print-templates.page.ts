@@ -40,6 +40,15 @@ import {
   printHtml,
 } from '@bill-book/ui-components';
 
+import {
+  DEFAULT_TABLE_SIZE,
+  TABLE_LIMITS,
+  buildTableHtml,
+  clampCols,
+  clampRows,
+  isBlankHtml,
+} from './print-table';
+
 export const MM_PX = 3.7795; // 1 mm = 3.7795 px shared constant
 
 export const PAPER_SIZES: Record<PaperSize, [number, number]> = {
@@ -540,10 +549,13 @@ export class PrintTemplatesPage implements OnInit {
   protected readonly canUndo = computed(() => this.undoStack().length > 1);
   protected readonly canRedo = computed(() => this.redoStack().length > 0);
 
-  // Section Grid & Split Guidelines
-  protected readonly showSplits = signal<boolean>(true);
-  protected readonly customRows = signal<number>(1);
-  protected readonly customCols = signal<number>(2);
+  // Cell guides: an outline round every table cell on the page, never printed
+  protected readonly showCellGuides = signal<boolean>(true);
+
+  // The size of the table Insert table builds (TK-264)
+  protected readonly tableRows = signal<number>(DEFAULT_TABLE_SIZE.rows);
+  protected readonly tableCols = signal<number>(DEFAULT_TABLE_SIZE.cols);
+  protected readonly tableLimits = TABLE_LIMITS;
 
   // Column Width Mouse Drag & Drop State
   protected readonly colResizeState = signal<{
@@ -1637,165 +1649,29 @@ export class PrintTemplatesPage implements OnInit {
     }
   }
 
-  // ---- Section Grid & Split Configuration -----------------------------------
+  // ---- Cell guides and the size of the next table ---------------------------
 
-  protected toggleSplits(): void {
-    this.showSplits.update((v) => !v);
+  protected toggleCellGuides(): void {
+    this.showCellGuides.update((v) => !v);
   }
 
-  protected setCustomRows(rows: number): void {
-    this.customRows.set(Math.max(1, Math.min(10, rows)));
+  protected setTableRows(rows: number): void {
+    this.tableRows.set(clampRows(rows));
   }
 
-  protected setCustomCols(cols: number): void {
-    this.customCols.set(Math.max(1, Math.min(6, cols)));
+  protected setTableCols(cols: number): void {
+    this.tableCols.set(clampCols(cols));
   }
 
-  protected applyCustomSplit(): void {
-    this.applySectionSplit(this.customRows(), this.customCols());
-  }
-
-  protected applySectionSplit(rows: number, cols: number, ratios?: number[]): void {
-    if (rows < 1) rows = 1;
-    if (cols < 1) cols = 1;
-    this.recordSnapshot(true);
-
-    const segEl = this.segElements().find(
-      (ref) => ref.nativeElement.dataset['seg'] === this.activeSeg(),
-    )?.nativeElement;
-    if (!segEl) return;
-
-    const existingContents: string[] = [];
-    const existingTds = segEl.querySelectorAll('td, th');
-    if (existingTds.length > 0) {
-      existingTds.forEach((c) => {
-        const h = c.innerHTML.trim();
-        if (h && h !== '&nbsp;') existingContents.push(h);
-      });
+  /** A typed size: kept inside the limits, and the box shows the size that was kept. */
+  protected onTableSizeInput(axis: 'rows' | 'cols', e: Event): void {
+    const input = e.target as HTMLInputElement;
+    if (axis === 'rows') {
+      this.setTableRows(+input.value);
+      input.value = String(this.tableRows());
     } else {
-      const rawHtml = segEl.innerHTML.trim();
-      if (rawHtml && rawHtml !== '<br>' && rawHtml !== '&nbsp;') {
-        existingContents.push(rawHtml);
-      }
-    }
-
-    const colWidths: number[] = [];
-    if (ratios && ratios.length === cols) {
-      const sum = ratios.reduce((a, b) => a + b, 0);
-      for (const r of ratios) {
-        colWidths.push(Math.round((r / sum) * 1000) / 10);
-      }
-    } else {
-      const equalWidth = Math.round((100 / cols) * 10) / 10;
-      for (let c = 0; c < cols; c++) {
-        colWidths.push(equalWidth);
-      }
-    }
-
-    const font = this.pageFontFamily() || this.lastFont() || 'Arial';
-    const sz = this.pageFontSize() || this.currentFontSize() || 11;
-
-    let tableHtml = '<table style="width: 100%; border-collapse: collapse; margin-bottom: 4px;">\n  <tbody>\n';
-    let contentIdx = 0;
-    for (let r = 0; r < rows; r++) {
-      tableHtml += '    <tr>\n';
-      for (let c = 0; c < cols; c++) {
-        const w = colWidths[c];
-        const content = contentIdx < existingContents.length ? existingContents[contentIdx++] : '&nbsp;';
-        tableHtml += `      <td style="width: ${w}%; padding: 6px 8px; vertical-align: top; border: 1px dashed rgba(160, 185, 215, 0.45); font-family: ${font}; font-size: ${sz}px;">${content}</td>\n`;
-      }
-      tableHtml += '    </tr>\n';
-    }
-    tableHtml += '  </tbody>\n</table>';
-
-    segEl.innerHTML = tableHtml;
-    this.onSegmentInput(this.activeSeg());
-    this.recordSnapshot(true);
-    this.showFlash(`Configured ${this.activeSegLabel()} into ${rows} row${rows > 1 ? 's' : ''} × ${cols} column${cols > 1 ? 's' : ''}`);
-  }
-
-  protected addSectionRow(): void {
-    const segEl = this.segElements().find(
-      (ref) => ref.nativeElement.dataset['seg'] === this.activeSeg(),
-    )?.nativeElement;
-    if (!segEl) return;
-    const table = segEl.querySelector('table');
-    if (table && table.rows.length > 0) {
-      const lastRow = table.rows[table.rows.length - 1];
-      const newRow = this.createMatchingRow(lastRow);
-      lastRow.parentNode?.insertBefore(newRow, lastRow.nextSibling);
-      this.onSegmentInput(this.activeSeg());
-      this.recordSnapshot(true);
-      this.showFlash(`Added row to ${this.activeSegLabel()}`);
-    } else {
-      this.applySectionSplit(2, 2);
-    }
-  }
-
-  protected removeSectionRow(): void {
-    const segEl = this.segElements().find(
-      (ref) => ref.nativeElement.dataset['seg'] === this.activeSeg(),
-    )?.nativeElement;
-    if (!segEl) return;
-    const table = segEl.querySelector('table');
-    if (table && table.rows.length > 1) {
-      table.rows[table.rows.length - 1].remove();
-      this.onSegmentInput(this.activeSeg());
-      this.recordSnapshot(true);
-      this.showFlash(`Removed row from ${this.activeSegLabel()}`);
-    }
-  }
-
-  protected addSectionCol(): void {
-    const segEl = this.segElements().find(
-      (ref) => ref.nativeElement.dataset['seg'] === this.activeSeg(),
-    )?.nativeElement;
-    if (!segEl) return;
-    const table = segEl.querySelector('table');
-    if (table && table.rows.length > 0) {
-      this.recordSnapshot(true);
-      for (const row of Array.from(table.rows)) {
-        const newCell = document.createElement('td');
-        const font = this.pageFontFamily() || this.lastFont() || 'Arial';
-        const sz = this.pageFontSize() || this.currentFontSize() || 11;
-        newCell.style.cssText = `border: 1px dashed rgba(160, 185, 215, 0.45); padding: 6px 8px; font-family: ${font}; font-size: ${sz}px; vertical-align: top;`;
-        newCell.innerHTML = '&nbsp;';
-        row.appendChild(newCell);
-      }
-      for (const row of Array.from(table.rows)) {
-        const cells = Array.from(row.children) as HTMLElement[];
-        const equalW = Math.round((100 / cells.length) * 10) / 10;
-        cells.forEach((c) => (c.style.width = `${equalW}%`));
-      }
-      this.onSegmentInput(this.activeSeg());
-      this.recordSnapshot(true);
-      this.showFlash(`Added column to ${this.activeSegLabel()}`);
-    } else {
-      this.applySectionSplit(1, 2);
-    }
-  }
-
-  protected removeSectionCol(): void {
-    const segEl = this.segElements().find(
-      (ref) => ref.nativeElement.dataset['seg'] === this.activeSeg(),
-    )?.nativeElement;
-    if (!segEl) return;
-    const table = segEl.querySelector('table');
-    if (table && table.rows.length > 0 && table.rows[0].children.length > 1) {
-      this.recordSnapshot(true);
-      for (const row of Array.from(table.rows)) {
-        if (row.children.length > 1) {
-          row.removeChild(row.lastElementChild!);
-        }
-      }
-      for (const row of Array.from(table.rows)) {
-        const cells = Array.from(row.children) as HTMLElement[];
-        const equalW = Math.round((100 / cells.length) * 10) / 10;
-        cells.forEach((c) => (c.style.width = `${equalW}%`));
-      }
-      this.onSegmentInput(this.activeSeg());
-      this.recordSnapshot(true);
-      this.showFlash(`Removed column from ${this.activeSegLabel()}`);
+      this.setTableCols(+input.value);
+      input.value = String(this.tableCols());
     }
   }
 
@@ -1821,12 +1697,65 @@ export class PrintTemplatesPage implements OnInit {
 
   // ---- Table Manipulation ---------------------------------------------------
 
+  /**
+   * Inserts a full-width table of the size in the Rows and Cols steppers.
+   *
+   * At the caret when it is in the band being edited. Otherwise into the band
+   * itself: in place of what is there when the band is empty, after it when it
+   * is not. That is what lets an empty band be laid out with the Table tools
+   * alone, without first clicking somewhere to put a caret.
+   */
   protected insertTable(): void {
-    const cell = '<td style="border:1px solid #ccc;padding:4px 6px;font-size:11px">&nbsp;</td>';
-    this.execSel(
-      'insertHTML',
-      `<table style="width:100%;border-collapse:collapse;margin:6px 0"><tr>${cell}${cell}</tr><tr>${cell}${cell}</tr></table>`,
-    );
+    const segEl = this.segElements().find(
+      (ref) => ref.nativeElement.dataset['seg'] === this.activeSeg(),
+    )?.nativeElement;
+    if (!segEl) return;
+
+    const rows = this.tableRows();
+    const cols = this.tableCols();
+    const html = buildTableHtml({
+      rows,
+      cols,
+      fontSizePx: this.pageFontSize() || this.currentFontSize() || undefined,
+    });
+
+    const tablesBefore = new Set<Element>(Array.from(segEl.querySelectorAll('table')));
+
+    this.recordSnapshot(true);
+    if (this.activeRange && segEl.contains(this.activeRange.commonAncestorContainer)) {
+      this.execSel('insertHTML', html);
+    } else {
+      if (isBlankHtml(segEl.innerHTML)) {
+        segEl.innerHTML = html;
+      } else {
+        segEl.insertAdjacentHTML('beforeend', html);
+      }
+      this.onSegmentInput(this.activeSeg());
+    }
+    this.focusFirstCellOfNewTable(segEl, tablesBefore);
+    this.recordSnapshot(true);
+    this.showFlash(`Inserted a ${rows} × ${cols} table in ${this.activeSegLabel()}`);
+  }
+
+  /**
+   * Puts the caret in the first cell of the table that was just inserted, the
+   * one that was not in the band before, so the person can type at once and
+   * the cell tools act on that table.
+   */
+  private focusFirstCellOfNewTable(segEl: HTMLElement, tablesBefore: ReadonlySet<Element>): void {
+    const table = Array.from(segEl.querySelectorAll('table')).find((t) => !tablesBefore.has(t));
+    const cell = table?.querySelector<HTMLElement>('td, th');
+    if (!cell) return;
+
+    segEl.focus();
+    const range = document.createRange();
+    range.selectNodeContents(cell);
+    range.collapse(true);
+    const sel = window.getSelection();
+    sel?.removeAllRanges();
+    sel?.addRange(range);
+    this.activeRange = range.cloneRange();
+    this.setActiveCell(cell);
   }
 
   protected rowAbove(): void {

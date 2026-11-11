@@ -1357,6 +1357,32 @@ them. Without it the bands are read-only and the buttons that save are not shown
 On a phone the panels stack, and **Preview** opens the preview full screen, with **Close** at its
 top.
 
+### Laying a band out with tables
+
+Every band is laid out with tables, and the **Table** group in the left panel is the whole toolkit
+(TK-264). There are no grid presets to pick from: start from the standard layout's tables, or from
+an empty band, and shape them.
+
+- **Insert table** builds a full-width table of equal columns. Set its size first with **New table
+  rows** and **New table cols**, up to 20 rows and 8 columns; the button says what it will build,
+  for example *Insert a 3 × 3 table*. With your cursor in a cell the table goes into that cell,
+  which is how a letterhead gets a table inside a table. With no cursor in the band, an empty band
+  is filled with the table, and a band that already has something gets the table after it, so an
+  empty band needs no click first. The cursor lands in the new table's first cell.
+- **Rows and columns.** Insert a row above or below, a column left or right, or a single cell, and
+  delete a row, a column or a cell.
+- **Merge cells** joins a cell with the next one across, and **Split cell** takes a merged cell
+  apart again.
+- **Col width** and **Row height** take a number, or the **−** and **+** buttons. **Auto** lets the
+  content decide the widths and **Equal** gives every column the same width. A column's edge can
+  also be dragged on the page.
+- **Cell borders** and **Cell shading** switch a cell's outline and tint.
+- **Cell guides**, at the top of the page and on by default, outlines every cell so the layout shows
+  when the borders are off. The outlines are for editing only and are never printed.
+
+All document types share this editor, so every template is laid out the same way. Templates you
+have already saved are not changed.
+
 ## Paper
 
 A4, A5, Letter or Legal for a laser or inkjet printer, with margins in millimetres. Or a thermal

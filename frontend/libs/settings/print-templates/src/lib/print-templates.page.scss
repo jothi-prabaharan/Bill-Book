@@ -706,8 +706,8 @@
   }
 }
 
-/* History Buttons & Splits Toggle */
-.pt-split-toggle {
+/* History Buttons & Cell Guides Toggle */
+.pt-guides-toggle {
   font-weight: 500;
   &.btn-active {
     background: color-mix(in srgb, var(--color-accent) 15%, transparent);
@@ -734,104 +734,6 @@
   }
 }
 
-/* Section Grid Split Sidebar Group */
-.pt-section-grid-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.pt-grid-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.pt-grid-presets {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
-  gap: 4px;
-}
-
-.pt-btn-preset {
-  font-size: 10px;
-  padding: 3px 6px;
-  border: 1px solid var(--color-divider);
-  background: var(--color-surface);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  white-space: nowrap;
-  text-align: center;
-
-  &:hover {
-    background: var(--color-surface-hover);
-    border-color: var(--color-accent-400);
-    color: var(--color-accent-800);
-  }
-}
-
-.pt-custom-grid-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.pt-stepper {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  border: 1px solid var(--color-divider);
-  border-radius: var(--radius-sm);
-  padding: 2px 4px;
-  background: var(--color-surface);
-
-  .pt-stepper-label {
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    color: var(--color-text-muted);
-    margin-right: 2px;
-  }
-
-  .pt-step-btn {
-    padding: 0 4px;
-    font-weight: bold;
-    min-height: unset;
-    height: 18px;
-    line-height: 1;
-    cursor: pointer;
-  }
-
-  .pt-step-val {
-    min-width: 16px;
-    text-align: center;
-    font-size: 11px;
-    font-weight: 600;
-  }
-}
-
-.pt-btn-apply-grid {
-  font-size: 10px;
-  font-weight: 600;
-  padding: 3px 8px;
-}
-
-.pt-grid-actions-row {
-  display: flex;
-  gap: 4px;
-  button {
-    font-size: 10px;
-    padding: 2px 6px;
-    border: 1px solid var(--color-divider);
-    background: var(--color-surface);
-    &:hover {
-      border-color: var(--color-accent);
-      color: var(--color-accent);
-    }
-  }
-}
-
 /* On-Canvas Section Banner */
 .pt-seg-banner {
   display: flex;
@@ -852,7 +754,7 @@
     border-radius: 4px;
   }
 
-  .pt-seg-quick-splits {
+  .pt-seg-quick-tools {
     display: inline-flex;
     gap: 3px;
 
@@ -875,8 +777,8 @@
   }
 }
 
-/* Visual Split Guidelines on Canvas */
-.pt-show-splits {
+/* Cell guides on the canvas: outlines only, never saved or printed */
+.pt-show-guides {
   .pt-seg {
     td, th {
       outline: 1px dashed rgba(60, 120, 216, 0.42) !important;
