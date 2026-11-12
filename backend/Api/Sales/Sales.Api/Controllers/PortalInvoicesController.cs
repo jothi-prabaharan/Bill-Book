@@ -10,7 +10,8 @@ namespace Sales.Api.Controllers;
 
 /// <summary>
 /// A contact's own invoices in the client portal (TK-95): the list, one
-/// invoice with its lines, and its archived PDF. The contact is taken only from
+/// invoice with its lines, and its PDF, laid out from the invoice's print template
+/// when it is asked for (TK-266). The contact is taken only from
 /// the portal token; an invoice that is not theirs, or not posted, is 404.
 /// </summary>
 [ApiController]
@@ -37,7 +38,7 @@ public sealed class PortalInvoicesController : ControllerBase
     [HttpGet("{id:long}/pdf")]
     public async Task<IActionResult> Pdf(long id, CancellationToken ct)
     {
-        ArchivedPdf? pdf = await _invoices.PdfAsync(ContactId, id, ct);
+        DocumentPdf? pdf = await _invoices.PdfAsync(ContactId, id, ct);
         return pdf is null ? NotFound() : File(pdf.Content, "application/pdf", pdf.FileName);
     }
 }

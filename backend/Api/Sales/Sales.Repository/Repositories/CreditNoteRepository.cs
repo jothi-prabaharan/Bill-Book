@@ -47,7 +47,6 @@ public sealed class CreditNoteRepository
 
     private readonly IInventoryClient _inventoryClient;
     private readonly ILedgerClient _ledgerClient;
-    private readonly Sales.Repository.Repositories.SalesDocumentArchiveRepository _archive;
     private readonly Shared.Kernel.Stock.IUqcLookup _uqc;
     private readonly IEInvoicePosting _eInvoicing;
 
@@ -70,7 +69,6 @@ public sealed class CreditNoteRepository
         TimeProvider clock,
         IInventoryClient inventoryClient,
         ILedgerClient ledgerClient,
-        Sales.Repository.Repositories.SalesDocumentArchiveRepository archive,
         Shared.Kernel.Stock.IUqcLookup uqc,
         IEInvoicePosting eInvoicing,
         CreditNoteApprovalService? approvals = null,
@@ -90,7 +88,6 @@ public sealed class CreditNoteRepository
         _clock = clock;
         _inventoryClient = inventoryClient;
         _ledgerClient = ledgerClient;
-        _archive = archive;
         _uqc = uqc;
         _eInvoicing = eInvoicing;
     }
@@ -472,11 +469,6 @@ public sealed class CreditNoteRepository
     {
         var (customerId, _) = _tenant.Require();
 
-        // Where the PDF is filed, resolved before Inventory or Accounting is
-        // called: both are over HTTP and outside this transaction, so a token
-        // that cannot name a folder is refused before anything is posted (TK-22).
-        StorageScope archiveScope = _archive.Scope();
-
         CreditNote? creditNote = await _db.CreditNotes
             .Include(x => x.Lines)
                 .ThenInclude(l => l.Taxes)
@@ -664,17 +656,8 @@ public sealed class CreditNoteRepository
         creditNote.PostedAt = _clock.GetUtcNow();
         creditNote.PostedBy = _user.UserId;
 
-        await _archive.ArchiveAsync(
-            archiveScope,
-            Sales.Repository.Repositories.ArchivedSalesDocument.CreditNote,
-            creditNote.CreditNoteId,
-            "CREDIT NOTE",
-            "Credit Note No",
-            creditNote,
-            creditNote.Lines,
-            invoice is null ? null : $"Against invoice {invoice.DocumentNo} dated {invoice.DocumentDate:dd-MMM-yyyy}",
-            ct);
-
+        // Nothing is rendered or filed here (TK-266, D-72): the credit note's PDF is laid out from its
+        // print template when it is asked for, so posting does not depend on Printing.
         await _db.SaveChangesAsync(ct);
 
         // A credit note against a B2B, export or SEZ supply is registered like

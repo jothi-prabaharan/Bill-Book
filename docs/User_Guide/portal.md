@@ -33,8 +33,9 @@ Each card shows the date, the due date, the total and a status:
 | **Void** | Withdrawn; nothing is owed on it |
 
 An invoice's page shows its lines, the totals, what is still owed, and **Download PDF**. The PDF is
-the same file that was filed when the invoice was posted, so the customer gets the copy your staff
-see.
+laid out from the invoice's print template when the customer asks for it (TK-266), the same layout your
+staff see on the view page, so the customer gets the document your staff would send, with the current
+template. A voided invoice is stamped VOID.
 
 ## Quotes
 

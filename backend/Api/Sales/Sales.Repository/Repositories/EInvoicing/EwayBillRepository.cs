@@ -43,7 +43,6 @@ public sealed class EwayBillRepository
     private readonly IUqcLookup _uqc;
     private readonly IEInvoiceGatewayRepository _gateway;
     private readonly IAfterCommit _afterCommit;
-    private readonly SalesDocumentArchiveRepository _archive;
     private readonly TimeProvider _clock;
     private readonly ILogger<EwayBillRepository> _log;
 
@@ -56,7 +55,6 @@ public sealed class EwayBillRepository
         IUqcLookup uqc,
         IEInvoiceGatewayRepository gateway,
         IAfterCommit afterCommit,
-        SalesDocumentArchiveRepository archive,
         TimeProvider clock,
         ILogger<EwayBillRepository> log)
     {
@@ -68,7 +66,6 @@ public sealed class EwayBillRepository
         _uqc = uqc;
         _gateway = gateway;
         _afterCommit = afterCommit;
-        _archive = archive;
         _clock = clock;
         _log = log;
     }
@@ -407,8 +404,9 @@ public sealed class EwayBillRepository
     }
 
     /// <summary>
-    /// A challan carries its bill on its face: its two columns take the number
-    /// and the date, and its filed PDF is written again with them on it.
+    /// A challan carries its bill on its face: its two columns take the number and the date, and its print
+    /// template shows them (<c>Document.EwayBillNo</c>, <c>Document.EwayBillDate</c>). Its PDF is laid out
+    /// from that template when it is asked for (TK-266), so there is nothing to file again here.
     /// </summary>
     private async Task OnChallanAsync(EwayBill row, EwayBillDetails details, CancellationToken ct)
     {
@@ -417,36 +415,12 @@ public sealed class EwayBillRepository
             return;
         }
 
-        DeliveryChallan challan = await _db.DeliveryChallans.Include(c => c.Lines)
+        DeliveryChallan challan = await _db.DeliveryChallans
             .FirstAsync(c => c.DeliveryChallanId == row.SourceId, ct);
         challan.EwayBillNo = details.EwbNo;
         challan.EwayBillDate = DateOnly.FromDateTime(details.EwbDate.ToOffset(Ist).DateTime);
         challan.VehicleNo ??= row.VehicleNo;
         challan.TransporterName ??= row.TransporterName;
-
-        try
-        {
-            string valid = details.ValidUntil is DateTimeOffset until
-                ? $", valid until {until.ToOffset(Ist):dd-MMM-yyyy}"
-                : string.Empty;
-            await _archive.ArchiveAsync(
-                _archive.Scope(),
-                ArchivedSalesDocument.DeliveryChallan,
-                challan.DeliveryChallanId,
-                "DELIVERY CHALLAN",
-                "Challan No",
-                challan,
-                challan.Lines,
-                $"E-way bill {details.EwbNo} dated {challan.EwayBillDate:dd-MMM-yyyy}{valid}"
-                    + (row.VehicleNo is null ? string.Empty : $", vehicle {row.VehicleNo}"),
-                ct);
-        }
-        catch (Exception ex) when (ex is InvalidOperationException or StorageKeyExistsException or IOException)
-        {
-            // The bill is generated and recorded; a PDF that could not be
-            // written again is not a reason to lose that.
-            _log.LogWarning(ex, "The challan {ChallanId}'s PDF could not be written again with its e-way bill.", challan.DeliveryChallanId);
-        }
     }
 
     private static EwayTransport Transport(TransportMode mode, int distance, string? vehicle, string? transporterId, string? transporterName) =>

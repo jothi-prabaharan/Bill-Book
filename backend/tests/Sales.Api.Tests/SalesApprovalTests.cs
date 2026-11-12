@@ -300,7 +300,7 @@ public sealed class SalesApprovalTests
             InvoiceRepository invoices = new(
                 db, tenant, numbering, new StubBaseCurrency(), new StubBranchSettings(), new StubTaxRates(),
                 names, names, user, TimeProvider.System, new RecordingInventory(), new RecordingLedger(),
-                credit, new StubDocumentStorage(), new StubInvoicePdf(), new StubOrgIdentity(), new StubUqcLookup(), new StubEInvoicing(),
+                credit, new StubUqcLookup(), new StubEInvoicing(),
                 discounts, overrides);
 
             return new Harness(db, invoices, overrides, credit, discounts, user);

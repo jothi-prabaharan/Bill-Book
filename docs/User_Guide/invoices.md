@@ -123,12 +123,14 @@ branch's name, the amount still due and the invoice number already filled in.
 - The QR is the `{{Payment.UpiQr}}` field in Settings › Print templates, offered on invoices.
   Untouched standard invoice templates carry it already; on an edited one, insert it where you like.
 
-**The PDF filed when an invoice was posted is a different thing, and the screen no longer offers it.**
-That copy is kept for the record and is not redrawn later, so it has its own fixed layout rather than
-the print template, and a voided invoice's copy is not stamped VOID. It is a plain PDF, not the PDF/A
-archive format yet. It used to be behind a **Download PDF** button; with that gone, what you view,
-print and save always matches the template. `GET api/sales/invoices/{id}/pdf` still serves it, and the
-customer portal's download is unchanged.
+**An invoice's PDF is the same document (TK-266).** `GET api/sales/invoices/{id}/pdf`, and the customer
+portal's **Download PDF**, lay the invoice out from its own print template, with the same fields and the
+same stamp as the view page: **PROFORMA** on a draft, **VOID** on a voided invoice, **IRN PENDING** while
+an invoice that needs an IRN has none. The PDF is made when it is asked for and nothing is filed when the
+invoice is posted, so posting is no slower for it, a change to the template shows in the next PDF, and the
+file never differs from what you viewed. It is a plain PDF, not the PDF/A archive format. The PDF is
+printed by a browser engine on the server, which an operator installs (see Platform › Printing and PDFs);
+**View** and **Print** do not need it.
 
 Two things do not show yet: the amount in words, and the place of supply's state name — it shows as
 the two-digit state code for now. **Paid** and **Outstanding** rows of a template are blank for the

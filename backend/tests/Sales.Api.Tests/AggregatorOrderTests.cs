@@ -63,6 +63,9 @@ public sealed class AggregatorOrderTests
     {
         public Task<PrintedDocument> RenderAsync(string documentTypeCode, long? printTemplateId, PrintPayload payload, string? watermark, CancellationToken ct) =>
             throw new InvalidOperationException("Aggregator intake must not print.");
+
+        public Task<byte[]> RenderPdfAsync(string documentTypeCode, long? printTemplateId, PrintPayload payload, string? watermark, CancellationToken ct) =>
+            throw new InvalidOperationException("Aggregator intake must not print.");
     }
 
     private sealed record Branch(SalesDbContext Db, AggregatorOrderRepository Aggregators, StubRestaurantMenu Menu);

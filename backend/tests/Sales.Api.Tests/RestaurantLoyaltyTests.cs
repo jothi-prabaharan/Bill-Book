@@ -66,7 +66,7 @@ public sealed class RestaurantLoyaltyTests
         InvoiceRepository invoices = new(
             db, tenant, numbering, new StubBaseCurrency(), branch, rates,
             names, names, new StubCurrentUser(), TimeProvider.System, new RecordingInventory(), ledger,
-            new StubCreditCheck(), new StubDocumentStorage(), new StubInvoicePdf(), new StubOrgIdentity(), new StubUqcLookup(), new StubEInvoicing(),
+            new StubCreditCheck(), new StubUqcLookup(), new StubEInvoicing(),
             loyalty: loyalty);
 
         StubRestaurantSettings settings = new(new RestaurantSettingsView { LoyaltyEarnRate = rate });

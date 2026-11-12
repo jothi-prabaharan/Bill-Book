@@ -70,8 +70,7 @@ public sealed class DocumentCustomFieldCarryTests
         InvoiceRepository invoices = new(
             db, tenant, new NumberGenerator(db, Options.Create(new NumberingOptions()), new StubFinancialYear()),
             new StubBaseCurrency(), new StubBranchSettings(), new StubTaxRates(), names, names, new StubCurrentUser(), TimeProvider.System,
-            new RecordingInventory(), new RecordingLedger(), new StubCreditCheck(), new StubDocumentStorage(), new StubInvoicePdf(),
-            new StubOrgIdentity(), new StubUqcLookup(), new StubEInvoicing(),
+            new RecordingInventory(), new RecordingLedger(), new StubCreditCheck(), new StubUqcLookup(), new StubEInvoicing(),
             customFields: new DocumentCustomFieldGate(new Definitions()));
 
         InvoiceResult created = await invoices.CreateAsync(new SaveInvoiceRequest

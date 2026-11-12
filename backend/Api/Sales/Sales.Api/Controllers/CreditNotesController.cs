@@ -143,17 +143,18 @@ public sealed class CreditNotesController : ControllerBase
         new() { Message = result.Detail ?? "This credit note was refused." };
 
     /// <summary>
-    /// The PDF archived when this credit note was posted (TK-22). Not found for a
-    /// draft, for a credit note in another branch, or when the file is missing — the
-    /// three are not told apart. Needs <c>sales.print</c>, as printing does: both
-    /// hand the document to someone outside the business.
+    /// The credit note as a PDF, laid out by its print template and rendered when it is asked for (TK-266):
+    /// the layout, the stamp and the fields are the ones View and Print show, so the PDF is that page. A
+    /// draft reads DRAFT, a posted note still waiting for its IRN reads IRN PENDING and a voided note VOID.
+    /// Not found for a credit note in another branch. Needs <c>sales.print</c>, as printing does: both hand
+    /// the document to someone outside the business.
     /// </summary>
     [HttpGet("{id:long}/pdf")]
     [PermissionAction("print")]
     public async Task<IActionResult> DownloadPdf(
-        long id, [FromServices] SalesDocumentArchiveRepository archive, CancellationToken ct)
+        long id, [FromServices] SalesDocumentPdfRepository documents, CancellationToken ct)
     {
-        ArchivedPdf? pdf = await archive.OpenAsync(ArchivedSalesDocument.CreditNote, id, ct);
+        DocumentPdf? pdf = await documents.OpenAsync(SalesPdfKind.CreditNote, id, ct);
         return pdf is null ? NotFound() : File(pdf.Content, "application/pdf", pdf.FileName);
     }
 }

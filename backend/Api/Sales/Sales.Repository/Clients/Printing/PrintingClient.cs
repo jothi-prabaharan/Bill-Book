@@ -15,7 +15,22 @@ public interface IPrintingClient
         PrintPayload payload,
         string? watermark,
         CancellationToken ct);
+
+    /// <summary>
+    /// The same document, laid out by the same template, printed to a PDF by Printing (TK-266). The
+    /// payload and the template id are the ones <see cref="RenderAsync"/> takes, which is what keeps
+    /// a document's PDF from ever differing from the page that shows it.
+    /// </summary>
+    Task<byte[]> RenderPdfAsync(
+        string documentTypeCode,
+        long? printTemplateId,
+        PrintPayload payload,
+        string? watermark,
+        CancellationToken ct);
 }
+
+/// <summary>A document printed to PDF: the file, and the number its download is named after.</summary>
+public sealed record PrintedPdf(byte[] Content, string DocumentNo);
 
 /// <summary>
 /// Printing's answer: the document, laid out, as HTML. The three identity fields are not Printing's: the

@@ -408,3 +408,18 @@ One step is waiting for a decision at a time. The approver can:
 - **send back**: the level before looks at it again, or the person who asked, if it was the first level. A reason is required.
 
 Someone away can name a **delegate** for a range of dates. The delegate can then act on their steps, but never on a step that any holder of a role may take.
+
+# Printing and PDFs
+
+## PDFs need a browser engine on the Printing service
+
+An invoice's, a credit note's or a delivery challan's PDF (the PDF routes of those three, and the customer portal's **Download PDF**) is laid out by the document's print template and printed to a file by a headless Chromium that the **Printing** service starts (TK-266). Nothing is filed when a document is posted: the PDF is made each time it is asked for, so it always matches the template. **View** and **Print** in the browser use no Chromium; only the PDF does.
+
+**An operator's job, on the machine that runs Printing:**
+
+- **Install a browser and fonts.** On Debian: `apt-get install -y chromium fonts-liberation fonts-noto-core fonts-noto-cjk`. **On Ubuntu, `chromium` is a snap** (apt has no `chromium` package on 24.04, and `chromium-browser` only installs the snap), which is confined and often cannot be started by a service account, so install Google Chrome instead: download Google's `.deb` and run `apt-get install -y ./google-chrome-stable_current_amd64.deb`, which puts it at `/usr/bin/google-chrome`, then `apt-get install -y fonts-liberation fonts-noto-core fonts-noto-cjk`. `fonts-liberation` draws Latin text at Arial's width, `fonts-noto-core` carries Tamil and `fonts-noto-cjk` carries Chinese. A language with no font installed prints empty boxes where its letters belong.
+- **Printing finds the browser** at `CHROME_PATH` (or `PUPPETEER_EXECUTABLE_PATH`) when that file exists, then at `/usr/bin/chromium`, `/usr/bin/chromium-browser`, `/usr/bin/google-chrome` or `/usr/bin/microsoft-edge`, and on Windows at Edge's or Chrome's usual folder. With none of them it tries to download Chromium on its first PDF, which fails on a server that cannot reach the internet.
+- **In a container,** build the Printing image with `--build-arg INSTALL_BROWSER=true` (`backend/Dockerfile`); it installs the same packages and sets `CHROME_PATH`. The other services' images do not carry a browser.
+- **Staging, UAT and Production run published binaries,** so the browser and fonts go on those servers by hand, once; the deploy scripts do not install them. Set `CHROME_PATH` for the Printing process if the browser is somewhere else.
+
+Without a browser a PDF request fails with a server error and everything else in Printing, including **View** and **Print**, keeps working.

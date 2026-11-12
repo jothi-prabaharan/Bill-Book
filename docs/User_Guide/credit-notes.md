@@ -44,7 +44,7 @@ Lower a quantity or a price to credit part of a line; remove a line to leave it 
 | The invoice | The note is **claimed against it**, so the invoice shows less outstanding |
 | Stock | For a sales return, the goods **come back at their original cost**. The cost of sales is reversed by stock costing, at that same cost |
 | GST return | The note is recorded for GSTR-1 against its original invoice |
-| PDF | A PDF of the note, naming the invoice it is against, is filed for the record. `GET api/sales/credit-notes/{id}/pdf` downloads it |
+| PDF | Nothing is filed at posting. `GET api/sales/credit-notes/{id}/pdf` makes the PDF when it is asked for, from the note's print template (see below) |
 
 ## Viewing and printing
 
@@ -58,8 +58,10 @@ a posted note that needs an IRN and has none yet is stamped **IRN PENDING**, as 
 in **Settings › Print templates** changes every credit note, on the screen and on paper. **Print** on that page sends the pages to the
 browser's print dialog, where they can also be saved as a PDF; it shows only to someone who may print sales documents.
 
-The PDF filed when the note was posted is a separate copy with its own fixed layout, kept for the record. It is not linked from the
-screen; `GET api/sales/credit-notes/{id}/pdf` still serves it.
+**The note's PDF is the same document (TK-266).** `GET api/sales/credit-notes/{id}/pdf` lays the note out from the same template with
+the same fields and the same stamp as the view page: **DRAFT** on a draft, **IRN PENDING** while it waits for its IRN, **VOID** on a
+voided note. It is made when asked for, so a change to the template shows in the next PDF, and it is a plain PDF, not PDF/A. The
+download needs the same permission as **Print**. It is not linked from the screen.
 
 Posting is refused, with the reason, when:
 

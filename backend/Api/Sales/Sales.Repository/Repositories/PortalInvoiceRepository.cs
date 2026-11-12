@@ -78,7 +78,7 @@ public sealed class PortalInvoiceRepository
     private readonly ILedgerClient _ledger;
     private readonly ITenantContext _tenant;
     private readonly IItemNameLookup _items;
-    private readonly SalesDocumentArchiveRepository _archive;
+    private readonly SalesDocumentPdfRepository _pdfs;
     private readonly TimeProvider _clock;
 
     public PortalInvoiceRepository(
@@ -86,14 +86,14 @@ public sealed class PortalInvoiceRepository
         ILedgerClient ledger,
         ITenantContext tenant,
         IItemNameLookup items,
-        SalesDocumentArchiveRepository archive,
+        SalesDocumentPdfRepository pdfs,
         TimeProvider clock)
     {
         _db = db;
         _ledger = ledger;
         _tenant = tenant;
         _items = items;
-        _archive = archive;
+        _pdfs = pdfs;
         _clock = clock;
     }
 
@@ -143,10 +143,13 @@ public sealed class PortalInvoiceRepository
         };
     }
 
-    /// <summary>The archived PDF, the same file staff download, or null when the invoice is not the contact's or has none.</summary>
-    public async Task<ArchivedPdf?> PdfAsync(long contactId, long invoiceId, CancellationToken ct) =>
+    /// <summary>
+    /// The invoice as a PDF, laid out by its print template: the same PDF staff download (TK-266). Null when
+    /// the invoice is not the contact's. Printing resolves the template from the portal session's own token.
+    /// </summary>
+    public async Task<DocumentPdf?> PdfAsync(long contactId, long invoiceId, CancellationToken ct) =>
         await Visible(contactId).AnyAsync(i => i.InvoiceId == invoiceId, ct)
-            ? await _archive.OpenAsync(ArchivedSalesDocument.Invoice, invoiceId, ct)
+            ? await _pdfs.OpenAsync(SalesPdfKind.Invoice, invoiceId, ct)
             : null;
 
     /// <summary>

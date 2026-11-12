@@ -4,6 +4,7 @@ using Sales.Repository.Clients;
 using Shared.Kernel.Documents;
 using Shared.Kernel.Interfaces;
 using Shared.Kernel.Numbering;
+using Shared.Kernel.Printing;
 using Shared.Kernel.Tax;
 using Shared.Kernel.Tenancy;
 
@@ -390,91 +391,48 @@ public sealed class RecordingInventory : IInventoryClient
         });
 }
 
-/// <summary>
-/// Saves nothing and reports the key back. Public here rather than private to
-/// one test class, so a second suite needing an InvoiceRepository does not have to
-/// write its own.
-/// </summary>
-public sealed class StubDocumentStorage : Shared.Kernel.Storage.IFileStorage
-{
-    public Task<string> SaveAsync(string key, Stream content, string contentType, Shared.Kernel.Storage.FileWriteMode mode = Shared.Kernel.Storage.FileWriteMode.CreateNew, CancellationToken ct = default) =>
-        Task.FromResult(key);
-
-    public Task<Stream?> OpenReadAsync(string key, CancellationToken ct = default) =>
-        Task.FromResult<Stream?>(null);
-
-    public Task DeleteAsync(string key, CancellationToken ct = default) => Task.CompletedTask;
-
-    public Task<Uri?> GetDownloadUrlAsync(string key, TimeSpan lifetime, CancellationToken ct = default) =>
-        Task.FromResult<Uri?>(null);
-}
-
-/// <summary>Renders a single byte, which is enough for anything not about the PDF.</summary>
-public sealed class StubInvoicePdf : Sales.Repository.Repositories.IInvoicePdfRendererRepository
-{
-    public byte[] Render(Sales.Repository.Repositories.PdfInvoiceModel model) => [0x25];
-}
+/// <summary>One document handed to Printing: its type, the template id it named, its payload and its stamp.</summary>
+public sealed record PrintCall(string DocumentTypeCode, long? PrintTemplateId, PrintPayload Payload, string? Watermark);
 
 /// <summary>
-/// Keeps every file it is given, in memory, and honours the write mode the way
-/// the real stores do: a create-only save over an existing key is refused. So a
-/// test can post, read the file back, and see a retry write over its leftover.
+/// Printing, as a document's own service sees it (TK-266): keeps every document it is asked to lay out, as a
+/// page and as a PDF, and answers with a page and with a PDF's first bytes. Public here rather than private to
+/// one suite, so a second suite that prints does not have to write its own.
 /// </summary>
-public sealed class RecordingDocumentStorage : Shared.Kernel.Storage.IFileStorage
+public sealed class RecordingPrintingClient : IPrintingClient
 {
-    public Dictionary<string, byte[]> Files { get; } = [];
+    public List<PrintCall> Pages { get; } = [];
 
-    public List<(string Key, Shared.Kernel.Storage.FileWriteMode Mode)> Saves { get; } = [];
+    public List<PrintCall> Pdfs { get; } = [];
 
-    public async Task<string> SaveAsync(string key, Stream content, string contentType, Shared.Kernel.Storage.FileWriteMode mode = Shared.Kernel.Storage.FileWriteMode.CreateNew, CancellationToken ct = default)
+    public Task<PrintedDocument> RenderAsync(
+        string documentTypeCode, long? printTemplateId, PrintPayload payload, string? watermark, CancellationToken ct)
     {
-        if (mode == Shared.Kernel.Storage.FileWriteMode.CreateNew && Files.ContainsKey(key))
-        {
-            throw new Shared.Kernel.Storage.StorageKeyExistsException(key);
-        }
-
-        using var copy = new MemoryStream();
-        await content.CopyToAsync(copy, ct);
-        Files[key] = copy.ToArray();
-        Saves.Add((key, mode));
-        return key;
+        Pages.Add(new PrintCall(documentTypeCode, printTemplateId, payload, watermark));
+        return Task.FromResult(new PrintedDocument { Html = "<p>laid out</p>", PageCount = 1 });
     }
 
-    public Task<Stream?> OpenReadAsync(string key, CancellationToken ct = default) =>
-        Task.FromResult<Stream?>(Files.TryGetValue(key, out byte[]? bytes) ? new MemoryStream(bytes) : null);
-
-    public Task DeleteAsync(string key, CancellationToken ct = default)
+    public Task<byte[]> RenderPdfAsync(
+        string documentTypeCode, long? printTemplateId, PrintPayload payload, string? watermark, CancellationToken ct)
     {
-        Files.Remove(key);
-        return Task.CompletedTask;
-    }
-
-    public Task<Uri?> GetDownloadUrlAsync(string key, TimeSpan lifetime, CancellationToken ct = default) =>
-        Task.FromResult<Uri?>(null);
-}
-
-/// <summary>Keeps each model it draws, so a test can read what would have printed.</summary>
-public sealed class RecordingSalesPdf : Sales.Repository.Repositories.ISalesDocumentPdfRendererRepository
-{
-    public List<Sales.Repository.Repositories.SalesPdfModel> Rendered { get; } = [];
-
-    public byte[] Render(Sales.Repository.Repositories.SalesPdfModel model)
-    {
-        Rendered.Add(model);
-        return "%PDF"u8.ToArray();
+        Pdfs.Add(new PrintCall(documentTypeCode, printTemplateId, payload, watermark));
+        return Task.FromResult("%PDF"u8.ToArray());
     }
 }
 
-/// <summary>The archive a credit note or challan service is built with in tests.</summary>
-public static class TestArchive
+/// <summary>The PDF repository a credit note, challan, portal or invoice suite is built with in tests.</summary>
+public static class TestDocumentPdf
 {
-    public static Sales.Repository.Repositories.SalesDocumentArchiveRepository For(
-        Sales.Repository.SalesDbContext db,
-        ITenantContext tenant,
-        Shared.Kernel.Storage.IFileStorage? storage = null,
-        Sales.Repository.Repositories.ISalesDocumentPdfRendererRepository? pdf = null) =>
-        new(db, tenant, storage ?? new StubDocumentStorage(), new StubOrgIdentity(),
-            new StubNameLookup(), new StubNameLookup(), pdf ?? new RecordingSalesPdf());
+    public static SalesDocumentPdfRepository For(
+        Sales.Repository.SalesDbContext db, IPrintingClient printing, StubOrgIdentity? identity = null)
+    {
+        StubNameLookup names = new();
+        identity ??= new StubOrgIdentity();
+
+        return new SalesDocumentPdfRepository(
+            new InvoicePrintRepository(db, identity, names, names, printing),
+            new SalesPrintRepository(db, identity, names, names, printing));
+    }
 }
 
 /// <summary>

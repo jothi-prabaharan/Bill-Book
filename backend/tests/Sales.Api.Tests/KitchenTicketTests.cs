@@ -67,6 +67,9 @@ public sealed class KitchenTicketTests
             Printed.Add((documentTypeCode, payload));
             return Task.FromResult(new PrintedDocument { Html = "<p>ticket</p>", PageCount = 1 });
         }
+
+        public Task<byte[]> RenderPdfAsync(string documentTypeCode, long? printTemplateId, PrintPayload payload, string? watermark, CancellationToken ct) =>
+            throw new InvalidOperationException("A kitchen ticket is printed as a page, never as a PDF.");
     }
 
     private sealed record Kitchen(SalesDbContext Db, RestaurantOrderRepository Orders, KotRepository Kots, RecordingPrinting Printing);

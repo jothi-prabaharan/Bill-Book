@@ -273,9 +273,6 @@ public sealed class InvoiceLineEditTests
                 new RecordingInventory(),
                 new RecordingLedger(),
                 new StubCreditCheck(),
-                new StubDocumentStorage(),
-                new StubInvoicePdf(),
-                new StubOrgIdentity(),
                 new StubUqcLookup(), new StubEInvoicing());
 
             return new Harness(db, invoices, tenant);

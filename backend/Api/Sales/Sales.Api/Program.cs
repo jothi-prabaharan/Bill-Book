@@ -138,9 +138,9 @@ builder.Services.AddHttpClient<Shared.Kernel.Contacts.IDiscountLimitClient, Shar
     client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
-builder.Services.AddScoped<Sales.Repository.Repositories.IInvoicePdfRendererRepository, Sales.Repository.Repositories.PdfSharpInvoiceRendererRepository>();
-builder.Services.AddScoped<Sales.Repository.Repositories.ISalesDocumentPdfRendererRepository, Sales.Repository.Repositories.PdfSharpSalesDocumentRenderer>();
-builder.Services.AddScoped<Sales.Repository.Repositories.SalesDocumentArchiveRepository>();
+// The PDF of an invoice, credit note or challan is Printing's, laid out from the document's own template when
+// it is asked for (TK-266); Sales keeps no PDF layout of its own and files none.
+builder.Services.AddScoped<Sales.Repository.Repositories.SalesDocumentPdfRepository>();
 
 // The branch's base currency, stamped onto every document's base-currency total.
 // Cached per organization: it changes about never, and the alternative is an

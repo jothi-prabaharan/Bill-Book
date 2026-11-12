@@ -68,11 +68,21 @@ public sealed class SalesPrintTests
     {
         public List<(string Type, long? TemplateId, PrintPayload Payload, string? Watermark)> Printed { get; } = [];
 
+        /// <summary>The same documents asked for as a PDF (TK-266).</summary>
+        public List<(string Type, long? TemplateId, PrintPayload Payload, string? Watermark)> Pdfs { get; } = [];
+
         public Task<PrintedDocument> RenderAsync(
             string documentTypeCode, long? printTemplateId, PrintPayload payload, string? watermark, CancellationToken ct)
         {
             Printed.Add((documentTypeCode, printTemplateId, payload, watermark));
             return Task.FromResult(new PrintedDocument { Html = "<p>laid out</p>", PageCount = 1 });
+        }
+
+        public Task<byte[]> RenderPdfAsync(
+            string documentTypeCode, long? printTemplateId, PrintPayload payload, string? watermark, CancellationToken ct)
+        {
+            Pdfs.Add((documentTypeCode, printTemplateId, payload, watermark));
+            return Task.FromResult("%PDF"u8.ToArray());
         }
     }
 
@@ -332,6 +342,125 @@ public sealed class SalesPrintTests
 
             await Assert.ThrowsAsync<InvalidOperationException>(() => a.Printing.PrintQuoteAsync(quote.QuoteId, default));
             Assert.Empty(a.Recorder.Printed);
+        }
+    }
+
+    /// <summary>
+    /// TK-266: a document's PDF and the page that shows it are laid out from the same payload, by the same
+    /// template and with the same stamp — which is what keeps the file a customer is sent from ever
+    /// differing from what the user saw.
+    /// </summary>
+    [SkippableFact]
+    public async Task A_challans_pdf_is_laid_out_from_the_same_payload_template_and_stamp_as_its_page()
+    {
+        Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
+
+        Arrangement a = Arrange();
+        await using (a.Db)
+        {
+            DeliveryChallan challan = Fill(
+                new DeliveryChallan
+                {
+                    DispatchDate = Dated.AddDays(1),
+                    VehicleNo = "TN01AB1234",
+                    PrintTemplateId = 52,
+                    Lines = [new DeliveryChallanDetail { LineNumber = 1, ItemId = 7, Quantity = 1m, UnitPrice = 200m, TaxableAmount = 200m, LineTotal = 236m }],
+                },
+                "DLC", DocumentStatus.Draft, Number("DC"));
+            a.Db.DeliveryChallans.Add(challan);
+            await a.Db.SaveChangesAsync();
+
+            PrintedDocument? page = await a.Printing.PrintChallanAsync(challan.DeliveryChallanId, default);
+            PrintedPdf? pdf = await a.Printing.PrintChallanPdfAsync(challan.DeliveryChallanId, default);
+
+            Assert.NotNull(page);
+            Assert.NotNull(pdf);
+            Assert.Equal(challan.DocumentNo, pdf!.DocumentNo);
+            Assert.StartsWith("%PDF", System.Text.Encoding.ASCII.GetString(pdf.Content));
+
+            var shown = Assert.Single(a.Recorder.Printed);
+            var filed = Assert.Single(a.Recorder.Pdfs);
+            Assert.Equal("DLC", filed.Type);
+            Assert.Equal(52, filed.TemplateId);
+            Assert.Equal("DRAFT", filed.Watermark);
+            Assert.Equal(shown.Type, filed.Type);
+            Assert.Equal(shown.TemplateId, filed.TemplateId);
+            Assert.Equal(shown.Watermark, filed.Watermark);
+            Assert.Equal(shown.Payload.Singles, filed.Payload.Singles);
+            Assert.Equal(shown.Payload.Rows("Item").Count, filed.Payload.Rows("Item").Count);
+        }
+    }
+
+    [SkippableFact]
+    public async Task A_credit_notes_pdf_is_named_after_the_note_and_asks_for_the_template_it_names()
+    {
+        Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
+
+        Arrangement a = Arrange();
+        await using (a.Db)
+        {
+            Invoice invoice = Fill(new Invoice { DueDate = Dated }, "INV", DocumentStatus.Posted, Number("INV"));
+            a.Db.Invoices.Add(invoice);
+            await a.Db.SaveChangesAsync();
+
+            string noteNo = Number("CN");
+            CreditNote note = Fill(
+                new CreditNote
+                {
+                    InvoiceId = invoice.InvoiceId,
+                    ReasonCode = CreditNoteReason.SalesReturn,
+                    PrintTemplateId = 31,
+                    Lines = [new CreditNoteDetail { LineNumber = 1, ItemId = 7, Quantity = 1m, UnitPrice = 200m, TaxableAmount = 200m, LineTotal = 236m }],
+                },
+                "CRN", DocumentStatus.Posted, noteNo);
+            a.Db.CreditNotes.Add(note);
+            await a.Db.SaveChangesAsync();
+
+            PrintedPdf? pdf = await a.Printing.PrintCreditNotePdfAsync(note.CreditNoteId, default);
+
+            Assert.Equal(noteNo, pdf!.DocumentNo);
+            var filed = Assert.Single(a.Recorder.Pdfs);
+            Assert.Equal(("CRN", (long?)31, (string?)null), (filed.Type, filed.TemplateId, filed.Watermark));
+            Assert.Equal("Goods returned", filed.Payload.Singles["Document.Reason"]);
+            Assert.Empty(a.Recorder.Printed);
+        }
+    }
+
+    [SkippableFact]
+    public async Task A_pdf_for_a_document_in_no_branch_of_the_callers_is_not_found_and_nothing_is_rendered()
+    {
+        Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
+
+        Arrangement a = Arrange();
+        await using (a.Db)
+        {
+            Assert.Null(await a.Printing.PrintChallanPdfAsync(987_654, default));
+            Assert.Null(await a.Printing.PrintCreditNotePdfAsync(987_654, default));
+            Assert.Empty(a.Recorder.Pdfs);
+        }
+    }
+
+    [SkippableFact]
+    public async Task A_branch_that_cannot_be_identified_stops_the_pdf_rather_than_printing_a_placeholder()
+    {
+        Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
+
+        Arrangement a = Arrange(resolvesBranch: false);
+        await using (a.Db)
+        {
+            DeliveryChallan challan = Fill(
+                new DeliveryChallan
+                {
+                    DispatchDate = Dated,
+                    Lines = [new DeliveryChallanDetail { LineNumber = 1, ItemId = 7, Quantity = 1m, UnitPrice = 200m, TaxableAmount = 200m, LineTotal = 236m }],
+                },
+                "DLC", DocumentStatus.Posted, Number("DC"));
+            a.Db.DeliveryChallans.Add(challan);
+            await a.Db.SaveChangesAsync();
+
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => a.Printing.PrintChallanPdfAsync(challan.DeliveryChallanId, default));
+            Assert.Empty(a.Recorder.Pdfs);
         }
     }
 }

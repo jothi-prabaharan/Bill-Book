@@ -57,6 +57,46 @@ public sealed class InvoicePrintRepository
     /// <summary>Null when the invoice is not in this branch — which the caller answers as not found.</summary>
     public async Task<PrintedDocument?> PrintAsync(long invoiceId, CancellationToken ct)
     {
+        InvoicePrintJob? job = await PrepareAsync(invoiceId, ct);
+        if (job is null)
+        {
+            return null;
+        }
+
+        PrintedDocument printed = await _printing.RenderAsync(
+            job.TypeCode, job.Invoice.PrintTemplateId, job.Payload, job.Watermark, ct);
+
+        // Which document this is, for the page that shows it (the view page's heading).
+        printed.DocumentNo = job.Invoice.DocumentNo;
+        printed.ChosenPrintTemplateId = job.Invoice.PrintTemplateId;
+        printed.DocumentTypeCode = job.TypeCode;
+        printed.Status = job.Invoice.Status.ToString();
+        return printed;
+    }
+
+    /// <summary>
+    /// The same invoice as a PDF (TK-266): the same payload, the same template and the same stamp as the page
+    /// that shows it, so the two cannot differ. Null when the invoice is not in this branch.
+    /// </summary>
+    public async Task<PrintedPdf?> PrintPdfAsync(long invoiceId, CancellationToken ct)
+    {
+        InvoicePrintJob? job = await PrepareAsync(invoiceId, ct);
+        if (job is null)
+        {
+            return null;
+        }
+
+        byte[] pdf = await _printing.RenderPdfAsync(
+            job.TypeCode, job.Invoice.PrintTemplateId, job.Payload, job.Watermark, ct);
+
+        return new PrintedPdf(pdf, job.Invoice.DocumentNo);
+    }
+
+    /// <summary>Everything Printing needs to lay the invoice out, whether as HTML or as a PDF.</summary>
+    private sealed record InvoicePrintJob(Invoice Invoice, string TypeCode, PrintPayload Payload, string? Watermark);
+
+    private async Task<InvoicePrintJob?> PrepareAsync(long invoiceId, CancellationToken ct)
+    {
         Invoice? invoice = await _db.Invoices
             .AsNoTracking()
             .Include(i => i.Lines)
@@ -111,19 +151,7 @@ public sealed class InvoicePrintRepository
             ? code
             : "INV";
 
-        PrintedDocument printed = await _printing.RenderAsync(
-            typeCode,
-            invoice.PrintTemplateId,
-            payload,
-            Watermark(invoice.Status, eInvoice?.Status),
-            ct);
-
-        // Which document this is, for the page that shows it (the view page's heading).
-        printed.DocumentNo = invoice.DocumentNo;
-        printed.ChosenPrintTemplateId = invoice.PrintTemplateId;
-        printed.DocumentTypeCode = typeCode;
-        printed.Status = invoice.Status.ToString();
-        return printed;
+        return new InvoicePrintJob(invoice, typeCode, payload, Watermark(invoice.Status, eInvoice?.Status));
     }
 
     /// <summary>

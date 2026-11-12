@@ -146,7 +146,7 @@ public sealed class InvoiceProjectBillingTests
             InvoiceRepository invoices = new(
                 db, tenant, numbering, new StubBaseCurrency(), new StubBranchSettings(), new StubTaxRates(),
                 names, names, new StubCurrentUser(), TimeProvider.System, new RecordingInventory(), ledger,
-                new StubCreditCheck(), new StubDocumentStorage(), new StubInvoicePdf(), new StubOrgIdentity(), new StubUqcLookup(), new StubEInvoicing(),
+                new StubCreditCheck(), new StubUqcLookup(), new StubEInvoicing(),
                 projectBilling: billing);
 
             return new Harness(db, invoices, ledger, billing);

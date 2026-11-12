@@ -28,7 +28,6 @@ public sealed class DeliveryChallanRepository
     private readonly TimeProvider _clock;
 
     private readonly IInventoryClient _inventoryClient;
-    private readonly Sales.Repository.Repositories.SalesDocumentArchiveRepository _archive;
     private readonly ILedgerClient _ledger;
 
     /// <summary>The account a sale challan's goods wait in until invoiced (TK-90).</summary>
@@ -57,7 +56,6 @@ public sealed class DeliveryChallanRepository
         ICurrentUser user,
         TimeProvider clock,
         IInventoryClient inventoryClient,
-        Sales.Repository.Repositories.SalesDocumentArchiveRepository archive,
         ILedgerClient ledger,
         DocumentCustomFieldGate? customFields = null)
     {
@@ -73,7 +71,6 @@ public sealed class DeliveryChallanRepository
         _user = user;
         _clock = clock;
         _inventoryClient = inventoryClient;
-        _archive = archive;
         _ledger = ledger;
     }
 
@@ -452,10 +449,6 @@ public sealed class DeliveryChallanRepository
     {
         var (customerId, _) = _tenant.Require();
 
-        // Resolved before Inventory is called, which is over HTTP and outside
-        // this transaction (TK-22).
-        StorageScope archiveScope = _archive.Scope();
-
         DeliveryChallan? deliveryChallan = await _db.DeliveryChallans
             .Include(x => x.Lines)
             .FirstOrDefaultAsync(x => x.DeliveryChallanId == deliveryChallanId, ct);
@@ -583,17 +576,8 @@ public sealed class DeliveryChallanRepository
         deliveryChallan.PostedAt = _clock.GetUtcNow();
         deliveryChallan.PostedBy = _user.UserId;
 
-        await _archive.ArchiveAsync(
-            archiveScope,
-            Sales.Repository.Repositories.ArchivedSalesDocument.DeliveryChallan,
-            deliveryChallan.DeliveryChallanId,
-            "DELIVERY CHALLAN",
-            "Challan No",
-            deliveryChallan,
-            deliveryChallan.Lines,
-            salesOrder is null ? null : $"Against sales order {salesOrder.DocumentNo}",
-            ct);
-
+        // Nothing is rendered or filed here (TK-266, D-72): the challan's PDF is laid out from its print
+        // template when it is asked for, so posting does not depend on Printing.
         await _db.SaveChangesAsync(ct);
         return new DeliveryChallanResult(DeliveryChallanOutcome.Ok, deliveryChallanId);
     }

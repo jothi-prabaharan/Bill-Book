@@ -124,17 +124,17 @@ public sealed class InvoicesController : ControllerBase
     }
 
     /// <summary>
-    /// The PDF archived when this invoice was posted (TK-22). Not found for a
-    /// draft, for a invoice in another branch, or when the file is missing — the
-    /// three are not told apart. Needs <c>sales.print</c>, as printing does: both
-    /// hand the document to someone outside the business.
+    /// The invoice as a PDF, laid out by its print template and rendered when it is asked for (TK-266):
+    /// the layout, the stamp and the fields are the ones View and Print show, so the PDF is that page. A
+    /// draft reads PROFORMA and a voided invoice VOID. Not found for an invoice in another branch. Needs
+    /// <c>sales.print</c>, as printing does: both hand the document to someone outside the business.
     /// </summary>
     [HttpGet("{id:long}/pdf")]
     [PermissionAction("print")]
     public async Task<IActionResult> DownloadPdf(
-        long id, [FromServices] SalesDocumentArchiveRepository archive, CancellationToken ct)
+        long id, [FromServices] SalesDocumentPdfRepository documents, CancellationToken ct)
     {
-        ArchivedPdf? pdf = await archive.OpenAsync(ArchivedSalesDocument.Invoice, id, ct);
+        DocumentPdf? pdf = await documents.OpenAsync(SalesPdfKind.Invoice, id, ct);
         return pdf is null ? NotFound() : File(pdf.Content, "application/pdf", pdf.FileName);
     }
 

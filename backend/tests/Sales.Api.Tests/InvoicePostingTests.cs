@@ -652,108 +652,13 @@ public sealed class InvoicePostingTests
         };
 
     /// <summary>
-    /// The seller block on a printed invoice is the branch's own, read from
-    /// Master.
-    ///
-    /// <b>It was two hard-coded lines under a TODO</b> — the name "Our Company"
-    /// and a GSTIN belonging to nobody — printed identically on every customer's
-    /// tax invoices. A tax invoice names the supplier whose registration the
-    /// buyer claims an input credit against, so a placeholder there is not a
-    /// cosmetic fault.
+    /// Posting an invoice files nothing (TK-266, D-72). It used to render a PDF and save it to storage
+    /// inside the post, under the customer's code, so a token without one refused the whole posting.
+    /// The PDF is laid out from the invoice's print template when somebody asks for it now, and posting
+    /// needs no storage scope, so such a token posts like any other.
     /// </summary>
     [SkippableFact]
-    public async Task A_posted_invoice_prints_the_branchs_own_name_and_gstin()
-    {
-        Skip.If(_pg.SkipReason is not null, _pg.SkipReason);
-
-        Harness h = await Harness.CreateAsync(_pg, new StubOrgIdentity(new OrgIdentity(
-            "Kumar Traders", "33BBBBB1111B1Z9", "9 Mount Road", null, "Chennai", "33", "600002")));
-
-        InvoiceResult created = await h.Invoices.CreateAsync(
-            Request(lines: [Line(quantity: 1m, unitPrice: 100m)]), CancellationToken.None);
-
-        Assert.Equal(InvoiceOutcome.Ok, (await h.Invoices.PostAsync(
-            created.InvoiceId, CancellationToken.None)).Outcome);
-
-        Assert.NotNull(h.Pdf.Rendered);
-        Assert.Equal("Kumar Traders", h.Pdf.Rendered!.OrgName);
-        Assert.Equal("33BBBBB1111B1Z9", h.Pdf.Rendered.OrgGstin);
-    }
-
-    /// <summary>
-    /// A different branch prints different details — which is the whole point,
-    /// and the thing a constant could never do.
-    /// </summary>
-    [SkippableFact]
-    public async Task A_second_branch_prints_its_own_details_not_the_firsts()
-    {
-        Skip.If(_pg.SkipReason is not null, _pg.SkipReason);
-
-        Harness first = await Harness.CreateAsync(_pg, new StubOrgIdentity(new OrgIdentity(
-            "Kumar Traders", "33BBBBB1111B1Z9", null, null, "Chennai", "33", null)));
-
-        Harness second = await Harness.CreateAsync(_pg, new StubOrgIdentity(new OrgIdentity(
-            "Sharma Stores", "29CCCCC2222C1Z8", null, null, "Bengaluru", "29", null)));
-
-        foreach (Harness h in new[] { first, second })
-        {
-            InvoiceResult created = await h.Invoices.CreateAsync(
-                Request(lines: [Line(quantity: 1m, unitPrice: 100m)]), CancellationToken.None);
-
-            await h.Invoices.PostAsync(created.InvoiceId, CancellationToken.None);
-        }
-
-        Assert.Equal("Kumar Traders", first.Pdf.Rendered!.OrgName);
-        Assert.Equal("Sharma Stores", second.Pdf.Rendered!.OrgName);
-        Assert.NotEqual(first.Pdf.Rendered.OrgGstin, second.Pdf.Rendered.OrgGstin);
-    }
-
-    /// <summary>
-    /// A branch Master cannot resolve stops the posting instead of printing a
-    /// placeholder. An invoice with the wrong seller on it is worse than no
-    /// invoice, because it looks filed.
-    /// </summary>
-    [SkippableFact]
-    public async Task An_unresolvable_branch_refuses_to_post_rather_than_printing_a_placeholder()
-    {
-        Skip.If(_pg.SkipReason is not null, _pg.SkipReason);
-
-        Harness h = await Harness.CreateAsync(_pg, new StubOrgIdentity { Resolves = false });
-
-        InvoiceResult created = await h.Invoices.CreateAsync(
-            Request(lines: [Line(quantity: 1m, unitPrice: 100m)]), CancellationToken.None);
-
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => h.Invoices.PostAsync(created.InvoiceId, CancellationToken.None));
-
-        Assert.Null(h.Pdf.Rendered);
-    }
-
-    [SkippableFact]
-    public async Task The_archived_pdf_is_filed_under_customer_branch_app_and_module()
-    {
-        Skip.If(_pg.SkipReason is not null, _pg.SkipReason);
-
-        Harness h = await Harness.CreateAsync(_pg);
-
-        InvoiceResult created = await h.Invoices.CreateAsync(
-            Request(lines: [Line(quantity: 1m, unitPrice: 100m)]), CancellationToken.None);
-        InvoiceResult posted = await h.Invoices.PostAsync(created.InvoiceId, CancellationToken.None);
-        Assert.Equal(InvoiceOutcome.Ok, posted.Outcome);
-
-        (string key, Shared.Kernel.Storage.FileWriteMode mode) = Assert.Single(h.Storage.Saves);
-
-        Assert.Equal(
-            $"0000000042/{h.Tenant.OrgId}/retail-erp/sales/invoices/{created.InvoiceId}.pdf",
-            key);
-
-        // Replace, deliberately: the archive is written before the commit, so a
-        // retried post must be able to write over its own leftover.
-        Assert.Equal(Shared.Kernel.Storage.FileWriteMode.Replace, mode);
-    }
-
-    [SkippableFact]
-    public async Task A_token_without_a_customer_code_is_refused_before_anything_is_posted()
+    public async Task A_token_without_a_customer_code_posts_because_posting_files_nothing()
     {
         Skip.If(_pg.SkipReason is not null, _pg.SkipReason);
 
@@ -762,19 +667,15 @@ public sealed class InvoicePostingTests
         InvoiceResult created = await h.Invoices.CreateAsync(
             Request(lines: [Line(quantity: 1m, unitPrice: 100m)]), CancellationToken.None);
 
-        // A token minted before customer_code existed.
+        // A token minted before customer_code existed. It was refused here, before anything was posted,
+        // because the archive's storage path could not be built.
         h.Tenant.CustomerCode = null;
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => h.Invoices.PostAsync(created.InvoiceId, CancellationToken.None));
+        InvoiceResult posted = await h.Invoices.PostAsync(created.InvoiceId, CancellationToken.None);
 
-        // The point of resolving the storage path first: Accounting and
-        // Inventory are called over HTTP, outside this transaction, so a refusal
-        // discovered only at the archive step would leave them posted.
-        Assert.Empty(h.Ledger.Posts);
-        Assert.Empty(h.Inventory.Issues);
-        Assert.Empty(h.Storage.Saves);
-        Assert.Null(h.Pdf.Rendered);
+        Assert.Equal(InvoiceOutcome.Ok, posted.Outcome);
+        Assert.NotEmpty(h.Ledger.Posts);
+        Assert.NotEmpty(h.Inventory.Issues);
     }
 
     private sealed record Harness(
@@ -782,21 +683,14 @@ public sealed class InvoicePostingTests
         InvoiceRepository Invoices,
         RecordingInventory Inventory,
         RecordingLedger Ledger,
-        TenantContext Tenant,
-        StubPdfRenderer Pdf,
-        StubFileStorage Storage)
+        TenantContext Tenant)
     {
-        public static Task<Harness> CreateAsync(PostgresFixture pg) =>
-            CreateAsync(pg, new StubOrgIdentity());
-
-        public static async Task<Harness> CreateAsync(
-            PostgresFixture pg, StubOrgIdentity orgIdentity)
+        public static async Task<Harness> CreateAsync(PostgresFixture pg)
         {
             Guid customerId = Guid.NewGuid();
             Guid orgId = Guid.NewGuid();
 
-            // A signed-in request carries customer_code, which the archived PDF
-            // is filed under.
+            // A signed-in request carries customer_code.
             TenantContext tenant = new() { CustomerId = customerId, OrgId = orgId, CustomerCode = "0000000042" };
             SalesDbContext db = pg.CreateContext(customerId, orgId);
 
@@ -811,9 +705,6 @@ public sealed class InvoicePostingTests
             StubBranchSettings branchSettings = new();
             StubCurrentUser currentUser = new();
             StubCreditCheck creditCheck = new();
-
-            StubPdfRenderer pdf = new();
-            StubFileStorage storage = new();
 
             var numbering = new NumberGenerator(
                 db, Options.Create(new NumberingOptions()), new StubFinancialYear());
@@ -832,12 +723,9 @@ public sealed class InvoicePostingTests
                 inventory,
                 ledger,
                 creditCheck,
-                storage,
-                pdf,
-                orgIdentity,
                 new StubUqcLookup(), new StubEInvoicing());
 
-            return new Harness(db, invoices, inventory, ledger, tenant, pdf, storage);
+            return new Harness(db, invoices, inventory, ledger, tenant);
         }
     }
 
@@ -998,36 +886,5 @@ public sealed class InvoicePostingTests
     private sealed class StubFinancialYear : IFinancialYearProvider
     {
         public Task<int> GetStartMonthAsync(CancellationToken ct = default) => Task.FromResult(4);
-    }
-
-    private sealed class StubFileStorage : Shared.Kernel.Storage.IFileStorage
-    {
-        /// <summary>Every save, in order: where it went and whether it could overwrite.</summary>
-        public List<(string Key, Shared.Kernel.Storage.FileWriteMode Mode)> Saves { get; } = [];
-
-        public Task<string> SaveAsync(string key, Stream content, string contentType, Shared.Kernel.Storage.FileWriteMode mode = Shared.Kernel.Storage.FileWriteMode.CreateNew, CancellationToken ct = default)
-        {
-            Saves.Add((key, mode));
-            return Task.FromResult(key);
-        }
-        public Task<Stream?> OpenReadAsync(string key, CancellationToken ct = default) => Task.FromResult<Stream?>(null);
-        public Task DeleteAsync(string key, CancellationToken ct = default) => Task.CompletedTask;
-        public Task<Uri?> GetDownloadUrlAsync(string key, TimeSpan lifetime, CancellationToken ct = default) => Task.FromResult<Uri?>(null);
-    }
-
-    /// <summary>
-    /// Keeps the model it was handed, so a test can read the seller block that
-    /// would have been printed.
-    /// </summary>
-    private sealed class StubPdfRenderer : Sales.Repository.Repositories.IInvoicePdfRendererRepository
-    {
-        public Sales.Repository.Repositories.PdfInvoiceModel? Rendered { get; private set; }
-
-        public byte[] Render(Sales.Repository.Repositories.PdfInvoiceModel model)
-        {
-            Rendered = model;
-
-            return [];
-        }
     }
 }

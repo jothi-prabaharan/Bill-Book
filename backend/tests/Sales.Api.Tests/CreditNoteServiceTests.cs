@@ -541,60 +541,62 @@ public sealed class CreditNoteServiceTests
             TaxGroupId = 1,
         };
 
-    /// <summary>
-    /// One branch, a posted invoice with a line to credit against — <see
-    /// cref="CreditNoteDetail.InvoiceDetailId"/> is a real foreign key — and the
-    /// service wired to stubs that record what it asked for.
-    /// </summary>
-    // ── Archive (TK-22) ─────────────────────────────────────────────────
-
-    private static string CreditNoteKey(SalesDbContext db, long id) =>
-        $"0000000042/{db.CurrentOrgId}/retail-erp/sales/credit-notes/{id}.pdf";
+    // ── PDF (TK-266) ────────────────────────────────────────────────────
 
     [SkippableFact]
-    public async Task Posting_archives_exactly_one_pdf_that_downloads_again()
+    public async Task Posting_lays_nothing_out_and_the_pdf_follows_the_template_the_note_names()
     {
         Skip.If(_pg.SkipReason is not null, _pg.SkipReason ?? string.Empty);
 
         Harness h = await Harness.CreateAsync(_pg);
         InvoiceDetail invoiceLine = await h.SeedInvoiceLineAsync();
-        long id = await h.SaveOkAsync(
-            Request(h.InvoiceId, invoiceLine.InvoiceDetailId, "33AAAAA0000A1Z5", [Line(4m, 100m)]));
+        SaveCreditNoteRequest request = Request(
+            h.InvoiceId, invoiceLine.InvoiceDetailId, "33AAAAA0000A1Z5", [Line(4m, 100m)]);
+        request.PrintTemplateId = 31;
+        long id = await h.SaveOkAsync(request);
 
         Assert.Equal(CreditNoteOutcome.Ok, (await h.Service.PostAsync(id, default)).Outcome);
 
-        (string key, Shared.Kernel.Storage.FileWriteMode mode) = Assert.Single(h.Storage.Saves);
-        Assert.Equal(CreditNoteKey(h.Db, id), key);
-        Assert.Equal(Shared.Kernel.Storage.FileWriteMode.Replace, mode);
+        // Nothing is rendered or filed at posting (D-72): the PDF is made when somebody asks for it.
+        Assert.Empty(h.Printing.Pdfs);
 
-        var tenant = new TenantContext { CustomerId = h.Db.CurrentCustomerId, OrgId = h.Db.CurrentOrgId, CustomerCode = "0000000042" };
-        Sales.Repository.Repositories.ArchivedPdf? pdf = await TestArchive.For(h.Db, tenant, h.Storage)
-            .OpenAsync(Sales.Repository.Repositories.ArchivedSalesDocument.CreditNote, id, default);
+        DocumentPdf? pdf = await h.Pdfs.OpenAsync(SalesPdfKind.CreditNote, id, default);
 
         Assert.NotNull(pdf);
         Assert.EndsWith(".pdf", pdf!.FileName);
         Assert.DoesNotContain("/", pdf.FileName);
+        Assert.StartsWith("%PDF", System.Text.Encoding.ASCII.GetString(pdf.Content));
+
+        // The template the note names, as a credit note, with no stamp on a posted one.
+        PrintCall call = Assert.Single(h.Printing.Pdfs);
+        Assert.Equal("CRN", call.DocumentTypeCode);
+        Assert.Equal(31, call.PrintTemplateId);
+        Assert.Null(call.Watermark);
     }
 
     [SkippableFact]
-    public async Task A_retried_post_writes_over_its_own_leftover_pdf()
+    public async Task A_draft_credit_notes_pdf_is_stamped_draft_and_a_voided_ones_void()
     {
         Skip.If(_pg.SkipReason is not null, _pg.SkipReason ?? string.Empty);
 
         Harness h = await Harness.CreateAsync(_pg);
         InvoiceDetail invoiceLine = await h.SeedInvoiceLineAsync();
-        long id = await h.SaveOkAsync(
-            Request(h.InvoiceId, invoiceLine.InvoiceDetailId, "33AAAAA0000A1Z5", [Line(4m, 100m)]));
+        long draft = await h.SaveOkAsync(
+            Request(h.InvoiceId, invoiceLine.InvoiceDetailId, "33AAAAA0000A1Z5", [Line(1m, 100m)]));
+        long voided = await h.SaveOkAsync(
+            Request(h.InvoiceId, invoiceLine.InvoiceDetailId, "33AAAAA0000A1Z5", [Line(1m, 100m)]));
+        Assert.Equal(CreditNoteOutcome.Ok, (await h.Service.VoidAsync(voided, "Raised in error", default)).Outcome);
 
-        // What a post whose commit failed leaves behind.
-        h.Storage.Files[CreditNoteKey(h.Db, id)] = [1, 2, 3];
+        Assert.NotNull(await h.Pdfs.OpenAsync(SalesPdfKind.CreditNote, draft, default));
+        Assert.NotNull(await h.Pdfs.OpenAsync(SalesPdfKind.CreditNote, voided, default));
 
-        Assert.Equal(CreditNoteOutcome.Ok, (await h.Service.PostAsync(id, default)).Outcome);
-        Assert.NotEqual(new byte[] { 1, 2, 3 }, h.Storage.Files[CreditNoteKey(h.Db, id)]);
+        Assert.Equal(["DRAFT", "VOID"], h.Printing.Pdfs.Select(c => c.Watermark));
+        // A note that names no template asks for none, so Printing falls back to the branch's own default.
+        Assert.All(h.Printing.Pdfs, c => Assert.Null(c.PrintTemplateId));
     }
 
     [SkippableFact]
-    public async Task Another_branchs_pdf_is_not_found_and_neither_is_a_drafts()
+    public async Task Another_branchs_credit_note_has_no_pdf_to_download()
     {
         Skip.If(_pg.SkipReason is not null, _pg.SkipReason ?? string.Empty);
 
@@ -602,30 +604,30 @@ public sealed class CreditNoteServiceTests
         InvoiceDetail invoiceLine = await h.SeedInvoiceLineAsync();
         long posted = await h.SaveOkAsync(
             Request(h.InvoiceId, invoiceLine.InvoiceDetailId, "33AAAAA0000A1Z5", [Line(1m, 100m)]));
-        long draft = await h.SaveOkAsync(
-            Request(h.InvoiceId, invoiceLine.InvoiceDetailId, "33AAAAA0000A1Z5", [Line(1m, 100m)]));
         Assert.Equal(CreditNoteOutcome.Ok, (await h.Service.PostAsync(posted, default)).Outcome);
 
-        var mine = new TenantContext { CustomerId = h.Db.CurrentCustomerId, OrgId = h.Db.CurrentOrgId, CustomerCode = "0000000042" };
-        Assert.Null(await TestArchive.For(h.Db, mine, h.Storage)
-            .OpenAsync(Sales.Repository.Repositories.ArchivedSalesDocument.CreditNote, draft, default));
-
         // Another branch of the same customer asks for the posted note by id.
-        Guid otherOrg = Guid.NewGuid();
-        await using SalesDbContext other = _pg.CreateContext(h.Db.CurrentCustomerId, otherOrg);
-        var theirs = new TenantContext { CustomerId = h.Db.CurrentCustomerId, OrgId = otherOrg, CustomerCode = "0000000042" };
+        await using SalesDbContext other = _pg.CreateContext(h.Db.CurrentCustomerId, Guid.NewGuid());
+        var printing = new RecordingPrintingClient();
 
-        Assert.Null(await TestArchive.For(other, theirs, h.Storage)
-            .OpenAsync(Sales.Repository.Repositories.ArchivedSalesDocument.CreditNote, posted, default));
+        Assert.Null(await TestDocumentPdf.For(other, printing)
+            .OpenAsync(SalesPdfKind.CreditNote, posted, default));
+        Assert.Empty(printing.Pdfs);
     }
 
+    /// <summary>
+    /// One branch, a posted invoice with a line to credit against — <see
+    /// cref="CreditNoteDetail.InvoiceDetailId"/> is a real foreign key — and the
+    /// service wired to stubs that record what it asked for.
+    /// </summary>
     private sealed record Harness(
         SalesDbContext Db,
         CreditNoteRepository Service,
         long InvoiceId,
         RecordingInventory Inventory,
         RecordingLedger Ledger,
-        RecordingDocumentStorage Storage)
+        RecordingPrintingClient Printing,
+        SalesDocumentPdfRepository Pdfs)
     {
         public static async Task<Harness> CreateAsync(
             PostgresFixture pg, DocumentStatus invoiceStatus = DocumentStatus.Posted)
@@ -659,7 +661,7 @@ public sealed class CreditNoteServiceTests
                 db, Options.Create(new NumberingOptions()), new StubFinancialYear());
 
             TenantContext tenant = new() { CustomerId = customerId, OrgId = orgId, CustomerCode = "0000000042" };
-            RecordingDocumentStorage storage = new();
+            RecordingPrintingClient printing = new();
 
             CreditNoteRepository service = new(
                 db,
@@ -674,10 +676,10 @@ public sealed class CreditNoteServiceTests
                 TimeProvider.System,
                 inventory,
                 ledger,
-                TestArchive.For(db, tenant, storage),
                 new StubUqcLookup(), new StubEInvoicing());
 
-            return new Harness(db, service, invoice.InvoiceId, inventory, ledger, storage);
+            return new Harness(
+                db, service, invoice.InvoiceId, inventory, ledger, printing, TestDocumentPdf.For(db, printing));
         }
 
         public async Task<long> SaveOkAsync(SaveCreditNoteRequest request)

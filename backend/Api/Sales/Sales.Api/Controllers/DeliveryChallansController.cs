@@ -131,17 +131,18 @@ public sealed class DeliveryChallansController : ControllerBase
         new() { Message = result.Detail ?? "This delivery challan was refused." };
 
     /// <summary>
-    /// The PDF archived when this challan was posted (TK-22). Not found for a
-    /// draft, for a challan in another branch, or when the file is missing — the
-    /// three are not told apart. Needs <c>sales.print</c>, as printing does: both
-    /// hand the document to someone outside the business.
+    /// The challan as a PDF, laid out by its print template and rendered when it is asked for (TK-266):
+    /// the layout, the stamp and the fields are the ones View and Print show, so the PDF is that page,
+    /// e-way bill included once the challan has one. A draft reads DRAFT and a voided challan VOID. Not
+    /// found for a challan in another branch. Needs <c>sales.print</c>, as printing does: both hand the
+    /// document to someone outside the business.
     /// </summary>
     [HttpGet("{id:long}/pdf")]
     [PermissionAction("print")]
     public async Task<IActionResult> DownloadPdf(
-        long id, [FromServices] SalesDocumentArchiveRepository archive, CancellationToken ct)
+        long id, [FromServices] SalesDocumentPdfRepository documents, CancellationToken ct)
     {
-        ArchivedPdf? pdf = await archive.OpenAsync(ArchivedSalesDocument.DeliveryChallan, id, ct);
+        DocumentPdf? pdf = await documents.OpenAsync(SalesPdfKind.DeliveryChallan, id, ct);
         return pdf is null ? NotFound() : File(pdf.Content, "application/pdf", pdf.FileName);
     }
 

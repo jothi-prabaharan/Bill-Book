@@ -40,7 +40,7 @@ public sealed class RecurringInvoiceTests
             new NumberGenerator(db, Options.Create(new NumberingOptions()), new StubFinancialYear()),
             baseCurrency, new StubBranchSettings(), new StubTaxRates(),
             names, names, new StubCurrentUser(), TimeProvider.System, new RecordingInventory(), ledger,
-            new StubCreditCheck(), new StubDocumentStorage(), new StubInvoicePdf(), new StubOrgIdentity(), new StubUqcLookup(), new StubEInvoicing());
+            new StubCreditCheck(), new StubUqcLookup(), new StubEInvoicing());
 
         return new Books(db, invoices, new RecurringBillingRepository(db, invoices, baseCurrency, TimeProvider.System), ledger);
     }

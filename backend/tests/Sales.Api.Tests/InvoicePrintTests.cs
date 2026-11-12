@@ -216,9 +216,68 @@ public sealed class PrintingClientTests
             client.RenderAsync("INV", null, new PrintPayload(), null, CancellationToken.None));
     }
 
+    /// <summary>
+    /// TK-266: the PDF is Printing's rendering of the same request the page is, so it goes to the sibling
+    /// route with the same body, under the same token.
+    /// </summary>
+    [Fact]
+    public async Task Asks_the_pdf_route_for_the_file_with_the_same_body_under_the_callers_own_token()
+    {
+        byte[] file = "%PDF-1.7 laid out"u8.ToArray();
+        var handler = new RecordingHandler { Pdf = file };
+        var accessor = new HttpContextAccessor { HttpContext = new DefaultHttpContext() };
+        accessor.HttpContext.Request.Headers.Authorization = "Bearer user-token";
+
+        var client = new PrintingClient(
+            new HttpClient(handler) { BaseAddress = new Uri("http://printing/") }, accessor);
+
+        var payload = new PrintPayload();
+        payload.Singles["Document.No"] = "INV-0007";
+
+        byte[] pdf = await client.RenderPdfAsync("INV", 5, payload, "VOID", CancellationToken.None);
+
+        Assert.Equal("/api/print/render-pdf", handler.Path);
+        Assert.Equal("Bearer user-token", handler.Authorization);
+
+        using JsonDocument body = JsonDocument.Parse(handler.Body!);
+        JsonElement root = body.RootElement;
+        Assert.Equal("INV", root.GetProperty("documentTypeCode").GetString());
+        Assert.Equal(5, root.GetProperty("printTemplateId").GetInt64());
+        Assert.Equal("VOID", root.GetProperty("watermark").GetString());
+        Assert.Equal("INV-0007", root.GetProperty("payload").GetProperty("singles").GetProperty("Document.No").GetString());
+
+        Assert.Equal(file, pdf);
+    }
+
+    [Fact]
+    public async Task An_empty_pdf_is_an_error_not_a_blank_download()
+    {
+        var client = new PrintingClient(
+            new HttpClient(new RecordingHandler { Pdf = [] }) { BaseAddress = new Uri("http://printing/") },
+            new HttpContextAccessor { HttpContext = new DefaultHttpContext() });
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            client.RenderPdfAsync("INV", null, new PrintPayload(), null, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task A_refusal_from_printing_is_an_error_for_the_pdf_route_too()
+    {
+        var handler = new RecordingHandler { Status = HttpStatusCode.InternalServerError, Pdf = "%PDF"u8.ToArray() };
+        var client = new PrintingClient(
+            new HttpClient(handler) { BaseAddress = new Uri("http://printing/") },
+            new HttpContextAccessor { HttpContext = new DefaultHttpContext() });
+
+        await Assert.ThrowsAsync<HttpRequestException>(() =>
+            client.RenderPdfAsync("INV", null, new PrintPayload(), null, CancellationToken.None));
+    }
+
     private sealed class RecordingHandler : HttpMessageHandler
     {
         public HttpStatusCode Status { get; init; } = HttpStatusCode.OK;
+
+        /// <summary>When set, the answer is this file as application/pdf instead of the page's JSON.</summary>
+        public byte[]? Pdf { get; init; }
 
         public string? Path { get; private set; }
 
@@ -232,6 +291,13 @@ public sealed class PrintingClientTests
             Path = request.RequestUri?.AbsolutePath;
             Authorization = request.Headers.Authorization?.ToString();
             Body = request.Content is null ? null : await request.Content.ReadAsStringAsync(cancellationToken);
+
+            if (Pdf is not null)
+            {
+                var file = new ByteArrayContent(Pdf);
+                file.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
+                return new HttpResponseMessage(Status) { Content = file };
+            }
 
             return new HttpResponseMessage(Status)
             {

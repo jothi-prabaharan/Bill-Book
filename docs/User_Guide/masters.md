@@ -1432,6 +1432,8 @@ overwriting theirs, and nothing is written. Reload and apply your changes again.
 - **Printing the other document types through their templates.** Invoices print through theirs
   (see Invoices); quotes, orders, bills and the rest still print with their own fixed layouts,
   or not at all
-- **A saved PDF of every document.** Printing goes through your browser. Archiving a copy needs a
-  PDF library that has not been chosen yet
+- **PDF/A, and a stored copy of every document.** An invoice, credit note or delivery challan can be
+  downloaded as a PDF laid out by its print template (see Invoices), made when it is asked for; the
+  other documents print through your browser. Nothing is filed at posting, and the PDF is not the
+  PDF/A archive format
 

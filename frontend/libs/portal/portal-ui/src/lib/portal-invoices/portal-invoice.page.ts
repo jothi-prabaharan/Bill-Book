@@ -10,7 +10,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PortalApi } from '../retail/portal-api.service';
 import { PortalInvoiceDetail, statusLabel, statusTone } from '../retail/portal.models';
 
-/** One invoice (TK-95): its lines and totals, and the archived PDF to download. */
+/** One invoice (TK-95): its lines and totals, and its PDF to download, laid out from its print template when asked for (TK-266). */
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-portal-invoice',

@@ -65,7 +65,7 @@ The checks run again when the challan is posted, not only when it is saved: anot
 
 **Post** dispatches the challan. If Inventory cannot issue the goods — usually because there is not enough on hand — the challan stays a draft and nothing on the order moves.
 
-Posting also files a PDF of the challan, naming its sales order if it has one. `GET api/sales/delivery-challans/{id}/pdf` downloads it. A refused post files nothing.
+Posting files nothing. The challan's PDF is made when it is asked for (see Viewing and printing).
 
 ## Viewing and printing
 
@@ -79,8 +79,10 @@ changes every challan, on the screen and on paper. **Print** on that page sends 
 also be saved as a PDF; it shows only to someone who may print sales documents. A draft challan is stamped **DRAFT** and a voided one
 **VOID**.
 
-The PDF filed when the challan was posted is a separate copy with its own fixed layout, kept for the record. It is not linked from the
-screen; `GET api/sales/delivery-challans/{id}/pdf` still serves it.
+**The challan's PDF is the same document (TK-266).** `GET api/sales/delivery-challans/{id}/pdf` lays the challan out from the same
+template with the same fields and the same stamp as the view page, naming its sales order and carrying its e-way bill once it has one:
+**DRAFT** on a draft, **VOID** on a voided challan. It is made when asked for, so a change to the template shows in the next PDF, and it
+is a plain PDF, not PDF/A. The download needs the same permission as **Print**. It is not linked from the screen.
 
 A posted challan cannot be withdrawn. The goods have physically left, and taking the paperwork back would leave the stock gone with nothing to explain it. **Raise a return instead.**
 
@@ -99,7 +101,7 @@ panel with **Generate e-way bill**:
   Leave the distance at 0 for the portal to work it out from the two PIN codes.
 - The e-way bill number, its date and how long it is valid (a day for each 200 km by road) come back
   from the portal and show in the panel.
-  The challan takes the number and date, and its filed PDF is written again with them on it.
+  The challan takes the number and date, and they print on it through the template (the e-way bill fields), on the screen and in its PDF.
 - **A bill made outside the product** can still be typed on the challan, with its date. It is
   recorded as made outside, and it is not generated here, changed or checked with the portal.
 - **Change vehicle** updates Part B when the goods move to another vehicle on the way.

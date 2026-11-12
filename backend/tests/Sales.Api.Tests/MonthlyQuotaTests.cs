@@ -396,7 +396,7 @@ public sealed class MonthlyQuotaTests
                 new NumberGenerator(db, Options.Create(new NumberingOptions()), new StubFinancialYear()),
                 baseCurrency, new StubBranchSettings(), new StubTaxRates(),
                 names, names, new StubCurrentUser(), TimeProvider.System, new RecordingInventory(), new RecordingLedger(),
-                new StubCreditCheck(), new StubDocumentStorage(), new StubInvoicePdf(), new StubOrgIdentity(), new StubUqcLookup(), new StubEInvoicing());
+                new StubCreditCheck(), new StubUqcLookup(), new StubEInvoicing());
             RecurringBillingRepository schedules = new(db, invoices, baseCurrency, TimeProvider.System);
 
             // The template is the month's first document; the March occurrence is the second.

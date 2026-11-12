@@ -651,48 +651,66 @@ public sealed class DeliveryChallanServiceTests
 
     private sealed record ConfirmedOrder(long SalesOrderId, long SalesOrderDetailId);
 
+    // ── PDF (TK-266) ────────────────────────────────────────────────────
+
+    [SkippableFact]
+    public async Task Posting_a_challan_lays_nothing_out_and_its_pdf_follows_the_template_it_names()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason ?? string.Empty);
+
+        Harness h = await Harness.CreateAsync(_pg);
+        ConfirmedOrder order = await h.ConfirmOrderAsync(quantity: 10m);
+        SaveDeliveryChallanRequest request = AgainstOrder(order, quantity: 4m);
+        request.PrintTemplateId = 52;
+        long id = await h.SaveOkAsync(request);
+
+        Assert.Equal(DeliveryChallanOutcome.Ok, (await h.Service.PostAsync(id, default)).Outcome);
+
+        // Nothing is rendered or filed at posting (D-72): the PDF is made when somebody asks for it.
+        Assert.Empty(h.Printing.Pdfs);
+
+        DocumentPdf? pdf = await h.Pdfs.OpenAsync(SalesPdfKind.DeliveryChallan, id, default);
+
+        Assert.NotNull(pdf);
+        Assert.EndsWith(".pdf", pdf!.FileName);
+        Assert.DoesNotContain("/", pdf.FileName);
+
+        PrintCall call = Assert.Single(h.Printing.Pdfs);
+        Assert.Equal("DLC", call.DocumentTypeCode);
+        Assert.Equal(52, call.PrintTemplateId);
+        Assert.Null(call.Watermark);
+    }
+
+    [SkippableFact]
+    public async Task A_draft_challans_pdf_is_stamped_draft_and_another_branchs_has_none()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason ?? string.Empty);
+
+        Harness h = await Harness.CreateAsync(_pg);
+        long id = await h.SaveOkAsync(Request("33AAAAA0000A1Z5", [Line(1m, 100m)]));
+
+        Assert.NotNull(await h.Pdfs.OpenAsync(SalesPdfKind.DeliveryChallan, id, default));
+        Assert.Equal("DRAFT", Assert.Single(h.Printing.Pdfs).Watermark);
+
+        // Another branch of the same customer asks for the challan by id.
+        await using SalesDbContext other = _pg.CreateContext(h.Db.CurrentCustomerId, Guid.NewGuid());
+        var printing = new RecordingPrintingClient();
+
+        Assert.Null(await TestDocumentPdf.For(other, printing).OpenAsync(SalesPdfKind.DeliveryChallan, id, default));
+        Assert.Empty(printing.Pdfs);
+    }
+
     /// <summary>
     /// One branch, its numbering series seeded, a challan service and an order
     /// service over the same context, and the inventory stub both of them call.
     /// </summary>
-    // ── Archive (TK-22) ─────────────────────────────────────────────────
-
-    [SkippableFact]
-    public async Task Posting_a_challan_archives_exactly_one_pdf_naming_its_order()
-    {
-        Skip.If(_pg.SkipReason is not null, _pg.SkipReason ?? string.Empty);
-
-        Harness h = await Harness.CreateAsync(_pg);
-        ConfirmedOrder order = await h.ConfirmOrderAsync(quantity: 10m);
-        long id = await h.SaveOkAsync(AgainstOrder(order, quantity: 4m));
-
-        Assert.Equal(DeliveryChallanOutcome.Ok, (await h.Service.PostAsync(id, default)).Outcome);
-
-        (string key, Shared.Kernel.Storage.FileWriteMode mode) = Assert.Single(h.Storage.Saves);
-        Assert.Equal($"0000000042/{h.Db.CurrentOrgId}/retail-erp/sales/delivery-challans/{id}.pdf", key);
-        Assert.Equal(Shared.Kernel.Storage.FileWriteMode.Replace, mode);
-    }
-
-    [SkippableFact]
-    public async Task A_refused_challan_archives_nothing()
-    {
-        Skip.If(_pg.SkipReason is not null, _pg.SkipReason ?? string.Empty);
-
-        Harness h = await Harness.CreateAsync(_pg);
-        ConfirmedOrder order = await h.ConfirmOrderAsync(quantity: 10m);
-        long id = await h.SaveOkAsync(AgainstOrder(order, quantity: 4m));
-        h.Inventory.RefuseIssues = true;
-
-        Assert.NotEqual(DeliveryChallanOutcome.Ok, (await h.Service.PostAsync(id, default)).Outcome);
-        Assert.Empty(h.Storage.Saves);
-    }
-
     private sealed record Harness(
         SalesDbContext Db,
         DeliveryChallanRepository Service,
         SalesOrderRepository Orders,
         RecordingInventory Inventory,
-        RecordingDocumentStorage Storage,
+        RecordingPrintingClient Printing,
+        SalesDocumentPdfRepository Pdfs,
         RecordingLedger Ledger)
     {
         public static async Task<Harness> CreateAsync(PostgresFixture pg)
@@ -711,7 +729,7 @@ public sealed class DeliveryChallanServiceTests
             NumberGenerator numbering = new(
                 db, Options.Create(new NumberingOptions()), new StubFinancialYear());
             TenantContext tenant = new() { CustomerId = customerId, OrgId = orgId, CustomerCode = "0000000042" };
-            RecordingDocumentStorage storage = new();
+            RecordingPrintingClient printing = new();
 
             DeliveryChallanRepository service = new(
                 db,
@@ -725,7 +743,6 @@ public sealed class DeliveryChallanServiceTests
                 new StubCurrentUser(),
                 TimeProvider.System,
                 inventory,
-                TestArchive.For(db, tenant, storage),
                 ledger);
 
             SalesOrderRepository orders = new(
@@ -742,7 +759,7 @@ public sealed class DeliveryChallanServiceTests
                 inventory,
                 new StubCreditCheck());
 
-            return new Harness(db, service, orders, inventory, storage, ledger);
+            return new Harness(db, service, orders, inventory, printing, TestDocumentPdf.For(db, printing), ledger);
         }
 
         public async Task<long> SaveOkAsync(SaveDeliveryChallanRequest request)

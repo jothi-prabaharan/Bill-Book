@@ -99,8 +99,10 @@ public sealed class EwayBillTests
         DeliveryChallan saved = await h.Db.DeliveryChallans.AsNoTracking().Include(c => c.Lines).SingleAsync();
         Assert.Equal(result.EwayBill.EwbNo, saved.EwayBillNo);
         Assert.Equal("NOS", saved.Lines[0].UqcCode);
-        // Its filed PDF is written again with the bill on it.
-        Assert.Contains(h.Pdf.Rendered, m => m.Reference is string r && r.Contains(result.EwayBill.EwbNo!));
+        // Its PDF is laid out from the challan when it is asked for (TK-266), with the bill on it.
+        Assert.NotNull(await h.Pdfs.OpenAsync(SalesPdfKind.DeliveryChallan, challan.DeliveryChallanId, default));
+        PrintCall call = Assert.Single(h.Printing.Pdfs);
+        Assert.Equal(result.EwayBill.EwbNo, (string?)call.Payload.Singles["Document.EwayBillNo"]);
     }
 
     [SkippableFact]
@@ -237,7 +239,8 @@ public sealed class EwayBillTests
         public required SalesDbContext Db { get; init; }
         public required EwayBillRepository Service { get; init; }
         public required HeldAfterCommit AfterCommit { get; init; }
-        public required RecordingSalesPdf Pdf { get; init; }
+        public required RecordingPrintingClient Printing { get; init; }
+        public required SalesDocumentPdfRepository Pdfs { get; init; }
         public required ManualClock Clock { get; init; }
 
         public static Harness Start(PostgresFixture postgres, bool ewayEnabled = true)
@@ -247,16 +250,15 @@ public sealed class EwayBillTests
             var clock = new ManualClock(new DateTimeOffset(2026, 9, 21, 4, 0, 0, TimeSpan.Zero));
             var identity = new StubOrgIdentity(new OrgIdentity(
                 "Test Traders", EInvoiceMapperTests.SellerGstin, "1 Test Street", null, "Chennai", "33", "600001"));
-            var pdf = new RecordingSalesPdf();
-            var archive = new Sales.Repository.Repositories.SalesDocumentArchiveRepository(
-                db, tenant, new RecordingDocumentStorage(), identity, new StubNameLookup(), new StubNameLookup(), pdf);
+            var printing = new RecordingPrintingClient();
             var afterCommit = new HeldAfterCommit();
 
             return new Harness
             {
                 Db = db,
                 AfterCommit = afterCommit,
-                Pdf = pdf,
+                Printing = printing,
+                Pdfs = TestDocumentPdf.For(db, printing, identity),
                 Clock = clock,
                 Service = new EwayBillRepository(
                     db,
@@ -267,7 +269,6 @@ public sealed class EwayBillTests
                     new StubUqcLookup(),
                     new SandboxEInvoiceGatewayRepository(clock),
                     afterCommit,
-                    archive,
                     clock,
                     NullLogger<EwayBillRepository>.Instance),
             };

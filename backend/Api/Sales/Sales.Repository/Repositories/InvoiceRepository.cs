@@ -75,15 +75,6 @@ public sealed class InvoiceRepository : IInvoiceRepository
     private readonly IInventoryClient _inventoryClient;
     private readonly ILedgerClient _ledgerClient;
     private readonly ICreditCheckClient _creditCheckClient;
-    private readonly Shared.Kernel.Storage.IFileStorage _storage;
-    private readonly Sales.Repository.Repositories.IInvoicePdfRendererRepository _pdfRenderer;
-
-    /// <summary>
-    /// Who this branch is, for the seller block. Read from Master rather than
-    /// written here: the two lines it replaces were a hard-coded company name
-    /// and a hard-coded GSTIN, printed on every customer's tax invoices alike.
-    /// </summary>
-    private readonly IOrgIdentityProvider _orgIdentity;
     private readonly Shared.Kernel.Stock.IUqcLookup _uqc;
     private readonly IEInvoicePosting _eInvoicing;
 
@@ -119,9 +110,6 @@ public sealed class InvoiceRepository : IInvoiceRepository
         IInventoryClient inventoryClient,
         ILedgerClient ledgerClient,
         ICreditCheckClient creditCheckClient,
-        Shared.Kernel.Storage.IFileStorage storage,
-        Sales.Repository.Repositories.IInvoicePdfRendererRepository pdfRenderer,
-        IOrgIdentityProvider orgIdentity,
         Shared.Kernel.Stock.IUqcLookup uqc,
         IEInvoicePosting eInvoicing,
         IDiscountLimitClient? discountLimits = null,
@@ -150,9 +138,6 @@ public sealed class InvoiceRepository : IInvoiceRepository
         _inventoryClient = inventoryClient;
         _ledgerClient = ledgerClient;
         _creditCheckClient = creditCheckClient;
-        _storage = storage;
-        _pdfRenderer = pdfRenderer;
-        _orgIdentity = orgIdentity;
         _uqc = uqc;
         _eInvoicing = eInvoicing;
     }
@@ -1693,12 +1678,6 @@ public sealed class InvoiceRepository : IInvoiceRepository
     {
         (Guid customerId, Guid orgId) = _tenant.Require();
 
-        // Resolved first, not where the PDF is written. Posting calls Accounting
-        // and Inventory over HTTP before it archives, so a scope that could only
-        // fail at the end would leave the ledger and the stock posted while this
-        // invoice rolled back. Here it fails before anything has happened.
-        StorageScope archiveScope = StorageScope.For(_tenant, StorageApp.RetailErp, StorageModule.Sales);
-
         Invoice? invoice = await _db.Invoices
             .FirstOrDefaultAsync(x => x.InvoiceId == invoiceId, ct);
 
@@ -2141,41 +2120,9 @@ public sealed class InvoiceRepository : IInvoiceRepository
         invoice.PostedAt = _clock.GetUtcNow();
         invoice.PostedBy = _user.UserId;
 
-        // 4. Generate and Archive PDF
-        //
-        // The seller comes from Master, and a branch that cannot be resolved
-        // stops the posting. A tax invoice names the supplier whose GSTIN the
-        // buyer claims an input credit against; printing a placeholder there is
-        // worse than printing nothing, because the document looks filed. This
-        // used to print "Our Company" and a made-up registration on every
-        // customer's invoices alike.
-        OrgIdentity? seller = await _orgIdentity.GetIdentityAsync(ct)
-            ?? throw new InvalidOperationException(
-                "The branch issuing this invoice could not be identified, so its seller "
-                + "details cannot be printed. The invoice was not posted.");
-
-        var contactNames = await _contactNames.ResolveAsync([invoice.ContactId], ct);
-        string customerName = contactNames.TryGetValue(invoice.ContactId, out var contactRef) ? contactRef.Name : "Unknown";
-
-        var pdfModel = new Sales.Repository.Repositories.PdfInvoiceModel
-        {
-            Invoice = invoice,
-            OrgName = seller.Name,
-            OrgGstin = seller.Gstin,
-            CustomerName = customerName,
-            ItemNames = (await _itemNames.ResolveAsync(invoice.Lines.Where(l => l.ItemId.HasValue).Select(l => (long)l.ItemId!).Distinct().ToArray(), ct)).ToDictionary(k => k.Key, v => v.Value.Name)
-        };
-        
-        byte[] pdfBytes = _pdfRenderer.Render(pdfModel);
-        string objectKey = Sales.Repository.Repositories.SalesDocumentArchiveRepository.Key(
-            archiveScope, Sales.Repository.Repositories.ArchivedSalesDocument.Invoice, invoice.InvoiceId);
-        // Replace, deliberately. The archive is written before the commit below,
-        // so a post whose commit fails leaves its PDF behind; a strict
-        // create-only save would then find that leftover on the retry and stop
-        // this invoice ever posting. The same key is the same invoice, and blob
-        // versioning keeps whatever is replaced.
-        await _storage.SaveAsync(objectKey, new MemoryStream(pdfBytes), "application/pdf", FileWriteMode.Replace, ct);
-
+        // Nothing is rendered or filed here (TK-266, D-72). The invoice's PDF is laid out from its
+        // print template when it is asked for (SalesDocumentPdfRepository), so posting no longer
+        // depends on Printing or on a headless browser, and a PDF can never be older than the template.
         await _db.SaveChangesAsync(ct);
 
         // A B2B, export or SEZ invoice on an e-invoicing branch gets a Pending

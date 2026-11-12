@@ -60,6 +60,21 @@ RUN dotnet publish "${PROJECT}" \
 FROM mcr.microsoft.com/dotnet/aspnet:${DOTNET_VERSION} AS runtime
 ARG ASSEMBLY
 
+# Printing's PDF route prints a document through headless Chromium (PuppeteerSharp), so the Printing image
+# — and only that one — needs a browser (TK-266, D-72). Opt in with --build-arg INSTALL_BROWSER=true; the
+# other services leave it off, because Chromium and its fonts add several hundred megabytes nothing else
+# uses. The fonts are the ones a printed document needs beyond Latin: fonts-liberation draws Arial's
+# widths, fonts-noto-core carries Tamil and fonts-noto-cjk carries Chinese. A language with no font
+# installed prints empty boxes where its letters belong.
+#
+# Before COPY, so a source-only edit reuses this layer, and as root, so it comes before USER app below.
+ARG INSTALL_BROWSER=false
+RUN if [ "$INSTALL_BROWSER" = "true" ]; then \
+      apt-get update \
+      && apt-get install -y --no-install-recommends chromium fonts-liberation fonts-noto-core fonts-noto-cjk \
+      && rm -rf /var/lib/apt/lists/*; \
+    fi
+
 WORKDIR /app
 COPY --from=build /app/publish .
 
@@ -70,9 +85,13 @@ COPY --from=build /app/publish .
 # DOTNET_SYSTEM_GLOBALIZATION_INVARIANT matches InvariantGlobalization in
 # Directory.Build.props; saying so here stops the runtime probing for ICU data
 # the image does not carry.
+#
+# CHROME_PATH is where PrintPdfGeneratorRepository looks first. It is set in every image and harmless in
+# one without a browser: the lookup checks the file exists and moves on when it does not.
 ENV ASPNETCORE_HTTP_PORTS=8080 \
     DOTNET_RUNNING_IN_CONTAINER=true \
-    DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=true
+    DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=true \
+    CHROME_PATH=/usr/bin/chromium
 
 EXPOSE 8080
 

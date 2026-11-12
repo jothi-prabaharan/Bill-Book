@@ -5,7 +5,6 @@ using Sales.Repository.Clients;
 using Sales.Entity.TableEntities;
 using Sales.Repository;
 using Shared.Kernel.Documents;
-using Shared.Kernel.Storage;
 using Shared.Kernel.Tenancy;
 using Xunit;
 
@@ -72,20 +71,21 @@ public sealed class PortalInvoiceTests
         Harness h = await Harness.CreateAsync(_pg);
         long theirs = await h.InvoiceAsync(Stranger, DocumentStatus.Posted, "INV/26/0010");
         long draft = await h.InvoiceAsync(Contact, DocumentStatus.Draft, "INV/26/0011");
-        await h.FileAsync(theirs);
 
         Assert.Null(await h.Portal.GetAsync(Contact, theirs, default));
         Assert.Null(await h.Portal.PdfAsync(Contact, theirs, default));
         Assert.Null(await h.Portal.GetAsync(Contact, draft, default));
         Assert.Null(await h.Portal.PdfAsync(Contact, draft, default));
+
+        // The contact is checked before anything is laid out, so a stranger's invoice is never rendered.
+        Assert.Empty(h.Printing.Pdfs);
     }
 
     [SkippableFact]
-    public async Task The_contacts_own_invoice_opens_with_its_lines_and_its_archived_pdf()
+    public async Task The_contacts_own_invoice_opens_with_its_lines_and_a_pdf_laid_out_from_its_template()
     {
         Harness h = await Harness.CreateAsync(_pg);
         long mine = await h.InvoiceAsync(Contact, DocumentStatus.Posted, "INV/26/0020");
-        await h.FileAsync(mine);
 
         PortalInvoiceDetail detail = (await h.Portal.GetAsync(Contact, mine, default))!;
         Assert.Equal("INV/26/0020", detail.Invoice.DocumentNo);
@@ -93,11 +93,16 @@ public sealed class PortalInvoiceTests
         Assert.Equal("Widget", line.Description);
         Assert.Equal(180m, detail.TaxAmount);
 
-        ArchivedPdf pdf = (await h.Portal.PdfAsync(Contact, mine, default))!;
+        DocumentPdf pdf = (await h.Portal.PdfAsync(Contact, mine, default))!;
         Assert.Equal("INV-26-0020.pdf", pdf.FileName);
+
+        // Printed on request through Printing (TK-266), not read back from a file posting had filed.
+        PrintCall call = Assert.Single(h.Printing.Pdfs);
+        Assert.Equal("INV", call.DocumentTypeCode);
+        Assert.Equal("INV/26/0020", call.Payload.Singles["Document.No"]);
     }
 
-    private sealed record Harness(SalesDbContext Db, TenantContext Tenant, PortalInvoiceRepository Portal, RecordingLedger Ledger, RecordingDocumentStorage Storage)
+    private sealed record Harness(SalesDbContext Db, TenantContext Tenant, PortalInvoiceRepository Portal, RecordingLedger Ledger, RecordingPrintingClient Printing)
     {
         public static async Task<Harness> CreateAsync(PostgresFixture pg)
         {
@@ -106,12 +111,12 @@ public sealed class PortalInvoiceTests
             TenantContext tenant = new() { CustomerId = Guid.NewGuid(), OrgId = Guid.NewGuid(), CustomerCode = "0000000042" };
             SalesDbContext db = pg.CreateContext(tenant.CustomerId!.Value, tenant.OrgId!.Value);
             RecordingLedger ledger = new();
-            RecordingDocumentStorage storage = new();
+            RecordingPrintingClient printing = new();
 
             PortalInvoiceRepository portal = new(
-                db, ledger, tenant, new StubNameLookup(), TestArchive.For(db, tenant, storage), new FixedClock());
+                db, ledger, tenant, new StubNameLookup(), TestDocumentPdf.For(db, printing), new FixedClock());
 
-            return new Harness(db, tenant, portal, ledger, storage);
+            return new Harness(db, tenant, portal, ledger, printing);
         }
 
         public async Task<long> InvoiceAsync(long contactId, DocumentStatus status, string number)
@@ -164,16 +169,6 @@ public sealed class PortalInvoiceTests
             Db.ChangeTracker.Clear();
             return invoice.InvoiceId;
         }
-
-        /// <summary>Files a PDF where posting would have archived it.</summary>
-        public async Task FileAsync(long invoiceId) =>
-            await Storage.SaveAsync(
-                SalesDocumentArchiveRepository.Key(
-                    StorageScope.For(Tenant, StorageApp.RetailErp, StorageModule.Sales),
-                    ArchivedSalesDocument.Invoice,
-                    invoiceId),
-                new MemoryStream("%PDF"u8.ToArray()),
-                "application/pdf");
     }
 
     private sealed class FixedClock : TimeProvider

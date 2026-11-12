@@ -17,6 +17,10 @@ namespace Sales.Repository.Repositories;
 /// Sales never reads a template and Printing never reads a quote, the boundary the Printing design was argued
 /// on. Each method answers null when the document is not in this branch, which the caller answers as not
 /// found; row-level security means another branch's id reads as none rather than as forbidden.
+///
+/// <b>One set of inputs per document, laid out two ways</b> (TK-266): as HTML for the View page and Print, or
+/// as a PDF for the download and the client portal. Both start from the same payload, template id and stamp,
+/// so a document's PDF can never differ from the page that shows it.
 /// </summary>
 public sealed class SalesPrintRepository
 {
@@ -43,7 +47,36 @@ public sealed class SalesPrintRepository
         _customFields = customFields;
     }
 
-    public async Task<PrintedDocument?> PrintQuoteAsync(long quoteId, CancellationToken ct)
+    public async Task<PrintedDocument?> PrintQuoteAsync(long quoteId, CancellationToken ct) =>
+        await RenderAsync(await LoadQuoteAsync(quoteId, ct), ct);
+
+    public async Task<PrintedDocument?> PrintOrderAsync(long salesOrderId, CancellationToken ct) =>
+        await RenderAsync(await LoadOrderAsync(salesOrderId, ct), ct);
+
+    public async Task<PrintedDocument?> PrintChallanAsync(long deliveryChallanId, CancellationToken ct) =>
+        await RenderAsync(await LoadChallanAsync(deliveryChallanId, ct), ct);
+
+    public async Task<PrintedDocument?> PrintCreditNoteAsync(long creditNoteId, CancellationToken ct) =>
+        await RenderAsync(await LoadCreditNoteAsync(creditNoteId, ct), ct);
+
+    /// <summary>The challan as a PDF, laid out by its template (TK-266). Null when it is not in this branch.</summary>
+    public async Task<PrintedPdf?> PrintChallanPdfAsync(long deliveryChallanId, CancellationToken ct) =>
+        await RenderPdfAsync(await LoadChallanAsync(deliveryChallanId, ct), ct);
+
+    /// <summary>The credit note as a PDF, laid out by its template (TK-266). Null when it is not in this branch.</summary>
+    public async Task<PrintedPdf?> PrintCreditNotePdfAsync(long creditNoteId, CancellationToken ct) =>
+        await RenderPdfAsync(await LoadCreditNoteAsync(creditNoteId, ct), ct);
+
+    /// <summary>What it takes to print one document: the document, its lines and what only its kind adds.</summary>
+    private sealed record PrintInputs(
+        DocumentHeaderBase Document,
+        IReadOnlyList<DocumentPrintLine> Lines,
+        string FallbackTypeCode,
+        CustomFieldEntityKind Kind,
+        Action<PrintPayload> AddTags,
+        string? Watermark);
+
+    private async Task<PrintInputs?> LoadQuoteAsync(long quoteId, CancellationToken ct)
     {
         Quote? quote = await _db.Quotes.AsNoTracking()
             .Include(q => q.Lines).ThenInclude(l => l.Taxes)
@@ -54,17 +87,16 @@ public sealed class SalesPrintRepository
             return null;
         }
 
-        return await RenderAsync(
+        return new PrintInputs(
             quote,
             [.. quote.Lines.Select(l => new DocumentPrintLine(l, [.. l.Taxes]))],
             "QTE",
             CustomFieldEntityKind.Quote,
             _ => { },
-            DocumentPrintPayload.Watermark(quote.Status),
-            ct);
+            DocumentPrintPayload.Watermark(quote.Status));
     }
 
-    public async Task<PrintedDocument?> PrintOrderAsync(long salesOrderId, CancellationToken ct)
+    private async Task<PrintInputs?> LoadOrderAsync(long salesOrderId, CancellationToken ct)
     {
         SalesOrder? order = await _db.SalesOrders.AsNoTracking()
             .Include(o => o.Lines).ThenInclude(l => l.Taxes)
@@ -79,7 +111,7 @@ public sealed class SalesPrintRepository
             ? await _db.Quotes.AsNoTracking().Where(q => q.QuoteId == quoteId).Select(q => q.DocumentNo).FirstOrDefaultAsync(ct)
             : null;
 
-        return await RenderAsync(
+        return new PrintInputs(
             order,
             [.. order.Lines.Select(l => new DocumentPrintLine(l, [.. l.Taxes]))],
             "SOR",
@@ -89,11 +121,10 @@ public sealed class SalesPrintRepository
                 payload.Singles["Document.DeliveryDate"] = order.DeliveryDate;
                 payload.Singles["Document.OriginalDocumentNo"] = quoteNo;
             },
-            DocumentPrintPayload.Watermark(order.Status),
-            ct);
+            DocumentPrintPayload.Watermark(order.Status));
     }
 
-    public async Task<PrintedDocument?> PrintChallanAsync(long deliveryChallanId, CancellationToken ct)
+    private async Task<PrintInputs?> LoadChallanAsync(long deliveryChallanId, CancellationToken ct)
     {
         DeliveryChallan? challan = await _db.DeliveryChallans.AsNoTracking()
             .Include(c => c.Lines).ThenInclude(l => l.Taxes)
@@ -108,7 +139,7 @@ public sealed class SalesPrintRepository
             ? await _db.SalesOrders.AsNoTracking().Where(o => o.SalesOrderId == orderId).Select(o => o.DocumentNo).FirstOrDefaultAsync(ct)
             : null;
 
-        return await RenderAsync(
+        return new PrintInputs(
             challan,
             [.. challan.Lines.Select(l => new DocumentPrintLine(l, [.. l.Taxes]))],
             "DLC",
@@ -122,11 +153,10 @@ public sealed class SalesPrintRepository
                 payload.Singles["Document.EwayBillDate"] = challan.EwayBillDate;
                 payload.Singles["Document.OriginalDocumentNo"] = orderNo;
             },
-            DocumentPrintPayload.Watermark(challan.Status),
-            ct);
+            DocumentPrintPayload.Watermark(challan.Status));
     }
 
-    public async Task<PrintedDocument?> PrintCreditNoteAsync(long creditNoteId, CancellationToken ct)
+    private async Task<PrintInputs?> LoadCreditNoteAsync(long creditNoteId, CancellationToken ct)
     {
         CreditNote? note = await _db.CreditNotes.AsNoTracking()
             .Include(n => n.Lines).ThenInclude(l => l.Taxes)
@@ -147,7 +177,7 @@ public sealed class SalesPrintRepository
         EInvoice? eInvoice = await _db.EInvoices.AsNoTracking()
             .FirstOrDefaultAsync(e => e.SourceType == EInvoiceSource.CreditNote && e.SourceId == creditNoteId, ct);
 
-        return await RenderAsync(
+        return new PrintInputs(
             note,
             [.. note.Lines.Select(l => new DocumentPrintLine(l, [.. l.Taxes]))],
             "CRN",
@@ -158,19 +188,14 @@ public sealed class SalesPrintRepository
                 payload.Singles["Document.OriginalDocumentNo"] = invoiceNo;
                 InvoicePrintRepository.AddEInvoice(payload, eInvoice);
             },
-            CreditNoteWatermark(note.Status, eInvoice?.Status),
-            ct);
+            CreditNoteWatermark(note.Status, eInvoice?.Status));
     }
 
-    private async Task<PrintedDocument> RenderAsync(
-        DocumentHeaderBase document,
-        IReadOnlyList<DocumentPrintLine> lines,
-        string fallbackTypeCode,
-        CustomFieldEntityKind kind,
-        Action<PrintPayload> addTags,
-        string? watermark,
-        CancellationToken ct)
+    /// <summary>The document's payload and the type code its layout is chosen for.</summary>
+    private async Task<(string TypeCode, PrintPayload Payload)> PrepareAsync(PrintInputs inputs, CancellationToken ct)
     {
+        DocumentHeaderBase document = inputs.Document;
+
         // The issuer's GSTIN is on every sales document a customer may be handed, so a branch that cannot be
         // identified stops the print rather than printing a placeholder name, as posting is stopped.
         OrgIdentity seller = await _orgIdentity.GetIdentityAsync(ct)
@@ -180,7 +205,7 @@ public sealed class SalesPrintRepository
         var contacts = await _contactNames.ResolveAsync([document.ContactId], ct);
         string customerName = contacts.TryGetValue(document.ContactId, out var contact) ? contact.Name : string.Empty;
 
-        long[] itemIds = [.. lines
+        long[] itemIds = [.. inputs.Lines
             .Where(l => l.Line.ItemId.HasValue)
             .Select(l => l.Line.ItemId!.Value)
             .Distinct()];
@@ -188,24 +213,37 @@ public sealed class SalesPrintRepository
         Dictionary<long, string> itemNames = (await _itemNames.ResolveAsync(itemIds, ct))
             .ToDictionary(pair => pair.Key, pair => pair.Value.Name);
 
-        PrintPayload payload = DocumentPrintPayload.Build(document, lines, seller, customerName, itemNames);
+        PrintPayload payload = DocumentPrintPayload.Build(document, inputs.Lines, seller, customerName, itemNames);
 
         // A sale's place of supply is the customer's state, from their GSTIN, else the branch's own, as on the
         // invoice: Sales stores no state id on a document.
         payload.Singles["Document.PlaceOfSupply"] =
             InvoicePrintPayloadRepository.PlaceOfSupply(document.ContactGstin, seller.StateCode);
 
-        addTags(payload);
+        inputs.AddTags(payload);
 
         // The branch's own fields marked to print, as {{custom.key}}.
         CustomFieldPrint.Add(payload, document.CustomFields,
-            _customFields is null ? null : await _customFields.GetAsync(kind, ct));
+            _customFields is null ? null : await _customFields.GetAsync(inputs.Kind, ct));
 
         string typeCode = document.TransactionTypeCode?.Trim() is { Length: 3 } code && DocumentTypeCatalog.IsPrintable(code)
             ? code
-            : fallbackTypeCode;
+            : inputs.FallbackTypeCode;
 
-        PrintedDocument printed = await _printing.RenderAsync(typeCode, document.PrintTemplateId, payload, watermark, ct);
+        return (typeCode, payload);
+    }
+
+    private async Task<PrintedDocument?> RenderAsync(PrintInputs? inputs, CancellationToken ct)
+    {
+        if (inputs is null)
+        {
+            return null;
+        }
+
+        (string typeCode, PrintPayload payload) = await PrepareAsync(inputs, ct);
+        DocumentHeaderBase document = inputs.Document;
+
+        PrintedDocument printed = await _printing.RenderAsync(typeCode, document.PrintTemplateId, payload, inputs.Watermark, ct);
 
         // Which document this is, for the page that shows it (the view page's heading).
         printed.DocumentNo = document.DocumentNo;
@@ -213,6 +251,20 @@ public sealed class SalesPrintRepository
         printed.DocumentTypeCode = typeCode;
         printed.Status = document.Status.ToString();
         return printed;
+    }
+
+    private async Task<PrintedPdf?> RenderPdfAsync(PrintInputs? inputs, CancellationToken ct)
+    {
+        if (inputs is null)
+        {
+            return null;
+        }
+
+        (string typeCode, PrintPayload payload) = await PrepareAsync(inputs, ct);
+        DocumentHeaderBase document = inputs.Document;
+
+        byte[] pdf = await _printing.RenderPdfAsync(typeCode, document.PrintTemplateId, payload, inputs.Watermark, ct);
+        return new PrintedPdf(pdf, document.DocumentNo);
     }
 
     /// <summary>

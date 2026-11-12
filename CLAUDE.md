@@ -432,9 +432,9 @@ JWT claims: `sub`, `customer_id`, `customer_code`, `org_id`, `display_name`, `li
 **Multi-language** (Tamil, Chinese) works natively — Postgres `varchar` is UTF-8 and counts characters not bytes. Create databases with UTF8 encoding.
 
 **Printing — two separate paths, don't conflate:**
-- Standard documents → **PDFsharp** (6.1.1, MIT), server-side, PDF/A for archiving. Syncfusion was the earlier plan and is dropped (D-11, 24 September 2026)
+- Standard documents → a PDF printed from the document's own print template by Printing's headless Chromium (PuppeteerSharp), on request (D-72, TK-266). **PDFsharp, the fixed layout and the posting-time archive are gone for sales documents**; Chromium does not write PDF/A, which stays TK-22's open aim. Syncfusion was the earlier plan and is dropped (D-11, 24 September 2026)
 - POS receipts → fixed-width text laid out by `receiptRows`, printed **through the browser** as an HTML page exactly the roll's width (`@page { size: 80mm auto; margin: 0 }`) — no ESC/POS (TK-155). In the desktop app the same page goes silently to the receipt printer chosen in its Printing menu, through `printHtml(html, kind)` (TK-184). It ends with the bill number as a Code128 barcode and, when something is owed, a UPI QR, drawn in the browser by `zxing-wasm`'s writer (TK-164). Labels go the same way at their own exact size (TK-159)
-- Archive every generated document to blob storage, linked by `SourceType` + `SourceId`
+- Archive every generated document to blob storage, linked by `SourceType` + `SourceId` — **except the sales PDFs (invoice, credit note, delivery challan), which are rendered from the template on request and not stored** (D-72, TK-266)
 
 **What a standard document looks like is a template, not code** (6 September 2026).
 `prt.PrintTemplates` holds one designable layout per document type per branch — five bands in a
@@ -467,8 +467,10 @@ register linking to it. The shared header, party, item and tax payload is `Share
   `con.PrintTemplates` was dropped rather than copied (D-13: nothing deployed); an old
   `PrintTemplateId` that no longer resolves falls back to the branch default, then to the
   standard layout.
-- **PDFsharp is the PDF library** (D-11, 24 September 2026); PDF/A output and the archive for every
-  document are TK-22.
+- **Headless Chromium, through Printing, is the PDF engine for sales documents** (D-72, TK-266; it replaced
+  PDFsharp, D-11, which is gone from Sales). Its host needs Chromium and fonts (platform guide, Printing
+  and PDFs; `INSTALL_BROWSER` in `backend/Dockerfile`). PDF/A output and a stored copy of each document
+  are TK-22's open aim.
 
 **SignalR needs Azure SignalR Service as a backplane** — with multiple replicas a message otherwise lands on the wrong pod.
 
@@ -600,7 +602,7 @@ The Accounting/Banking merge is what that argument predicted: Banking mapped thi
 
 Written-down-value depreciation charged nothing until TK-11. The two pages under `accounting-ui/src/lib/fixed-assets/` are still routed from nowhere. The old T10 stage file, `TRANSACTIONS-ACCOUNTING-BANKING.md`, no longer exists.*
 
-*Document print & archive (T3.4) moved Phase 1 → Phase 2 on 24 August 2026, by decision. The print half already works — `/sales/invoices/{id}/print` renders a full tax-invoice layout, watermarks drafts and voided documents, and splits GST per component and per rate. **The archive half is no longer blocked on Syncfusion.** Posting an invoice renders a PDF with PDFsharp 6.1.1 (`Sales.Api/Services/Pdf/PdfSharpInvoiceRenderer.cs`, MIT, already pinned) and saves it to storage under `StorageKey.DocumentKey(scope, "invoices", "{id}.pdf")`. What stays undone: the file is **plain PDF, not PDF/A**; it has a fixed layout of its own rather than the print template; it covers invoices only; and no endpoint returns it. PDFsharp replaces Syncfusion for good (D-11, 24 September 2026), and the rest is TK-22 in [`docs/Task_Details.md`](./docs/Task_Details.md). See T3.4 in [`docs/Modules.md`](./docs/Modules.md).*
+*Document print & archive (T3.4) moved Phase 1 → Phase 2 on 24 August 2026, by decision. The print half already works — `/sales/invoices/{id}/print` renders a full tax-invoice layout, watermarks drafts and voided documents, and splits GST per component and per rate. **The archive half is no longer blocked on Syncfusion.** Posting an invoice renders a PDF with PDFsharp 6.1.1 (`Sales.Api/Services/Pdf/PdfSharpInvoiceRenderer.cs`, MIT, already pinned) and saves it to storage under `StorageKey.DocumentKey(scope, "invoices", "{id}.pdf")`. What stays undone: the file is **plain PDF, not PDF/A**; it has a fixed layout of its own rather than the print template; it covers invoices only; and no endpoint returns it. PDFsharp replaces Syncfusion for good (D-11, 24 September 2026), and the rest is TK-22 in [`docs/Task_Details.md`](./docs/Task_Details.md). See T3.4 in [`docs/Modules.md`](./docs/Modules.md). **Superseded by TK-266 (D-72, 11 November 2026): PDFsharp, the fixed layout and the posting-time archive are gone, and the PDF of an invoice, credit note or challan is rendered from the template on request.***
 
 *Report Excel/CSV export moved Phase 1 → Phase 2 on 24 August 2026, by decision, as a roadmap label only — the Excel half is built and shipped — `ExcelReportWriter` lives in `Reporting.Api` today, proven by `ExcelReportWriterTests`. **CSV export is now built** (4 September 2026): `ExportFormat` carries `Csv`, `CsvReportWriter` produces RFC 4180 output as UTF-8 with a BOM — Excel on Windows reads a BOM-less file in the machine's ANSI code page and renders every Tamil or Chinese name as mojibake — and money goes out invariant with no grouping, so an Indian-format branch does not export `12,34,567.89` into a comma-separated file. Both writers take the same `ReportResultView` with paging off, so the two formats cannot disagree with each other or with the screen.*
 
@@ -621,7 +623,7 @@ Written-down-value depreciation charged nothing until TK-11. The two pages under
 - **API clients** get per-action `{module}.{action}` permissions through their role (D-07, TK-29)
 - **Fixed assets**: books **and** tax schedules (D-08); no new transaction codes (D-09); capitalising reclassifies to the category account (D-19); a disposal pays into a chosen bank account or is invoiced to the buyer (D-20)
 - **A branch declares its trade**, and seeds and menus follow it (D-10, TK-30)
-- **PDF library**: PDFsharp (D-11)
+- **PDF library**: headless Chromium through Printing, from the document's template, on request (D-72; PDFsharp, D-11, is gone)
 - **Pricing**: per user with a branch cap for RetailErp and School; per active employee for HRMS and Payroll (D-12)
 - **Tenant setting**: transaction-local, as the Tenancy section says (TK-08)
 - **Approvals**: one engine. Its state machine is in `Shared.Kernel.Approvals`, workflow configuration and chain resolution are in Master (tenant schema `apr`), and `Employee` resolves only the employee approver kinds (D-26, TK-99, TK-49)
