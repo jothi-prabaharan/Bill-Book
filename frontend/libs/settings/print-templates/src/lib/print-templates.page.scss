@@ -18,6 +18,36 @@
   gap: var(--space-3);
 }
 
+/* The kind of document being designed (TK-267): at the right of the page heading, under it on a narrow screen. */
+.pt-typepick {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 220px;
+}
+
+.pt-typepick-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.pt-type-select {
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .pt-typepick {
+    width: 100%;
+  }
+
+  .pt-type-select {
+    min-height: 44px;
+  }
+}
+
 .pt-title {
   margin: 0;
   font-size: 1.5rem;

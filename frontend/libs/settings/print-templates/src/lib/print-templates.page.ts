@@ -56,6 +56,7 @@ import {
   paperTypesFor,
   selectedPaperType,
 } from './paper-types';
+import { normalizeSettings, settingsChanged } from './print-settings';
 
 export const MM_PX = 3.7795; // 1 mm = 3.7795 px shared constant
 
@@ -633,7 +634,7 @@ export class PrintTemplatesPage implements OnInit {
     if (JSON.stringify(draft) !== JSON.stringify(detail.content)) {
       return true;
     }
-    if (JSON.stringify(settings) !== JSON.stringify(detail.settings)) {
+    if (settingsChanged(settings, detail.settings)) {
       return true;
     }
     return false;
@@ -797,6 +798,34 @@ export class PrintTemplatesPage implements OnInit {
     }
   }
 
+  /**
+   * The Print template type dropdown: open another kind of document. It goes through the route, as the Settings
+   * menu's rows do, so the page has one way of changing type. Unsaved changes are asked about first, since
+   * opening a type starts the page over; if they are kept, the dropdown goes back to the type it was on.
+   */
+  protected async chooseDocumentType(select: HTMLSelectElement): Promise<void> {
+    const code = select.value;
+    const current = this.documentType();
+    if (!code || code === current) {
+      return;
+    }
+
+    if (this.dirty()) {
+      const ok = await this.confirmDialog.confirm({
+        title: 'Discard changes?',
+        message: 'Discard the changes you have not saved?',
+        confirmLabel: 'Discard',
+        tone: 'danger',
+      });
+      if (!ok) {
+        select.value = current ?? '';
+        return;
+      }
+    }
+
+    await this.router.navigate(['/settings/print-templates', code]);
+  }
+
   protected async select(id: number): Promise<void> {
     if (this.dirty()) {
       const ok = await this.confirmDialog.confirm({
@@ -822,42 +851,7 @@ export class PrintTemplatesPage implements OnInit {
     this.draftName.set(detail.templateName);
     this.draftContent.set({ ...detail.content });
 
-    const s = detail.settings;
-    this.draftSettings.set({
-      printerType: s.printerType ?? 'laser',
-      paperSize: s.paperSize ?? 'A4',
-      rollWidthMm: s.rollWidthMm ?? 80,
-      rollUnit: s.rollUnit ?? 'mm',
-      marginTopMm: s.marginTopMm ?? 16,
-      marginBottomMm: s.marginBottomMm ?? 16,
-      marginLeftMm: s.marginLeftMm ?? 18,
-      marginRightMm: s.marginRightMm ?? 18,
-      footerPos: s.footerPos ?? 'inline',
-      fixedFooterPos: s.fixedFooterPos ?? 'inline',
-      fixedFooterPref: s.fixedFooterPref ?? 'inline',
-      segMargins: {
-        fixedHeader: {
-          aboveMm: s.segMargins?.fixedHeader?.aboveMm ?? 0,
-          belowMm: s.segMargins?.fixedHeader?.belowMm ?? 2,
-        },
-        header: {
-          aboveMm: s.segMargins?.header?.aboveMm ?? 2,
-          belowMm: s.segMargins?.header?.belowMm ?? 2,
-        },
-        details: {
-          aboveMm: s.segMargins?.details?.aboveMm ?? 2,
-          belowMm: s.segMargins?.details?.belowMm ?? 2,
-        },
-        footer: {
-          aboveMm: s.segMargins?.footer?.aboveMm ?? 2,
-          belowMm: s.segMargins?.footer?.belowMm ?? 0,
-        },
-        fixedFooter: {
-          aboveMm: s.segMargins?.fixedFooter?.aboveMm ?? 2,
-          belowMm: s.segMargins?.fixedFooter?.belowMm ?? 0,
-        },
-      },
-    });
+    this.draftSettings.set(normalizeSettings(detail.settings));
 
     this.messages.set(
       detail.unknownTags.length > 0

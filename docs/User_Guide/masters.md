@@ -1334,8 +1334,15 @@ themselves. A template you have edited is left exactly as you wrote it; the edit
 ## The editor
 
 **Settings › Print templates**, or one entry per document type under the Print templates group of
-the Settings menu. Pick the document type at the top; its templates are listed on the left, with
-the default marked.
+the Settings menu. The **Print template type** dropdown at the top right of the page picks the kind
+of document, Quote, Sales order, Sales invoice and the rest, so you can move from one to another
+without going back to the menu (TK-267). If you have unsaved changes it asks before it opens
+another; **Cancel** keeps you where you are. The templates for that kind are listed in the panel,
+with the default marked.
+
+If the Settings menu could not be loaded, it shows a single **Print templates** row instead of one
+for each kind of document. That row opens the first kind, and the dropdown is how you reach the
+others.
 
 - Each of the five bands is a box of HTML. Click in the one you want, put the cursor where the
   field should go, and pick the field from **Insert field** — it goes in at the cursor, replacing
