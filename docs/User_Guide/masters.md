@@ -1395,10 +1395,26 @@ If the template a document chose is later deleted or switched off, the document 
 
 ## Paper
 
-A4, A5, Letter or Legal for a laser or inkjet printer, with margins in millimetres. Or a thermal
-roll — 58, 80 or 112 mm — which prints as one continuous strip with no page breaks. You can
-enter a roll width in inches if that is how your printer is sold; it is stored in millimetres
-either way.
+The **Paper type** bar is the first thing on the editor (TK-267), above the page. It has one button
+for each paper: **A4**, **A5**, **Letter** and **Legal** for a laser or inkjet printer, and for a
+thermal roll **Thermal 2 inch** (58 mm), **Thermal 3 inch** (80 mm), **Thermal 4 inch** (104 mm) and
+**Roll 112 mm**. A line above the buttons says what the chosen paper is, for example *A4 sheet,
+210 × 297 mm* or *80 mm wide roll, printed on a continuous length*.
+
+Choose a paper and the page in the editor takes its size at once. A sheet has the size of a sheet.
+A roll is as wide as its paper and as long as what is printed on it, with no page breaks. A
+template saved with a roll width that is not on the bar gets one more button after the others,
+selected, so the page you open is the page you saved.
+
+**The margins follow the paper only if you have not set them.** They are in millimetres, under
+*Page margins* in the settings. Each paper starts with its own: 16 mm top and bottom and 18 mm at the
+sides on A4, Letter and Legal, 10 mm on A5, and 3 mm on a roll up to 80 mm or 4 mm on a wider one.
+When you change the paper and the margins are still the ones the old paper starts with, they change
+to the new paper's. If you have changed any of them, all four stay as you set them.
+
+A roll also shows a **Display unit**, mm or inch, under the margins; widths are stored in
+millimetres either way. **Save As** starts on the paper the page is on (A4, A5, Letter, Thermal 3
+inch or Thermal 4 inch), and a template made from Legal or another roll keeps the size name it had.
 
 ## Where the footer sits
 

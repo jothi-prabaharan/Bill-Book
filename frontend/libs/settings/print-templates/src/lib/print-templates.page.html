@@ -9,6 +9,31 @@
   <bb-message-box [messages]="messages()" />
 
   @if (detail(); as curTemplate) {
+    <!-- Paper type: the first control on the screen (TK-267) -->
+    <section class="pt-paperbar" aria-label="Paper type">
+      <div class="pt-paperbar-head">
+        <span class="pt-paperbar-title" id="pe-paper-title">Paper type</span>
+        <span class="pt-paperbar-readout" data-testid="paper-readout">{{ paperText() }}</span>
+      </div>
+      <div class="pt-paperbar-types" role="radiogroup" aria-labelledby="pe-paper-title">
+        @for (type of paperTypeOptions(); track type.key) {
+          <button
+            type="button"
+            class="pt-paper-opt"
+            role="radio"
+            [class.active]="type.key === paperKey()"
+            [attr.aria-checked]="type.key === paperKey()"
+            [attr.data-paper]="type.key"
+            [disabled]="!canEdit()"
+            (click)="choosePaperType(type)"
+          >
+            <span class="pt-paper-name">{{ type.label }}</span>
+            <span class="pt-paper-dim">{{ type.detail }}</span>
+          </button>
+        }
+      </div>
+    </section>
+
     <div class="pt-workspace">
       <!-- Left sidebar: Configuration & Formatting Ribbon -->
       <aside class="pt-sidebar" aria-label="Template configuration">
@@ -95,64 +120,8 @@
           <span class="pt-field-hint">Renames the selected template</span>
         </div>
 
-        <!-- Printer type -->
-        <div class="field">
-          <label>Printer type</label>
-          <div class="seg">
-            <button
-              type="button"
-              class="seg-opt"
-              [class.active]="isLaser()"
-              [disabled]="!canEdit()"
-              (click)="setPrinterType('laser')"
-            >
-              Laser / inkjet
-            </button>
-            <button
-              type="button"
-              class="seg-opt"
-              [class.active]="!isLaser()"
-              [disabled]="!canEdit()"
-              (click)="setPrinterType('thermal')"
-            >
-              Thermal roll
-            </button>
-          </div>
-        </div>
-
-        <!-- Laser: Paper size -->
-        @if (isLaser()) {
-          <div class="field">
-            <label for="pe-paper">Paper size</label>
-            <select
-              class="input"
-              id="pe-paper"
-              [disabled]="!canEdit()"
-              [ngModel]="paperSize()"
-              (ngModelChange)="setPaperSize($event)"
-            >
-              <option value="A4">A4 (210×297 mm)</option>
-              <option value="A5">A5 (148×210 mm)</option>
-              <option value="Letter">Letter (216×279 mm)</option>
-              <option value="Legal">Legal (216×356 mm)</option>
-            </select>
-          </div>
-        } @else {
-          <!-- Thermal: Roll width & Unit -->
-          <div class="field">
-            <label for="pe-roll">Roll width</label>
-            <select
-              class="input"
-              id="pe-roll"
-              [disabled]="!canEdit()"
-              [ngModel]="rollWidthMm()"
-              (ngModelChange)="setRollWidth($event)"
-            >
-              <option [ngValue]="58">58 mm</option>
-              <option [ngValue]="80">80 mm</option>
-              <option [ngValue]="112">112 mm</option>
-            </select>
-          </div>
+        <!-- A roll's display unit (the paper itself is chosen in the Paper type bar above) -->
+        @if (!isLaser()) {
           <div class="field">
             <label>Display unit</label>
             <div class="seg">

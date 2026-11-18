@@ -28,7 +28,6 @@ import {
   PrintTemplateDetail,
   PrintTemplateListItem,
   PrintTemplateService,
-  PrinterType,
   SegmentMargins,
   SegmentPosition,
 } from '@bill-book/master-core';
@@ -48,15 +47,19 @@ import {
   clampRows,
   isBlankHtml,
 } from './print-table';
+import {
+  PaperType,
+  SHEET_SIZES_MM,
+  applyPaperType,
+  paperReadout,
+  paperSizeNameFor,
+  paperTypesFor,
+  selectedPaperType,
+} from './paper-types';
 
 export const MM_PX = 3.7795; // 1 mm = 3.7795 px shared constant
 
-export const PAPER_SIZES: Record<PaperSize, [number, number]> = {
-  A4: [210, 297],
-  A5: [148, 210],
-  Letter: [216, 279],
-  Legal: [216, 356],
-};
+export const PAPER_SIZES: Record<PaperSize, [number, number]> = SHEET_SIZES_MM;
 
 export type SegCode = 'fh' | 'h' | 'd' | 'f' | 'ff';
 
@@ -648,6 +651,11 @@ export class PrintTemplatesPage implements OnInit {
   protected readonly rollWidthMm = computed(() => this.draftSettings().rollWidthMm ?? 80);
   protected readonly rollUnit = computed(() => this.draftSettings().rollUnit ?? 'mm');
 
+  // The Paper type bar (TK-267): its buttons, the one the template is on, and what that paper is in words.
+  protected readonly paperTypeOptions = computed(() => paperTypesFor(this.draftSettings()));
+  protected readonly paperKey = computed(() => selectedPaperType(this.draftSettings()).key);
+  protected readonly paperText = computed(() => paperReadout(selectedPaperType(this.draftSettings())));
+
   protected readonly padTop = computed(() =>
     Math.round((this.draftSettings().marginTopMm ?? 16) * MM_PX),
   );
@@ -985,16 +993,18 @@ export class PrintTemplatesPage implements OnInit {
 
   // ---- Settings mutations ---------------------------------------------------
 
-  protected setPrinterType(type: PrinterType): void {
-    this.draftSettings.update((s) => ({ ...s, printerType: type }));
-  }
-
-  protected setPaperSize(size: PaperSize): void {
-    this.draftSettings.update((s) => ({ ...s, paperSize: size }));
-  }
-
-  protected setRollWidth(width: number): void {
-    this.draftSettings.update((s) => ({ ...s, rollWidthMm: width }));
+  /**
+   * The Paper type bar's one action (TK-267): the paper changes at once, and so do the margins nobody had
+   * changed. A zoom on Fit width is worked out again, since the page it fitted is a different width now.
+   */
+  protected choosePaperType(type: PaperType): void {
+    if (!this.canEdit()) {
+      return;
+    }
+    this.draftSettings.update((s) => applyPaperType(s, type));
+    if (this.zoomStr() === 'fit') {
+      this.onZoomChange('fit');
+    }
   }
 
   protected setRollUnit(unit: 'mm' | 'in'): void {
@@ -2357,7 +2367,7 @@ export class PrintTemplatesPage implements OnInit {
     const detail = this.detail();
     const curName = this.draftName().trim() || detail?.templateName || 'Custom Template';
     this.saveAsName.set(curName.includes('(Custom)') ? curName : `${curName} (Custom)`);
-    this.saveAsPaperSize.set(detail?.paperSizeName || 'A4');
+    this.saveAsPaperSize.set(paperSizeNameFor(this.draftSettings()) ?? (detail?.paperSizeName || 'A4'));
     this.showSaveAsModal.set(true);
   }
 
