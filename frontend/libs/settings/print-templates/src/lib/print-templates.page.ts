@@ -651,9 +651,11 @@ export class PrintTemplatesPage implements OnInit {
   protected readonly rollWidthMm = computed(() => this.draftSettings().rollWidthMm ?? 80);
   protected readonly rollUnit = computed(() => this.draftSettings().rollUnit ?? 'mm');
 
-  // The Paper type bar (TK-267): its buttons, the one the template is on, and what that paper is in words.
+  // The Paper type dropdown (TK-267): its entries, the one the template is on, and what that paper is in words.
   protected readonly paperTypeOptions = computed(() => paperTypesFor(this.draftSettings()));
   protected readonly paperKey = computed(() => selectedPaperType(this.draftSettings()).key);
+  protected readonly sheetTypes = computed(() => this.paperTypeOptions().filter((type) => type.kind === 'sheet'));
+  protected readonly rollTypes = computed(() => this.paperTypeOptions().filter((type) => type.kind === 'roll'));
   protected readonly paperText = computed(() => paperReadout(selectedPaperType(this.draftSettings())));
 
   protected readonly padTop = computed(() =>
@@ -994,9 +996,16 @@ export class PrintTemplatesPage implements OnInit {
   // ---- Settings mutations ---------------------------------------------------
 
   /**
-   * The Paper type bar's one action (TK-267): the paper changes at once, and so do the margins nobody had
+   * The Paper type dropdown's one action (TK-267): the paper changes at once, and so do the margins nobody had
    * changed. A zoom on Fit width is worked out again, since the page it fitted is a different width now.
    */
+  protected choosePaperKey(key: string): void {
+    const type = this.paperTypeOptions().find((option) => option.key === key);
+    if (type) {
+      this.choosePaperType(type);
+    }
+  }
+
   protected choosePaperType(type: PaperType): void {
     if (!this.canEdit()) {
       return;
