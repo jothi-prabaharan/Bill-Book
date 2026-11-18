@@ -1299,12 +1299,13 @@ Nothing you can set will reorder them.
 ## Merge fields
 
 A merge field is a placeholder that fills itself in when the document prints — `{{Document.No}}`,
-`{{Party.Name}}`, `{{Totals.GrandTotal}}`. Insert them from the **Insert field** panel in the
-editor rather than typing them, so the spelling is always one the document type knows.
+`{{Party.Name}}`, `{{Totals.GrandTotal}}`. Add them from the editor's field list (click a cell on
+the paper, then **Add**) rather than typing them, so the spelling is always one the document type
+knows.
 
-Fields marked with a repeat mark come from a list rather than a single value: put
+Fields in a group marked **list** come from a list rather than a single value: put
 `{{Item.ItemName}}` in a table row and that row prints once per item on the document. A field
-with no repeat mark prints once wherever you put it.
+in a group with no **list** mark prints once wherever you put it.
 
 **A field that cannot be filled in prints as nothing** — never as its own name. The template
 list tells you if a template has any, so you can find them before a customer does.
@@ -1344,9 +1345,9 @@ If the Settings menu could not be loaded, it shows a single **Print templates** 
 for each kind of document. That row opens the first kind, and the dropdown is how you reach the
 others.
 
-- Each of the five bands is a box of HTML. Click in the one you want, put the cursor where the
-  field should go, and pick the field from **Insert field** — it goes in at the cursor, replacing
-  anything you had selected. Fields marked **Repeats** come from a list.
+- Each of the five bands is a box of HTML. Click the cell where a field should go and add it from
+  the list that opens there (see *Adding a field to a cell*, below). Fields in a group marked
+  **list** repeat once per item.
 - **Save and preview** saves the template and shows it printed against sample data, exactly as the
   printing service lays it out, including how many pages it runs to. The preview always shows the
   saved template; while you have unsaved changes it says so.
@@ -1360,6 +1361,31 @@ others.
 
 Opening the screen needs permission to view settings; changing anything needs permission to edit
 them. Without it the bands are read-only and the buttons that save are not shown.
+
+### Adding a field to a cell
+
+Click the cell, row or empty place on the paper where a field should go, in any band (TK-267). A
+list of fields opens beside it, headed with where the field will go, for example *to Details · row
+1, column 2*, and **Add** next to a field puts it into that exact cell. If the band was not the one
+you were editing, the click makes it so.
+
+- **Search fields** narrows the list by a field's name or its description.
+- In a cell that already has text, the field goes in where you clicked in the text, and at the end
+  of the cell when you clicked somewhere else in it. A band with no table in it, such as a
+  one-line Header, takes the field where you clicked. A cell can hold several fields.
+- **A heading of the items table.** A field that repeats, added to a heading cell, goes into the
+  cell below it, the one that prints once per item, and an empty heading is named after the field,
+  for example *Item name*. A heading you have already written is kept. A field that prints once,
+  added to a heading, goes in the heading itself.
+- **Esc**, a click anywhere else, typing in the band, or scrolling the cell out of sight closes the
+  list, and clicking another cell moves it there. Selecting text with the mouse, or dragging a
+  column edge, does not open it. **Undo** takes an added field out again.
+- **Insert field**, above the paper, and **Alt + Enter** open the same list for the cell the
+  cursor is in, with the cursor in its search box. **Insert field** again closes it.
+- On a phone the list is a sheet along the foot of the screen.
+
+Nothing is added until you press **Add**, so a click only to put the cursor somewhere can be
+dismissed with **Esc**, or by carrying on typing.
 
 ### Two panels that scroll on their own
 

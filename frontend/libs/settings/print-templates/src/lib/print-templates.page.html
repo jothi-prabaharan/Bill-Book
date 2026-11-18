@@ -153,7 +153,9 @@
               class="btn btn-secondary"
               type="button"
               [disabled]="mode() === 'preview' || !canEdit()"
-              (click)="openFields($event)"
+              data-fields-trigger
+              title="Insert field (Alt+Enter)"
+              (click)="openFieldsFromToolbar($event)"
             >
               Insert field
             </button>
@@ -229,7 +231,7 @@
 
         <!-- Canvas (Edit Mode) -->
         @if (mode() === 'edit') {
-          <div #paperScroller class="pt-scroller">
+          <div #paperScroller class="pt-scroller" (scroll)="onPaperScroll()">
             <div [style.width]="zoomWidth()" [style.height]="zoomHeight()" class="pt-zoom-container">
               <div [style.transform]="zoomScale()" class="pt-zoom-scaler">
                 <div
@@ -266,7 +268,7 @@
                         [contentEditable]="canEdit() && activeSeg() === seg.code"
                         (mouseup)="onSnap($event)"
                         (keyup)="onSnap($event)"
-                        (click)="onSnap($event)"
+                        (click)="onBandClick($event, seg.code)"
                         (input)="onSegmentInput(seg.code)"
                         (mousemove)="onCellHover($event, seg.code)"
                         (mousedown)="onCellMouseDown($event, seg.code)"
@@ -1126,45 +1128,70 @@
   }
 </div>
 
-<!-- Insert Field Popover Dialog -->
+<!-- The field picker (TK-267): next to the cell that was clicked, or the caret for Insert field -->
 @if (fieldsOpen()) {
-  <div class="dialog-backdrop" (click)="closeFields()">
-    <div
-      role="dialog"
-      aria-label="Insert field"
-      class="pt-fields-dialog"
-      [style.left.px]="fieldsPos().left"
-      [style.top.px]="fieldsPos().top"
-      (click)="$event.stopPropagation()"
-    >
-      <div class="pt-fields-head">
-        <span class="pt-fields-title">Insert field</span>
-        <button class="btn btn-ghost btn-xs" type="button" (click)="closeFields()">Close</button>
-      </div>
-
-      <div class="pt-fields-grid">
-        @for (grp of placeholders(); track grp.group) {
-          <div class="pt-fields-col">
-            <div class="pt-fields-group-head">
-              <span class="menuhead">{{ grp.group }}</span>
-              @if (grp.isList) {
-                <span class="tag tag-outline" title="Repeats per row">list</span>
-              }
-            </div>
-
-            @for (field of grp.placeholders; track field.tag) {
-              <button
-                class="pt-field-item"
-                type="button"
-                [title]="field.description"
-                (click)="insertField(field.tag, grp.isList)"
-              >
-                {{ grp.isList ? '<<' + field.tag + '>>' : '{{' + field.tag + '}}' }}
-              </button>
-            }
-          </div>
+  <div
+    role="dialog"
+    aria-label="Add a field"
+    class="pt-fields-pop"
+    [style.left.px]="fieldsPos().left"
+    [style.top.px]="fieldsPos().top"
+    [style.bottom.px]="fieldsPos().bottom"
+    [style.max-height.px]="fieldsPos().maxHeight"
+  >
+    <div class="pt-fields-head">
+      <div class="pt-fields-heading">
+        <span class="pt-fields-title">Add a field</span>
+        @if (fieldContext(); as where) {
+          <span class="pt-fields-where" data-testid="fields-where">
+            to {{ where.band }}@if (where.place) { · {{ where.place }}}
+          </span>
         }
       </div>
+      <button class="btn btn-ghost btn-xs" type="button" (click)="closeFields()">Close</button>
+    </div>
+
+    @if (fieldContext()?.heading) {
+      <p class="pt-fields-hint">
+        A field that repeats, added to a heading, also goes in the column below it.
+      </p>
+    }
+
+    <input
+      #fieldSearch
+      class="input pt-fields-search"
+      type="search"
+      placeholder="Search fields"
+      aria-label="Search fields"
+      [ngModel]="fieldQuery()"
+      (ngModelChange)="fieldQuery.set($event)"
+    />
+
+    <div class="pt-fields-list">
+      @for (grp of filteredGroups(); track grp.group) {
+        <div class="pt-fields-group">
+          <div class="pt-fields-group-head">
+            <span class="menuhead">{{ grp.group }}</span>
+            @if (grp.isList) {
+              <span class="tag tag-outline" title="Repeats per row">list</span>
+            }
+          </div>
+
+          @for (field of grp.placeholders; track field.tag) {
+            <button
+              class="pt-field-item"
+              type="button"
+              [title]="field.description"
+              (click)="addField(field, grp.isList)"
+            >
+              <span class="pt-field-tag">{{ grp.isList ? '<<' + field.tag + '>>' : '{{' + field.tag + '}}' }}</span>
+              <span class="pt-field-add">Add</span>
+            </button>
+          }
+        </div>
+      } @empty {
+        <p class="pt-fields-empty">No field matches “{{ fieldQuery() }}”.</p>
+      }
     </div>
   </div>
 }

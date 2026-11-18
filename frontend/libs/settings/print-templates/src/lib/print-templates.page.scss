@@ -571,12 +571,17 @@
 
 .pt-seg {
   opacity: 0.42;
-  pointer-events: none;
+  cursor: pointer;
   transition: opacity 0.12s;
+
+  /* A band that is not being edited is still one to click (TK-267): the click edits it and offers its fields. */
+  &:hover {
+    opacity: 0.72;
+  }
 
   &[data-seg-on='1'] {
     opacity: 1;
-    pointer-events: auto;
+    cursor: auto;
     box-shadow: 0 -2px 0 var(--color-accent), 0 2px 0 var(--color-accent);
 
     td,
@@ -700,20 +705,16 @@
   color: var(--color-muted);
 }
 
-/* Insert Field Dialog */
-.dialog-backdrop {
+/* The field picker (TK-267): a popover next to the cell that was clicked, with no backdrop, so the paper stays in
+   view and the person can carry on typing instead of choosing. */
+.pt-fields-pop {
   position: fixed;
-  inset: 0;
-  z-index: 50;
-  background: rgba(0, 0, 0, 0.15);
-}
-
-.pt-fields-dialog {
-  position: fixed;
-  width: 640px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 440px;
   max-width: 92vw;
-  max-height: 440px;
-  overflow-y: auto;
+  max-height: 380px;
   padding: var(--space-3);
   background: var(--color-bg);
   border: 1px solid var(--color-divider);
@@ -723,10 +724,17 @@
 }
 
 .pt-fields-head {
+  flex: none;
   display: flex;
-  align-items: baseline;
+  align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: var(--space-2);
+  gap: var(--space-2);
+}
+
+.pt-fields-heading {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .pt-fields-title {
@@ -735,15 +743,29 @@
   font-size: 14px;
 }
 
-.pt-fields-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-3) var(--space-4);
-  align-content: start;
+.pt-fields-where {
+  font-size: 11.5px;
+  color: var(--color-muted);
 }
 
-.pt-fields-col {
-  min-width: 0;
+.pt-fields-hint {
+  flex: none;
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--color-accent-700);
+}
+
+.pt-fields-search {
+  flex: none;
+}
+
+.pt-fields-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
 .pt-fields-group-head {
@@ -755,23 +777,69 @@
   margin-bottom: 3px;
 }
 
+.pt-fields-empty {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
 .pt-field-item {
   width: 100%;
-  text-align: left;
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 11.5px;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-height: 30px;
   margin-bottom: 2px;
   padding: 3px 6px;
   border: none;
   background: none;
   border-radius: var(--radius-sm);
+  font-size: 11.5px;
+  text-align: left;
   cursor: pointer;
   color: inherit;
 
-  &:hover {
+  &:hover,
+  &:focus-visible {
     background: var(--color-surface);
+  }
+
+  &:hover .pt-field-add,
+  &:focus-visible .pt-field-add {
+    border-color: var(--color-accent);
+    color: var(--color-accent-800);
+  }
+}
+
+.pt-field-tag {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.pt-field-add {
+  flex: none;
+  padding: 1px 8px;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  /* On a phone the picker is a sheet along the foot of the screen, clear of the keyboard's way and of the cell. */
+  .pt-fields-pop {
+    left: 8px !important;
+    right: 8px;
+    top: auto !important;
+    bottom: 8px !important;
+    width: auto;
+    max-width: none;
+    max-height: 60vh !important;
+  }
+
+  .pt-field-item {
+    min-height: 44px;
   }
 }
 

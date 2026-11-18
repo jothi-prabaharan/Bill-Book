@@ -22,6 +22,7 @@ import { SessionContextService } from '@bill-book/auth';
 import {
   DocumentTypeOption,
   PaperSize,
+  PlaceholderDefinition,
   PlaceholderGroup,
   PrintContent,
   PrintSettings,
@@ -57,6 +58,16 @@ import {
   selectedPaperType,
 } from './paper-types';
 import { normalizeSettings, settingsChanged } from './print-settings';
+import {
+  cellPosition,
+  insertChipAt,
+  isHeadingCell,
+  isInView,
+  nameHeading,
+  pickerPlacement,
+  planFieldInsert,
+  type PickerPlacement,
+} from './field-insert';
 
 export const MM_PX = 3.7795; // 1 mm = 3.7795 px shared constant
 
@@ -440,6 +451,26 @@ export class PrintTemplatesPage implements OnInit {
   protected readonly documentType = signal<string | null>(null);
   protected readonly templates = signal<PrintTemplateListItem[]>([]);
   protected readonly placeholders = signal<PlaceholderGroup[]>([]);
+
+  /** The groups the picker lists: all of them, or the fields whose name, description or group has the search in it. */
+  protected readonly filteredGroups = computed<PlaceholderGroup[]>(() => {
+    const query = this.fieldQuery().trim().toLowerCase();
+    const groups = this.placeholders();
+    if (!query) {
+      return groups;
+    }
+    return groups
+      .map((group) => ({
+        ...group,
+        placeholders: group.placeholders.filter(
+          (field) =>
+            field.tag.toLowerCase().includes(query) ||
+            (field.description ?? '').toLowerCase().includes(query) ||
+            group.group.toLowerCase().includes(query),
+        ),
+      }))
+      .filter((group) => group.placeholders.length > 0);
+  });
   protected readonly detail = signal<PrintTemplateDetail | null>(null);
 
   // Template settings & draft
@@ -523,9 +554,24 @@ export class PrintTemplatesPage implements OnInit {
   private activeCell: HTMLElement | null = null;
   private flashTimer: ReturnType<typeof setTimeout> | null = null;
 
-  // Insert field popover
+  // The field picker (TK-267): opened by a click on a cell, or by Insert field. It remembers the cell it was
+  // opened for, so the field goes there however long the person takes to pick it.
   protected readonly fieldsOpen = signal(false);
-  protected readonly fieldsPos = signal<{ left: number; top: number }>({ left: 0, top: 0 });
+  /** Under its cell by `top`, or above it by `bottom` when there is no room below, and never taller than the room. */
+  protected readonly fieldsPos = signal<PickerPlacement>({ left: 0, top: 0, bottom: null, maxHeight: 380 });
+  protected readonly fieldQuery = signal('');
+  /** Where the picker will put a field, in words: the band, the cell, and whether it is a heading. */
+  protected readonly fieldContext = signal<{ band: string; place: string | null; heading: boolean } | null>(null);
+  protected readonly fieldSearch = viewChild<ElementRef<HTMLInputElement>>('fieldSearch');
+  private fieldTarget: { seg: SegCode; cell: HTMLElement | null; range: Range | null } | null = null;
+  /**
+   * What the picker hangs from, read again whenever the paper scrolls so it stays beside its cell. `follows` is
+   * the element on the paper it hangs from, whose going out of view closes the picker; null when it hangs from
+   * the toolbar, which does not scroll.
+   */
+  private fieldAnchor: { read: () => DOMRect; follows: HTMLElement | null } | null = null;
+  /** The click that ends a column drag is not a request for a field. */
+  private suppressPickerUntil = 0;
 
   // Preview Pagination State
   protected readonly previewPage = signal(1);
@@ -1182,6 +1228,7 @@ export class PrintTemplatesPage implements OnInit {
   }
 
   protected onSegmentInput(code: SegCode): void {
+    this.closeFields();
     const segDef = SEGMENTS.find((s) => s.code === code);
     if (!segDef) return;
     const tagHtml = this.getSegmentTagHtml(code);
@@ -1654,6 +1701,16 @@ export class PrintTemplatesPage implements OnInit {
   @HostListener('window:keydown', ['$event'])
   protected handleKeyDown(e: KeyboardEvent): void {
     if (this.mode() !== 'edit' || !this.canEdit()) return;
+    if (e.key === 'Escape' && this.fieldsOpen()) {
+      e.preventDefault();
+      this.closeFields();
+      return;
+    }
+    if (e.altKey && e.key === 'Enter') {
+      e.preventDefault();
+      this.openFieldsAtCaret();
+      return;
+    }
     if (e.ctrlKey || e.metaKey) {
       if (e.key.toLowerCase() === 'z' && !e.shiftKey) {
         e.preventDefault();
@@ -2227,6 +2284,8 @@ export class PrintTemplatesPage implements OnInit {
     const st = this.colResizeState();
     if (!st) return;
 
+    // The click that follows a drag is not a click on the cell.
+    this.suppressPickerUntil = Date.now() + 400;
     this.recordSnapshot(true);
     for (const r of Array.from(st.table.rows)) {
       let cIdx = 0;
@@ -2272,29 +2331,211 @@ export class PrintTemplatesPage implements OnInit {
     this.setRowHeight(next);
   }
 
-  // ---- Field Insertion Popover ----------------------------------------------
+  // ---- The field picker (TK-267) ------------------------------------------------
 
-  protected openFields(e: MouseEvent): void {
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const w = 640;
-    const h = 420;
-    const left = Math.max(8, Math.min(rect.left, window.innerWidth - w - 8));
-    const top = Math.max(8, Math.min(rect.bottom + 6, window.innerHeight - h - 8));
-    this.fieldsPos.set({ left, top });
+  private segHost(seg: SegCode): HTMLDivElement | null {
+    return this.segElements().find((ref) => ref.nativeElement.dataset['seg'] === seg)?.nativeElement ?? null;
+  }
+
+  /** A click on any band: edit it, and offer the fields for the cell that was clicked. */
+  protected onBandClick(e: MouseEvent, seg: SegCode): void {
+    this.onSnap(e);
+    if (!this.canEdit() || this.mode() !== 'edit' || this.colResizeState()) {
+      return;
+    }
+    if (Date.now() < this.suppressPickerUntil) {
+      return;
+    }
+
+    // Dragging across text selects it; that is not a request for a field.
+    const selection = window.getSelection();
+    if (selection && !selection.isCollapsed) {
+      return;
+    }
+
+    const cell = ((e.target as HTMLElement | null)?.closest('td, th') ?? null) as HTMLElement | null;
+    const host = this.segHost(seg);
+    const wasActive = this.activeSeg() === seg;
+    if (!wasActive) {
+      // Not being edited yet: it becomes editable and takes focus, and the caret goes in the cell that was clicked.
+      this.setActiveSeg(seg);
+      if (cell) {
+        setTimeout(() => this.placeCaretIn(cell));
+      }
+    }
+
+    // The caret the click left, when the band was already being edited and the caret is in the clicked cell.
+    let range: Range | null = null;
+    if (wasActive && selection && selection.rangeCount > 0) {
+      const caret = selection.getRangeAt(0);
+      if (caret.collapsed && (cell ?? host)?.contains(caret.startContainer)) {
+        range = caret.cloneRange();
+      }
+    }
+
+    this.fieldTarget = { seg, cell, range };
+    if (cell) {
+      this.showFields(() => cell.getBoundingClientRect(), cell, seg, cell, false);
+      return;
+    }
+
+    // No cell: it hangs from the point that was clicked, which moves with the element it was clicked in.
+    const clicked = e.target as HTMLElement;
+    const at = clicked.getBoundingClientRect();
+    const dx = e.clientX - at.left;
+    const dy = e.clientY - at.top;
+    this.showFields(
+      () => {
+        const now = clicked.getBoundingClientRect();
+        return new DOMRect(now.left + dx, now.top + dy, 0, 0);
+      },
+      clicked,
+      seg,
+      null,
+      false,
+    );
+  }
+
+  /** Insert field in the toolbar, or Alt+Enter: the same picker, for the cell the caret is in. */
+  protected openFieldsFromToolbar(e: MouseEvent): void {
+    if (this.fieldsOpen()) {
+      this.closeFields();
+      return;
+    }
+    this.openFieldsAtCaret(e.currentTarget as HTMLElement);
+  }
+
+  /** `button` is the toolbar button it hangs from; from the keyboard there is none and it hangs from the cell. */
+  private openFieldsAtCaret(button?: HTMLElement): void {
+    const seg = this.activeSeg();
+    const host = this.segHost(seg);
+    const cell = this.activeCell && host?.contains(this.activeCell) ? this.activeCell : null;
+    const caret = this.activeRange;
+    const range =
+      caret && caret.collapsed && host?.contains(caret.startContainer) ? caret.cloneRange() : null;
+
+    this.fieldTarget = { seg, cell, range };
+    if (button) {
+      this.showFields(() => button.getBoundingClientRect(), null, seg, cell, true);
+      return;
+    }
+    const on = cell ?? host;
+    this.showFields(() => on?.getBoundingClientRect() ?? new DOMRect(8, 8, 0, 0), on, seg, cell, true);
+  }
+
+  private showFields(
+    read: () => DOMRect,
+    follows: HTMLElement | null,
+    seg: SegCode,
+    cell: HTMLElement | null,
+    focusSearch: boolean,
+  ): void {
+    const isCell = !!cell && cell.matches('td, th');
+    this.fieldAnchor = { read, follows };
+    this.fieldsPos.set(pickerPlacement(read(), { width: window.innerWidth, height: window.innerHeight }));
+    this.fieldQuery.set('');
+    this.fieldContext.set({
+      band: SEGMENTS.find((s) => s.code === seg)?.label ?? 'this band',
+      place: isCell ? cellPosition(cell as HTMLTableCellElement) : null,
+      heading: isCell && isHeadingCell(cell as HTMLTableCellElement),
+    });
     this.fieldsOpen.set(true);
+    if (focusSearch) {
+      setTimeout(() => this.fieldSearch()?.nativeElement.focus());
+    }
   }
 
   protected closeFields(): void {
-    this.fieldsOpen.set(false);
+    if (this.fieldsOpen()) {
+      this.fieldsOpen.set(false);
+    }
+    this.fieldAnchor = null;
   }
 
-  protected insertField(tag: string, isList: boolean): void {
+  /**
+   * The paper scrolled. Putting the caret in a cell near the edge makes the browser scroll it into view, so a
+   * scroll right after a click is normal and must not close the picker; the picker follows its cell instead, and
+   * goes only when the cell has scrolled out of sight.
+   */
+  protected onPaperScroll(): void {
+    const anchor = this.fieldAnchor;
+    if (!this.fieldsOpen() || !anchor) {
+      return;
+    }
+
+    const rect = anchor.read();
+    const scroller = this.paperScroller()?.nativeElement;
+    if (anchor.follows && scroller && !isInView(rect, scroller.getBoundingClientRect())) {
+      this.closeFields();
+      return;
+    }
+    this.fieldsPos.set(pickerPlacement(rect, { width: window.innerWidth, height: window.innerHeight }));
+  }
+
+  /** The caret goes at the end of a cell, or at its start when the cell is empty. */
+  private placeCaretIn(cell: HTMLElement): void {
+    const range = document.createRange();
+    range.selectNodeContents(cell);
+    range.collapse(false);
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+    this.onSnap();
+  }
+
+  /** The picker closes when the person clicks away from it and from the paper, since a click on the paper moves it. */
+  @HostListener('document:pointerdown', ['$event'])
+  protected onDocumentPointerDown(e: Event): void {
+    if (!this.fieldsOpen()) {
+      return;
+    }
+    const target = e.target as HTMLElement | null;
+    if (target?.closest('.pt-fields-pop, .pt-seg-content, [data-fields-trigger]')) {
+      return;
+    }
+    this.closeFields();
+  }
+
+  /** Adds the field to the cell the picker was opened for, and the caret goes after it. */
+  protected async addField(field: PlaceholderDefinition, isList: boolean): Promise<void> {
+    const target = this.fieldTarget;
+    const host = target ? this.segHost(target.seg) : null;
+    if (!target || !host) {
+      this.closeFields();
+      return;
+    }
+
+    // The band has to be the one being edited for the caret to go back into it.
+    if (this.activeSeg() !== target.seg) {
+      this.activeSeg.set(target.seg);
+      await new Promise<void>((resolve) => setTimeout(resolve));
+    }
+
     this.recordSnapshot(true);
-    const chipHtml = `<span contenteditable="false" class="pt-chip${isList ? ' pt-chip--list' : ''}">${isList ? `&lt;&lt;${tag}&gt;&gt;` : `{{${tag}}}`}</span>\u00a0`;
-    this.execSel('insertHTML', chipHtml);
-    this.fieldsOpen.set(false);
-    this.onSegmentInput(this.activeSeg());
+    const plan = planFieldInsert(target.cell, isList);
+    const named = plan.labelCell ? nameHeading(plan.labelCell, field) : false;
+    const caret = insertChipAt(
+      host,
+      plan.chipCell,
+      plan.chipCell === target.cell ? target.range : null,
+      field.tag,
+      isList,
+    );
+
+    host.focus({ preventScroll: true });
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(caret);
+
+    this.closeFields();
+    this.onSnap();
+    this.onSegmentInput(target.seg);
     this.recordSnapshot(true);
+    this.showFlash(
+      plan.labelCell
+        ? `Added ${field.tag} to the column${named ? ' and named its heading' : ''}`
+        : `Added ${field.tag}`,
+    );
   }
 
   // ---- Zoom Controls --------------------------------------------------------
