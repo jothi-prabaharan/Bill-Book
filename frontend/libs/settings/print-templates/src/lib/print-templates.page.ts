@@ -468,6 +468,9 @@ export class PrintTemplatesPage implements OnInit {
 
   // Editor states
   protected readonly activeSeg = signal<SegCode>('d');
+
+  /** Which panel a narrow window shows: the paper or the settings (TK-267). Both show side by side when wide. */
+  protected readonly pane = signal<'paper' | 'settings'>('paper');
   protected readonly mode = signal<'edit' | 'preview'>('edit');
   protected readonly zoom = signal<number>(1);
   protected readonly zoomStr = signal<string>('1');

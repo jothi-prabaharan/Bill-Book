@@ -1337,8 +1337,8 @@ themselves. A template you have edited is left exactly as you wrote it; the edit
 the Settings menu. The **Print template type** dropdown at the top right of the page picks the kind
 of document, Quote, Sales order, Sales invoice and the rest, so you can move from one to another
 without going back to the menu (TK-267). If you have unsaved changes it asks before it opens
-another; **Cancel** keeps you where you are. The templates for that kind are listed in the panel,
-with the default marked.
+another; **Cancel** keeps you where you are. The templates for that kind are listed at the top of
+the settings panel, with the default marked.
 
 If the Settings menu could not be loaded, it shows a single **Print templates** row instead of one
 for each kind of document. That row opens the first kind, and the dropdown is how you reach the
@@ -1361,8 +1361,21 @@ others.
 Opening the screen needs permission to view settings; changing anything needs permission to edit
 them. Without it the bands are read-only and the buttons that save are not shown.
 
-On a phone the panels stack, and **Preview** opens the preview full screen, with **Close** at its
-top.
+### Two panels that scroll on their own
+
+The editor has two panels side by side (TK-267): the **paper**, with its toolbar (the five bands,
+Undo and Redo, Cell guides, zoom, Insert field, Preview, Discard, Save As and Save) fixed above it,
+on the left, and the **settings and formatting tools** on the right. Each has its own scrollbar and
+the page does not scroll, so you can scroll a long template, or a thermal roll, without losing the
+settings, and look through the settings while the paper stays where it is. **Preview** fills the
+paper panel.
+
+The panels share the height of the window. On a short window they are shorter, and below a height
+where that stops being useful the page itself scrolls a little rather than squeezing them further.
+
+On a narrow window, about 1,000 pixels wide or less, the two panels are tabs, **Paper** and
+**Settings**, and the one you pick fills the height and scrolls on its own. On a phone the page
+flows and scrolls as one, with the same two tabs so only one panel is on it at a time.
 
 ### Laying a band out with tables
 

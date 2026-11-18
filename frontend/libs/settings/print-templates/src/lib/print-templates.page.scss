@@ -1,3 +1,13 @@
+/* The page fills the shell's content area, so each panel has a height of its own to scroll in (TK-267). The
+   host element had none, so `.pt-shell { height: 100% }` fell back to auto, the editor grew to the height of its
+   content and the shell scrolled everything as one document. Below the minimum height the content area scrolls
+   instead of squeezing the panels to nothing. */
+:host {
+  display: block;
+  height: 100%;
+  min-height: 520px;
+}
+
 .pt-shell {
   display: flex;
   flex-direction: column;
@@ -765,16 +775,101 @@
   }
 }
 
-/* Responsive adjustments */
+/* The two panels (TK-267): the paper on the left and the settings on the right, each with its own scrollbar.
+   On a narrow window they are two tabs, and the one shown fills the height and scrolls on its own. */
+.pt-pane-tabs {
+  display: none;
+}
+
 @media (max-width: 1024px) {
+  :host {
+    min-height: 560px;
+  }
+
+  .pt-pane-tabs {
+    flex: none;
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--color-divider);
+  }
+
+  .pt-pane-tab {
+    flex: 1;
+    min-height: 44px;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    background: transparent;
+    color: var(--color-muted);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+
+    &.active {
+      border-bottom-color: var(--color-accent);
+      color: var(--color-accent-700);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-accent);
+      outline-offset: -2px;
+    }
+  }
+
   .pt-workspace {
     flex-direction: column;
-    overflow-y: auto;
+    overflow: hidden;
   }
 
   .pt-sidebar {
+    flex: 1 1 auto;
     width: 100%;
-    overflow-y: visible;
+    overflow-y: auto;
+  }
+
+  /* The paper pane scrolls as one here, toolbar and paper together: a toolbar that wraps onto five rows on a
+     phone, kept fixed above a paper pane of its own, left the paper a sliver. */
+  .pt-canvas-area {
+    flex: 1 1 auto;
+    width: 100%;
+    overflow-y: auto;
+  }
+
+  .pt-scroller {
+    flex: none;
+    min-height: auto;
+  }
+
+  .pt-pane-off {
+    display: none;
+  }
+}
+
+/* A phone has no height to share between a heading, two pickers, tabs and a pane, so there the page flows and
+   scrolls as one, and the tabs are what keep it short: only the one panel shows. */
+@media (max-width: 640px) {
+  .pt-head .hint {
+    display: none;
+  }
+
+  :host {
+    height: auto;
+    min-height: 0;
+  }
+
+  .pt-shell {
+    height: auto;
+    overflow: visible;
+  }
+
+  .pt-workspace {
+    flex: none;
+    overflow: visible;
+  }
+
+  .pt-canvas-area,
+  .pt-sidebar {
+    flex: none;
+    overflow: visible;
   }
 }
 

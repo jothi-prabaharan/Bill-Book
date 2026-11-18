@@ -51,9 +51,283 @@
       <span class="pt-paperbar-readout" data-testid="paper-readout">{{ paperText() }}</span>
     </section>
 
+    <!-- On a narrow window one panel shows at a time (TK-267) -->
+    <div class="pt-pane-tabs" role="tablist" aria-label="Editor panels">
+      <button
+        type="button"
+        class="pt-pane-tab"
+        role="tab"
+        id="pe-tab-paper"
+        aria-controls="pe-pane-paper"
+        [class.active]="pane() === 'paper'"
+        [attr.aria-selected]="pane() === 'paper'"
+        (click)="pane.set('paper')"
+      >
+        Paper
+      </button>
+      <button
+        type="button"
+        class="pt-pane-tab"
+        role="tab"
+        id="pe-tab-settings"
+        aria-controls="pe-pane-settings"
+        [class.active]="pane() === 'settings'"
+        [attr.aria-selected]="pane() === 'settings'"
+        (click)="pane.set('settings')"
+      >
+        Settings
+      </button>
+    </div>
+
     <div class="pt-workspace">
-      <!-- Left sidebar: Configuration & Formatting Ribbon -->
-      <aside class="pt-sidebar" aria-label="Template configuration">
+      <!-- Left: the paper, with its toolbar fixed above it. Its own scrollbar (TK-267). -->
+      <main class="pt-canvas-area" id="pe-pane-paper" [class.pt-pane-off]="pane() !== 'paper'">
+        <!-- Top Toolbar -->
+        <div class="pt-canvas-toolbar">
+          <!-- Segment Tabs -->
+          <div class="btngrp" role="tablist" aria-label="Segments">
+            @for (seg of segments; track seg.code) {
+              <button
+                class="btn btn-secondary pt-tab-btn"
+                type="button"
+                role="tab"
+                [class.picked]="activeSeg() === seg.code"
+                [disabled]="mode() === 'preview'"
+                (click)="setActiveSeg(seg.code)"
+              >
+                {{ seg.label }}
+              </button>
+            }
+          </div>
+
+          <!-- Actions: Zoom, Undo, Redo, Cell guides, Insert Field, Preview, Discard, Save -->
+          <div class="pt-canvas-actions">
+            @if (mode() === 'edit' && canEdit()) {
+              <button
+                class="btn btn-ghost btn-sm"
+                type="button"
+                [disabled]="!canUndo()"
+                (click)="undo()"
+                title="Undo (Ctrl+Z)"
+              >
+                ↶ Undo
+              </button>
+              <button
+                class="btn btn-ghost btn-sm"
+                type="button"
+                [disabled]="!canRedo()"
+                (click)="redo()"
+                title="Redo (Ctrl+Y)"
+              >
+                ↷ Redo
+              </button>
+              <button
+                class="btn btn-ghost btn-sm pt-guides-toggle"
+                [class.btn-active]="showCellGuides()"
+                type="button"
+                (click)="toggleCellGuides()"
+                title="Outline every table cell on the page. The outlines are not printed."
+              >
+                Cell guides: {{ showCellGuides() ? 'ON' : 'OFF' }}
+              </button>
+              <span class="pt-vdivider"></span>
+            }
+
+            <select
+              class="input pt-zoom-select"
+              title="Zoom"
+              aria-label="Zoom"
+              [ngModel]="zoomStr()"
+              (ngModelChange)="onZoomChange($event)"
+            >
+              <option value="fit">Fit width</option>
+              <option value="0.5">50%</option>
+              <option value="0.75">75%</option>
+              <option value="1">100%</option>
+              <option value="1.25">125%</option>
+              <option value="1.5">150%</option>
+              <option value="2">200%</option>
+            </select>
+
+            <button
+              class="btn btn-secondary"
+              type="button"
+              [disabled]="mode() === 'preview' || !canEdit()"
+              (click)="openFields($event)"
+            >
+              Insert field
+            </button>
+
+            <button
+              class="btn btn-secondary"
+              type="button"
+              (click)="togglePreview()"
+            >
+              {{ mode() === 'preview' ? 'Back to edit' : 'Preview' }}
+            </button>
+
+            @if (mode() === 'preview') {
+              <button
+                class="btn btn-primary"
+                type="button"
+                [disabled]="busy()"
+                (click)="printPreview()"
+              >
+                Print
+              </button>
+            }
+
+            <span class="pt-vdivider"></span>
+
+            @if (flash()) {
+              <span class="pt-flash-msg">{{ flash() }}</span>
+            }
+
+            @if (canEdit()) {
+              <button
+                class="btn btn-ghost"
+                type="button"
+                [disabled]="busy() || !dirty()"
+                (click)="discard()"
+              >
+                Discard
+              </button>
+
+              <button
+                class="btn btn-secondary"
+                type="button"
+                [disabled]="busy()"
+                (click)="openSaveAsModal()"
+                title="Save as a new custom template scoped to this organization"
+              >
+                Save As
+              </button>
+
+              @if (!curTemplate.isSample) {
+                <button
+                  class="btn btn-primary"
+                  type="button"
+                  [disabled]="busy() || !dirty() || draftName().trim() === ''"
+                  (click)="save()"
+                >
+                  Save
+                </button>
+              } @else {
+                <button
+                  class="btn btn-primary"
+                  type="button"
+                  [disabled]="busy()"
+                  (click)="openSaveAsModal()"
+                  title="Sample templates are protected from direct edit. Save as a new custom template."
+                >
+                  Save As
+                </button>
+              }
+            }
+          </div>
+        </div>
+
+        <!-- Canvas (Edit Mode) -->
+        @if (mode() === 'edit') {
+          <div #paperScroller class="pt-scroller">
+            <div [style.width]="zoomWidth()" [style.height]="zoomHeight()" class="pt-zoom-container">
+              <div [style.transform]="zoomScale()" class="pt-zoom-scaler">
+                <div
+                  class="pt-page"
+                  [class.pt-show-guides]="showCellGuides()"
+                  [style.width.px]="pageWidthPx()"
+                  [style.height]="canvasHeight()"
+                  [style.padding]="canvasPadding()"
+                  [style.fontFamily]="pageFontFamily()"
+                  [style.fontSize.px]="pageFontSize()"
+                >
+                  @for (seg of segments; track seg.code) {
+                    <div
+                      class="pt-seg"
+                      [attr.data-seg-on]="activeSeg() === seg.code ? '1' : null"
+                      [attr.data-pin]="isSegPinned(seg.code) ? '1' : null"
+                      [attr.data-pin-first]="isSegPinFirst(seg.code) ? '1' : null"
+                      [style.margin]="getSegMarginStyle(seg.code)"
+                      (click)="setActiveSeg(seg.code)"
+                    >
+                      @if (activeSeg() === seg.code && canEdit()) {
+                        <div class="pt-seg-banner">
+                          <span class="pt-seg-pill">{{ seg.label }}</span>
+                          <span class="pt-seg-quick-tools">
+                            <button type="button" (click)="autoActiveSectionCols()" title="Auto column width for all tables in section">Auto</button>
+                            <button type="button" (click)="equalizeActiveSectionCols()" title="Equalize column widths for all tables in section">Equal</button>
+                          </span>
+                        </div>
+                      }
+                      <div
+                        #segContent
+                        class="pt-seg-content"
+                        [attr.data-seg]="seg.code"
+                        [contentEditable]="canEdit() && activeSeg() === seg.code"
+                        (mouseup)="onSnap($event)"
+                        (keyup)="onSnap($event)"
+                        (click)="onSnap($event)"
+                        (input)="onSegmentInput(seg.code)"
+                        (mousemove)="onCellHover($event, seg.code)"
+                        (mousedown)="onCellMouseDown($event, seg.code)"
+                      ></div>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+
+        @if (colResizeState(); as st) {
+          <div
+            class="pt-col-resize-guide"
+            [style.left.px]="st.currentX"
+            [style.top.px]="st.top"
+            [style.height.px]="st.bottom - st.top"
+          >
+            <div class="pt-col-resize-badge">
+              {{ st.curPct1 }}% | {{ st.curPct2 }}%
+            </div>
+          </div>
+        }
+
+        <!-- Canvas (Preview Mode - Exact Server-Side PDF) -->
+        @if (mode() === 'preview') {
+          <div class="pt-pdf-preview-pane">
+            @if (pdfLoading()) {
+              <div class="pt-pdf-loading-state">
+                <div class="spinner"></div>
+                <div class="pt-pdf-loading-text">
+                  <h3>Generating exact PDF with Puppeteer...</h3>
+                  <p class="hint">Rendering layout on server for paper size: {{ draftSettings().paperSize || curTemplate.paperSizeName || 'A4' }}</p>
+                </div>
+              </div>
+            } @else if (pdfSafeUrl()) {
+              <div class="pt-pdf-viewer-wrap">
+                <iframe
+                  [src]="pdfSafeUrl()"
+                  class="pt-pdf-iframe"
+                  title="PDF Print Preview"
+                ></iframe>
+              </div>
+            } @else {
+              <div class="pt-pdf-error-state">
+                <p>Could not load PDF preview. Please check your template settings and try again.</p>
+                <button class="btn btn-secondary" type="button" (click)="togglePreview()">Back to edit</button>
+              </div>
+            }
+          </div>
+        }
+      </main>
+
+      <!-- Right: settings and the formatting ribbon. Its own scrollbar (TK-267). -->
+      <aside
+        class="pt-sidebar"
+        id="pe-pane-settings"
+        aria-label="Template configuration"
+        [class.pt-pane-off]="pane() !== 'settings'"
+      >
         <div>
           <h2 class="pt-doc-title">{{ documentTypeName() }}</h2>
           <span class="pt-doc-sub">Print template</span>
@@ -787,247 +1061,6 @@
           </div>
         }
       </aside>
-
-      <!-- Right Area: Toolbar + WYSIWYG Canvas -->
-      <main class="pt-canvas-area">
-        <!-- Top Toolbar -->
-        <div class="pt-canvas-toolbar">
-          <!-- Segment Tabs -->
-          <div class="btngrp" role="tablist" aria-label="Segments">
-            @for (seg of segments; track seg.code) {
-              <button
-                class="btn btn-secondary pt-tab-btn"
-                type="button"
-                role="tab"
-                [class.picked]="activeSeg() === seg.code"
-                [disabled]="mode() === 'preview'"
-                (click)="setActiveSeg(seg.code)"
-              >
-                {{ seg.label }}
-              </button>
-            }
-          </div>
-
-          <!-- Actions: Zoom, Undo, Redo, Cell guides, Insert Field, Preview, Discard, Save -->
-          <div class="pt-canvas-actions">
-            @if (mode() === 'edit' && canEdit()) {
-              <button
-                class="btn btn-ghost btn-sm"
-                type="button"
-                [disabled]="!canUndo()"
-                (click)="undo()"
-                title="Undo (Ctrl+Z)"
-              >
-                ↶ Undo
-              </button>
-              <button
-                class="btn btn-ghost btn-sm"
-                type="button"
-                [disabled]="!canRedo()"
-                (click)="redo()"
-                title="Redo (Ctrl+Y)"
-              >
-                ↷ Redo
-              </button>
-              <button
-                class="btn btn-ghost btn-sm pt-guides-toggle"
-                [class.btn-active]="showCellGuides()"
-                type="button"
-                (click)="toggleCellGuides()"
-                title="Outline every table cell on the page. The outlines are not printed."
-              >
-                Cell guides: {{ showCellGuides() ? 'ON' : 'OFF' }}
-              </button>
-              <span class="pt-vdivider"></span>
-            }
-
-            <select
-              class="input pt-zoom-select"
-              title="Zoom"
-              aria-label="Zoom"
-              [ngModel]="zoomStr()"
-              (ngModelChange)="onZoomChange($event)"
-            >
-              <option value="fit">Fit width</option>
-              <option value="0.5">50%</option>
-              <option value="0.75">75%</option>
-              <option value="1">100%</option>
-              <option value="1.25">125%</option>
-              <option value="1.5">150%</option>
-              <option value="2">200%</option>
-            </select>
-
-            <button
-              class="btn btn-secondary"
-              type="button"
-              [disabled]="mode() === 'preview' || !canEdit()"
-              (click)="openFields($event)"
-            >
-              Insert field
-            </button>
-
-            <button
-              class="btn btn-secondary"
-              type="button"
-              (click)="togglePreview()"
-            >
-              {{ mode() === 'preview' ? 'Back to edit' : 'Preview' }}
-            </button>
-
-            @if (mode() === 'preview') {
-              <button
-                class="btn btn-primary"
-                type="button"
-                [disabled]="busy()"
-                (click)="printPreview()"
-              >
-                Print
-              </button>
-            }
-
-            <span class="pt-vdivider"></span>
-
-            @if (flash()) {
-              <span class="pt-flash-msg">{{ flash() }}</span>
-            }
-
-            @if (canEdit()) {
-              <button
-                class="btn btn-ghost"
-                type="button"
-                [disabled]="busy() || !dirty()"
-                (click)="discard()"
-              >
-                Discard
-              </button>
-
-              <button
-                class="btn btn-secondary"
-                type="button"
-                [disabled]="busy()"
-                (click)="openSaveAsModal()"
-                title="Save as a new custom template scoped to this organization"
-              >
-                Save As
-              </button>
-
-              @if (!curTemplate.isSample) {
-                <button
-                  class="btn btn-primary"
-                  type="button"
-                  [disabled]="busy() || !dirty() || draftName().trim() === ''"
-                  (click)="save()"
-                >
-                  Save
-                </button>
-              } @else {
-                <button
-                  class="btn btn-primary"
-                  type="button"
-                  [disabled]="busy()"
-                  (click)="openSaveAsModal()"
-                  title="Sample templates are protected from direct edit. Save as a new custom template."
-                >
-                  Save As
-                </button>
-              }
-            }
-          </div>
-        </div>
-
-        <!-- Canvas (Edit Mode) -->
-        @if (mode() === 'edit') {
-          <div #paperScroller class="pt-scroller">
-            <div [style.width]="zoomWidth()" [style.height]="zoomHeight()" class="pt-zoom-container">
-              <div [style.transform]="zoomScale()" class="pt-zoom-scaler">
-                <div
-                  class="pt-page"
-                  [class.pt-show-guides]="showCellGuides()"
-                  [style.width.px]="pageWidthPx()"
-                  [style.height]="canvasHeight()"
-                  [style.padding]="canvasPadding()"
-                  [style.fontFamily]="pageFontFamily()"
-                  [style.fontSize.px]="pageFontSize()"
-                >
-                  @for (seg of segments; track seg.code) {
-                    <div
-                      class="pt-seg"
-                      [attr.data-seg-on]="activeSeg() === seg.code ? '1' : null"
-                      [attr.data-pin]="isSegPinned(seg.code) ? '1' : null"
-                      [attr.data-pin-first]="isSegPinFirst(seg.code) ? '1' : null"
-                      [style.margin]="getSegMarginStyle(seg.code)"
-                      (click)="setActiveSeg(seg.code)"
-                    >
-                      @if (activeSeg() === seg.code && canEdit()) {
-                        <div class="pt-seg-banner">
-                          <span class="pt-seg-pill">{{ seg.label }}</span>
-                          <span class="pt-seg-quick-tools">
-                            <button type="button" (click)="autoActiveSectionCols()" title="Auto column width for all tables in section">Auto</button>
-                            <button type="button" (click)="equalizeActiveSectionCols()" title="Equalize column widths for all tables in section">Equal</button>
-                          </span>
-                        </div>
-                      }
-                      <div
-                        #segContent
-                        class="pt-seg-content"
-                        [attr.data-seg]="seg.code"
-                        [contentEditable]="canEdit() && activeSeg() === seg.code"
-                        (mouseup)="onSnap($event)"
-                        (keyup)="onSnap($event)"
-                        (click)="onSnap($event)"
-                        (input)="onSegmentInput(seg.code)"
-                        (mousemove)="onCellHover($event, seg.code)"
-                        (mousedown)="onCellMouseDown($event, seg.code)"
-                      ></div>
-                    </div>
-                  }
-                </div>
-              </div>
-            </div>
-          </div>
-        }
-
-        @if (colResizeState(); as st) {
-          <div
-            class="pt-col-resize-guide"
-            [style.left.px]="st.currentX"
-            [style.top.px]="st.top"
-            [style.height.px]="st.bottom - st.top"
-          >
-            <div class="pt-col-resize-badge">
-              {{ st.curPct1 }}% | {{ st.curPct2 }}%
-            </div>
-          </div>
-        }
-
-        <!-- Canvas (Preview Mode - Exact Server-Side PDF) -->
-        @if (mode() === 'preview') {
-          <div class="pt-pdf-preview-pane">
-            @if (pdfLoading()) {
-              <div class="pt-pdf-loading-state">
-                <div class="spinner"></div>
-                <div class="pt-pdf-loading-text">
-                  <h3>Generating exact PDF with Puppeteer...</h3>
-                  <p class="hint">Rendering layout on server for paper size: {{ draftSettings().paperSize || curTemplate.paperSizeName || 'A4' }}</p>
-                </div>
-              </div>
-            } @else if (pdfSafeUrl()) {
-              <div class="pt-pdf-viewer-wrap">
-                <iframe
-                  [src]="pdfSafeUrl()"
-                  class="pt-pdf-iframe"
-                  title="PDF Print Preview"
-                ></iframe>
-              </div>
-            } @else {
-              <div class="pt-pdf-error-state">
-                <p>Could not load PDF preview. Please check your template settings and try again.</p>
-                <button class="btn btn-secondary" type="button" (click)="togglePreview()">Back to edit</button>
-              </div>
-            }
-          </div>
-        }
-      </main>
     </div>
 
     <!-- Save As New Template Modal -->
