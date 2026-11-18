@@ -324,6 +324,17 @@
   color: var(--color-danger, #c0392b);
 }
 
+.tender-hint {
+  margin: var(--space-2, 8px) 0 0;
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #5b6472);
+
+  /* Add was pressed with nowhere to put the money. */
+  &.tender-hint--alert {
+    color: var(--color-danger, #c0392b);
+  }
+}
+
 .printer-form {
   display: grid;
   gap: var(--space-3, 12px);

@@ -6,7 +6,7 @@ rewrites and stages it whenever the details file changes. **Never edit it by han
 status, edit the card's first line in the details file; the card there holds the rules, lanes,
 where to start, sub-tasks and notes.
 
-**Summary:** 251 completed, 2 working, 10 open, and 2 blocked (265 cards).
+**Summary:** 252 completed, 1 working, 10 open, and 2 blocked (265 cards).
 
 | Card | Title | Group | Status | Completed by | Completed at | Tests | Issue | Note |
 | :--- | :--- | :--- | :---: | :--- | :--- | :--- | :---: | :--- |
@@ -274,4 +274,4 @@ where to start, sub-tasks and notes.
 | [TK-265](./Task_Details.md#tk-265--a-print-template-field-on-every-transaction-screen-and-the-view-page-names-the-template-it-printed-with) | A Print template field on every transaction screen, and the view page names the template it printed with | Z | ✅ completed | Claude Sonnet 5.5 | 2026-11-11 | written, not run | [#254](https://github.com/jothi-prabaharan/Bill-Book/issues/254) | — |
 | [TK-266](./Task_Details.md#tk-266--every-sales-pdf-is-rendered-from-the-documents-print-template-and-the-fixed-pdf-layout-goes) | Every sales PDF is rendered from the document's print template, and the fixed PDF layout goes | Z | ✅ completed | Claude Sonnet 5.5 | 2026-11-12 | written, not run | [#255](https://github.com/jothi-prabaharan/Bill-Book/issues/255) | — |
 | [TK-267](./Task_Details.md#tk-267--print-template-editor-paper-type-first-panes-that-scroll-alone-click-a-cell-to-insert-a-field) | Print-template editor: paper type first, panes that scroll alone, click a cell to insert a field | Z | 🔶 working | Claude Sonnet 5.5 (working) | since 2026-11-18 | — | [#256](https://github.com/jothi-prabaharan/Bill-Book/issues/256) | — |
-| [TK-268](./Task_Details.md#tk-268--a-payment-account-can-be-added-from-the-till-and-the-new-bank-account-form-is-a-real-popup) | A payment account can be added from the till, and the New bank account form is a real popup | Z | 🔶 working | Claude Sonnet 5.5 (working) | since 2026-11-18 | — | [#257](https://github.com/jothi-prabaharan/Bill-Book/issues/257) | — |
+| [TK-268](./Task_Details.md#tk-268--a-payment-account-can-be-added-from-the-till-and-the-new-bank-account-form-is-a-real-popup) | A payment account can be added from the till, and the New bank account form is a real popup | Z | ✅ completed | Claude Sonnet 5.5 | 2026-11-18 | written, not run | [#257](https://github.com/jothi-prabaharan/Bill-Book/issues/257) | — |

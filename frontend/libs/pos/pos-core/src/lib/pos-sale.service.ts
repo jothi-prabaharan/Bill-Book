@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { TenderMode } from './pos-tender';
+import { TenderMode, accountFitsMode } from './pos-tender';
 
 /** A bank or cash account a tender can land in (`GET api/bank-accounts/tender-options`). */
 export interface TenderAccount {
@@ -54,7 +54,7 @@ export class PosSaleService {
 
   /** The account a mode defaults to: a cash account for cash, the first non-cash one otherwise; the default flag first. */
   static defaultAccountFor(mode: TenderMode, accounts: readonly TenderAccount[]): TenderAccount | null {
-    const fits = accounts.filter((a) => (mode === 'Cash') === (a.accountType === 'Cash'));
+    const fits = accounts.filter((a) => accountFitsMode(mode, a));
     return fits.find((a) => a.isDefault) ?? fits[0] ?? null;
   }
 }

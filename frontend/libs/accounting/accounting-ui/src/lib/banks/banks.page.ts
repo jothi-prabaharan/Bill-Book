@@ -50,7 +50,7 @@ interface Bank {
     TextInputComponent,
     CheckboxComponent,
   ],
-  host: { class: 'register-page' },
+  host: { class: 'register-page', '(document:keydown.escape)': 'closeForm()' },
   templateUrl: './banks.page.html',
   styleUrl: './banks.page.scss',
 })
@@ -95,13 +95,19 @@ export class BanksPage implements OnInit {
   }
 
   startAdd(): void {
+    this.message.set(null);
     this.editingId.set(0);
     this.form = { bankCode: '', bankName: '', isActive: true };
   }
 
   startEdit(row: Bank): void {
+    this.message.set(null);
     this.editingId.set(row.bankId);
     this.form = { bankCode: row.bankCode, bankName: row.bankName, isActive: row.isActive };
+  }
+
+  closeForm(): void {
+    this.editingId.set(null);
   }
 
   async save(): Promise<void> {

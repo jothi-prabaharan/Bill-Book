@@ -274,6 +274,19 @@ The till is driven by the keyboard:
 - **The till number** is set at the top of the screen and remembered in this browser.
 - **Offline, the till refuses to sell.** The status at the top says so, and nothing is queued to send later. A sale is either posted, with its stock taken, or not made at all.
 
+### Adding the account a payment goes into
+
+The **Into** list of the Tender window offers the accounts the chosen button can take: **Cash** offers cash in hand accounts, and **Card** and **UPI** offer your bank accounts and wallets. Overdraft, cash credit and credit card accounts are never offered, and neither is an account that is **Not linked** to the ledger (Banking › Bank accounts shows it, with **Link ledger** to put it right).
+
+A new branch has none of these, because nothing creates a bank or cash account on its own. When nothing fits the button, a line under the row says what is missing and who can add it, and **Add** says the same instead of doing nothing (TK-268). Before, the list read "No account for this mode", **Add** answered with a message hidden behind the window, and the only way on was to leave the till for Banking, which loses the cart.
+
+**The + beside Into adds the account without leaving the till.** It shows for anyone who may create bank accounts (the `banking.create` permission); anyone else is told to ask the owner. It opens the same popup as **Banking › Bank accounts** (see [Accounts](#/accounting)), set up for the button you are on:
+
+- **Cash** opens it as *Cash in hand*, named and referenced for you (*CASH*), so **Save** is all that is needed for the first one.
+- **Card** and **UPI** open it as a bank account, and offer only the kinds the till can take money into. A branch with no bank on file is asked for the bank's name in the same popup.
+
+Save it and the new account is chosen in **Into**. The cart and any tenders already added are untouched, and **Esc** closes only the popup, not the Tender window behind it.
+
 ### The receipt
 
 After each sale the till prints a receipt through the browser, as a page exactly the width of the receipt roll, so a thermal receipt printer installed on the computer prints it like any other page. It prints the branch's name, address, phone and GSTIN, the bill number and date, and each item with its quantity, rate and amount. It then prints the taxable value, GST split by component and rate, any round-off, the total, how the sale was paid, and the change. Every figure on it comes from the posted invoice.

@@ -242,10 +242,12 @@
                 label="Into"
                 name="tenderAccountId"
                 [clearable]="false"
-                emptyText="No account for this mode"
+                emptyText="No account yet"
+                [showAdd]="canAddAccount()"
                 [options]="tenderAccountOptions()"
                 [ngModel]="tenderAccountId()"
                 (ngModelChange)="tenderAccountId.set($event)"
+                (add)="openAccountDialog()"
               />
             </div>
         @if (tenderMode() !== 'Cash') {
@@ -261,6 +263,10 @@
         }
         <button type="button" class="btn btn-secondary" (click)="addTender()">Add</button>
       </div>
+
+      @if (accountNotice(); as notice) {
+        <p class="tender-hint" [class.tender-hint--alert]="tenderNotice() !== null" role="status">{{ notice }}</p>
+      }
 
       @if (tenders().length > 0) {
         <ul class="tender-lines">
@@ -280,7 +286,12 @@
         <div class="pos-grand"><dt>Change</dt><dd>{{ rupees(tenderState().change) }}</dd></div>
       </dl>
 
-      @if (tenderState().problem; as problem) {
+      @if (tenderNotice(); as notice) {
+        <!-- With no account for the mode the line under Into already says so, and turns red. -->
+        @if (accountNotice() === null) {
+          <p class="tender-problem" role="alert">{{ notice }}</p>
+        }
+      } @else if (tenderState().problem; as problem) {
         <p class="tender-problem">{{ problem }}</p>
       }
 
@@ -330,6 +341,16 @@
         <button type="button" class="btn btn-primary" (click)="savePrinter()">Save</button>
       </div>
     </section>
+  }
+
+  @if (accountDialogOpen()) {
+    <bb-bank-account-dialog
+      [heading]="accountHeading()"
+      [kinds]="accountKinds()"
+      [preset]="accountPreset()"
+      (saved)="onAccountSaved($event)"
+      (closed)="accountDialogOpen.set(false)"
+    />
   }
 
   <bb-lookup-dialog

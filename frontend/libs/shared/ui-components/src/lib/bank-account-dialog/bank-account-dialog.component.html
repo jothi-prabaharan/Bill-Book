@@ -1,0 +1,166 @@
+<div class="backdrop" aria-hidden="true" (click)="onBackdrop()"></div>
+
+<section class="dialog bad-dialog" role="dialog" aria-modal="true" aria-labelledby="bank-account-dialog-title">
+  <header>
+    <h2 id="bank-account-dialog-title">{{ title() }}</h2>
+    <button type="button" class="close-btn" aria-label="Close" (click)="close()">✕</button>
+  </header>
+
+  <form class="bad-form" (ngSubmit)="save()" novalidate>
+    <div class="dialog-body bad-body">
+      @if (error(); as text) {
+        <bb-message-box [messages]="[{ tone: 'error', text }]" />
+      }
+
+      @if (!editing()) {
+        <p class="bad-note">{{ note() }}</p>
+      }
+
+      <div class="bad-fields">
+        <bb-text-input
+          label="Account name"
+          name="accountName"
+          [required]="true"
+          maxlength="100"
+          hint="Shown wherever the account is picked, and on its ledger account."
+          [ngModel]="form().accountName"
+          (ngModelChange)="set('accountName', $event)"
+        />
+
+        <bb-select
+          label="Type"
+          name="accountType"
+          [required]="true"
+          [clearable]="false"
+          placeholder=""
+          [disabled]="kindOptions().length < 2"
+          [options]="kindOptions()"
+          [ngModel]="form().accountType"
+          (ngModelChange)="setKind($event)"
+        />
+
+        @if (bankNeeded()) {
+          @if (addingBank()) {
+            <div class="bad-bank">
+              <bb-text-input
+                label="New bank"
+                name="newBankName"
+                [required]="true"
+                maxlength="100"
+                placeholder="e.g. HDFC Bank"
+                hint="Added to Banking › Banks when you save."
+                [ngModel]="newBankName()"
+                (ngModelChange)="setNewBank($event)"
+              />
+              @if (banks().length > 0) {
+                <button type="button" class="bad-link" (click)="addingBank.set(false)">Choose from the list</button>
+              }
+            </div>
+          } @else {
+            <bb-select
+              label="Bank"
+              name="bankId"
+              [required]="true"
+              placeholder="Select a bank…"
+              [showAdd]="true"
+              [options]="bankOptions()"
+              [ngModel]="form().bankId"
+              (ngModelChange)="set('bankId', $event)"
+              (add)="addingBank.set(true)"
+            />
+          }
+        }
+
+        <bb-text-input
+          label="Account number"
+          name="accountNumber"
+          [required]="true"
+          maxlength="30"
+          [hint]="bankNeeded() ? '' : 'Cash in hand has no number. Any short reference will do, such as CASH.'"
+          [ngModel]="form().accountNumber"
+          (ngModelChange)="set('accountNumber', $event)"
+        />
+
+        @if (bankNeeded()) {
+          <bb-text-input
+            label="IFSC"
+            name="ifsc"
+            maxlength="11"
+            [uppercase]="true"
+            [ngModel]="form().ifsc"
+            (ngModelChange)="set('ifsc', $event)"
+          />
+
+          <bb-text-input
+            label="Branch"
+            name="branchName"
+            maxlength="100"
+            [ngModel]="form().branchName"
+            (ngModelChange)="set('branchName', $event)"
+          />
+
+          <bb-text-input
+            label="MICR"
+            name="micr"
+            maxlength="9"
+            [ngModel]="form().micr"
+            (ngModelChange)="set('micr', $event)"
+          />
+
+          <bb-text-input
+            label="SWIFT"
+            name="swiftCode"
+            maxlength="11"
+            [uppercase]="true"
+            [ngModel]="form().swiftCode"
+            (ngModelChange)="set('swiftCode', $event)"
+          />
+
+          <bb-text-input
+            label="IBAN"
+            name="iban"
+            maxlength="34"
+            [ngModel]="form().iban"
+            (ngModelChange)="set('iban', $event)"
+          />
+        }
+
+        <bb-text-input
+          label="Currency"
+          name="currencyCode"
+          [required]="true"
+          maxlength="3"
+          [uppercase]="true"
+          [ngModel]="form().currencyCode"
+          (ngModelChange)="set('currencyCode', $event)"
+        />
+
+        @if (overdraws()) {
+          <bb-number-input
+            label="Limit"
+            name="odLimit"
+            [min]="0"
+            [decimals]="2"
+            [ngModel]="form().odLimit"
+            (ngModelChange)="set('odLimit', $event)"
+          />
+        }
+
+        <bb-checkbox
+          class="bad-wide"
+          text="Active"
+          name="isActive"
+          [ngModel]="form().isActive"
+          (ngModelChange)="set('isActive', $event)"
+        />
+      </div>
+    </div>
+
+    <footer class="dialog-actions">
+      <button type="button" class="btn btn-secondary" (click)="close()" [disabled]="busy()">Cancel</button>
+      <button type="submit" class="btn btn-primary" [disabled]="!canSave()">
+        {{ busy() ? 'Saving…' : 'Save' }}
+      </button>
+    </footer>
+  </form>
+</section>

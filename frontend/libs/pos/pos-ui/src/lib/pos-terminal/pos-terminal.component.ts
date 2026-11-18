@@ -1,9 +1,12 @@
 import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { readApiFailure } from '@bill-book/api-client';
+import { AuthService } from '@bill-book/auth';
 import { FormatSettingsService } from '@bill-book/currency-format';
 import { toApiLine } from '@bill-book/sales-core';
 import {
+  BankAccountDialogComponent,
+  BankAccountSaved,
   DocumentLine,
   LookupDialogComponent,
   LookupRow,
@@ -31,16 +34,21 @@ import {
   TenderMode,
   TillBranch,
   WALK_IN_CONTACT_CODE,
+  accountFitsMode,
   addItem,
   cartContext,
   cartTotals,
   commandFor,
   isInterStateSale,
+  newAccountHeading,
+  newAccountPreset,
   removeLine,
   reprice,
   roundToRupee,
   setQuantity,
   setUnitPrice,
+  tenderAccountKinds,
+  tenderAccountNotice,
   tenderSummary,
 } from '@bill-book/pos-core';
 import { matchScannedItem } from '@bill-book/scan-core';
@@ -86,6 +94,7 @@ const TILL_KEY = 'bb.pos.tillId';
   selector: 'bb-pos-terminal',
   standalone: true,
   imports: [InfoTooltipComponent, 
+    BankAccountDialogComponent,
     LookupDialogComponent,
     ScanComponent,
     MessageBoxComponent,
@@ -177,8 +186,27 @@ export class PosTerminalComponent implements OnInit, OnDestroy {
   );
 
   protected readonly accountsForMode = computed(() =>
-    this.tenderAccounts().filter((a) => (this.tenderMode() === 'Cash') === (a.accountType === 'Cash')),
+    this.tenderAccounts().filter((a) => accountFitsMode(this.tenderMode(), a)),
   );
+
+  // ---- Adding an account from the Tender window (TK-268) ---------------------
+
+  private readonly auth = inject(AuthService);
+  protected readonly accountDialogOpen = signal(false);
+
+  /** Whoever may create a bank account may add one here; anyone else is told who can. */
+  protected readonly canAddAccount = computed(() => this.auth.has('banking.create'));
+  protected readonly accountKinds = computed(() => tenderAccountKinds(this.tenderMode()));
+  protected readonly accountPreset = computed(() => newAccountPreset(this.tenderMode()));
+  protected readonly accountHeading = computed(() => newAccountHeading(this.tenderMode()));
+
+  /** Why Into is empty, or null while it has an account to offer. */
+  protected readonly accountNotice = computed(() =>
+    this.accountsForMode().length === 0 ? tenderAccountNotice(this.tenderMode(), this.canAddAccount()) : null,
+  );
+
+  /** What Add could not do, shown in the Tender window where the cashier is looking. */
+  protected readonly tenderNotice = signal<string | null>(null);
 
   protected readonly canCheckout = computed(
     () => !this.busy() && this.online() && this.customer() !== null && this.lines().length > 0,
@@ -250,6 +278,11 @@ export class PosTerminalComponent implements OnInit, OnDestroy {
     // A scan is bb-scan's (TK-164): it takes the burst before this handler
     // sees the Enter, so only the till's own keys are left here.
     if (event.defaultPrevented) {
+      return;
+    }
+
+    // The Add account popup is modal: its own keys, Escape included, are its.
+    if (this.accountDialogOpen()) {
       return;
     }
 
@@ -586,9 +619,11 @@ export class PosTerminalComponent implements OnInit, OnDestroy {
   protected closeTender(): void {
     this.tenderOpen.set(false);
     this.tenders.set([]);
+    this.tenderNotice.set(null);
   }
 
   protected chooseMode(mode: TenderMode): void {
+    this.tenderNotice.set(null);
     this.tenderMode.set(mode);
     this.tenderAccountId.set(PosSaleService.defaultAccountFor(mode, this.tenderAccounts())?.bankAccountId ?? null);
     this.tenderAmount.set((this.tenderState().remaining / 100).toFixed(2));
@@ -598,10 +633,17 @@ export class PosTerminalComponent implements OnInit, OnDestroy {
   protected addTender(): void {
     const amount = Math.round(Number(this.tenderAmount()) * 100);
     const account = this.tenderAccountId();
-    if (!Number.isFinite(amount) || amount <= 0 || account === null) {
-      this.messages.set([{ tone: 'warning', text: 'Enter an amount and choose where the money went.' }]);
+    if (account === null) {
+      this.tenderNotice.set(this.accountNotice() ?? 'Choose where the money went.');
       return;
     }
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      this.tenderNotice.set('Enter an amount.');
+      return;
+    }
+
+    this.tenderNotice.set(null);
 
     this.tenders.set([
       ...this.tenders(),
@@ -614,6 +656,33 @@ export class PosTerminalComponent implements OnInit, OnDestroy {
     ]);
     this.tenderAmount.set((this.tenderState().remaining / 100).toFixed(2));
     this.tenderReference.set('');
+  }
+
+  protected openAccountDialog(): void {
+    this.accountDialogOpen.set(true);
+  }
+
+  /** The popup saved an account: reload what the till offers and put the new one in Into. */
+  protected async onAccountSaved(event: BankAccountSaved): Promise<void> {
+    this.accountDialogOpen.set(false);
+    const mode = this.tenderMode();
+    const known = new Set(this.tenderAccounts().map((a) => a.bankAccountId));
+
+    try {
+      const accounts = await this.posSales.tenderAccounts();
+      this.tenderAccounts.set(accounts);
+
+      const added = accounts.filter((a) => !known.has(a.bankAccountId) && accountFitsMode(mode, a));
+      const chosen =
+        added.find((a) => a.accountName === event.accountName) ??
+        added[0] ??
+        PosSaleService.defaultAccountFor(mode, accounts);
+
+      this.tenderAccountId.set(chosen?.bankAccountId ?? null);
+      this.tenderNotice.set(null);
+    } catch (error) {
+      this.messages.set([this.failure(error)]);
+    }
   }
 
   protected removeTender(index: number): void {

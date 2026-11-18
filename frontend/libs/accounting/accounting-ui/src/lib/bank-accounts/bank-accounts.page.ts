@@ -1,65 +1,33 @@
+import { CdkDragDrop } from '@angular/cdk/drag-drop';
+import { HttpClient } from '@angular/common/http';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import {
-  BbSelectOption,
-  CheckboxComponent,
+  BankAccountDialogComponent,
+  BankAccountRecord,
   ColumnDef,
   ConfirmDialogService,
   DataGridCellTemplateDirective,
   DataGridComponent,
   IconButtonComponent,
+  InfoTooltipComponent,
   MASTER_STATUSES,
   MessageBoxComponent,
-  NumberInputComponent,
   RegisterHeaderComponent,
-  SelectComponent,
   StatusTabsComponent,
-  TextInputComponent,
   countStatusTabs,
   masterStatus,
   rowsInStatus,
 } from '@bill-book/ui-components';
-import { CdkDragDrop } from '@angular/cdk/drag-drop';
-import { HttpClient } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { InfoTooltipComponent } from '@bill-book/ui-components';
 
-type AccountType =
-  | 'Savings'
-  | 'Current'
-  | 'OverDraft'
-  | 'CashCredit'
-  | 'CreditCard'
-  | 'Wallet'
-  | 'Cash'
-  | 'EEFC';
-
-interface Bank {
-  bankId: number;
-  bankName: string;
-  isActive: boolean;
-}
-
-interface BankAccount {
-  bankAccountId: number;
-  bankId: number | null;
+/** A row of the register: the account the popup edits, and what only the list shows. */
+interface BankAccount extends BankAccountRecord {
   bankName: string | null;
   ledgerAccountId: number | null;
   ledgerAccountCode: string | null;
-  accountName: string;
-  accountNumber: string;
-  accountType: AccountType;
-  ifsc: string | null;
-  micr: string | null;
-  swiftCode: string | null;
-  iban: string | null;
-  branchName: string | null;
-  currencyCode: string;
-  odLimit: number | null;
   isDefault: boolean;
   /** Money paid online through the client portal lands here (TK-98). */
   isOnlinePaymentAccount: boolean;
   displayOrder: number;
-  isActive: boolean;
   isLedgerLinked: boolean;
 }
 
@@ -68,9 +36,10 @@ interface BankAccount {
  * Accounting, because only Accounting writes ledger rows and an account with no
  * ledger identity cannot be posted to.
  *
- * When that call fails the account still saves, marked unlinked, and Link ledger
- * retries it — the alternative is losing everything the user typed because
- * another service was briefly down.
+ * The form is a popup (`bb-bank-account-dialog`, TK-268), the same one the
+ * till opens from its Tender window, so this page keeps only the list and what
+ * can be done to a row. When the ledger step fails the account still shows,
+ * marked unlinked, and Link ledger retries it.
  */
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -81,35 +50,16 @@ interface BankAccount {
     DataGridComponent,
     DataGridCellTemplateDirective,
     IconButtonComponent,
-    FormsModule,
-    TextInputComponent,
-    NumberInputComponent,
-    CheckboxComponent,
-    SelectComponent,
     MessageBoxComponent,
     RegisterHeaderComponent,
     StatusTabsComponent,
+    BankAccountDialogComponent,
   ],
   host: { class: 'register-page' },
   templateUrl: './bank-accounts.page.html',
   styleUrl: './bank-accounts.page.scss',
 })
 export class BankAccountsPage implements OnInit {
-
-  protected readonly accountTypeOptions: BbSelectOption<string>[] = [
-    { value: 'Savings', label: 'Savings' },
-    { value: 'Current', label: 'Current' },
-    { value: 'OverDraft', label: 'Overdraft' },
-    { value: 'CashCredit', label: 'Cash credit' },
-    { value: 'CreditCard', label: 'Credit card' },
-    { value: 'Wallet', label: 'Wallet' },
-    { value: 'Cash', label: 'Cash in hand' },
-    { value: 'EEFC', label: 'EEFC account' },
-  ];
-
-  protected readonly bankOptions = computed<BbSelectOption<number>[]>(() =>
-    this.banks().map((bank) => ({ value: bank.bankId, label: bank.bankName })),
-  );
   private readonly http = inject(HttpClient);
   private readonly confirmDialog = inject(ConfirmDialogService);
 
@@ -118,13 +68,15 @@ export class BankAccountsPage implements OnInit {
   protected readonly status = signal('Active');
   protected readonly statusTabs = computed(() => countStatusTabs(this.rows(), MASTER_STATUSES, masterStatus));
   protected readonly visibleRows = computed(() => rowsInStatus(this.rows(), this.status(), masterStatus));
-  protected readonly banks = signal<Bank[]>([]);
   protected readonly busy = signal(false);
   protected readonly message = signal<string | null>(null);
   protected readonly messageIsError = signal(false);
-  protected readonly editingId = signal<number | null>(null);
 
-  form = this.blank();
+  /** Null while the popup is closed, 0 for a new account, otherwise the account being edited. */
+  protected readonly editingId = signal<number | null>(null);
+  protected readonly editingRow = computed(
+    () => this.rows().find((row) => row.bankAccountId === this.editingId()) ?? null,
+  );
 
   columns: ColumnDef[] = [
     { field: 'account', header: 'Account', isTemplate: true },
@@ -141,7 +93,6 @@ export class BankAccountsPage implements OnInit {
 
   ngOnInit(): void {
     void this.load();
-    void this.loadBanks();
   }
 
   async load(): Promise<void> {
@@ -157,121 +108,20 @@ export class BankAccountsPage implements OnInit {
     }
   }
 
-  async loadBanks(): Promise<void> {
-    try {
-      this.banks.set(await this.get<Bank[]>('/api/banks'));
-    } catch {
-      // The bank dropdown is empty; cash and wallet accounts still work.
-    }
-  }
-
   startAdd(): void {
     this.editingId.set(0);
-    this.form = this.blank();
   }
 
   startEdit(row: BankAccount): void {
     this.editingId.set(row.bankAccountId);
-    this.form = {
-      bankId: row.bankId,
-      accountName: row.accountName,
-      accountNumber: row.accountNumber,
-      accountType: row.accountType,
-      ifsc: row.ifsc,
-      micr: row.micr,
-      swiftCode: row.swiftCode,
-      iban: row.iban,
-      branchName: row.branchName,
-      currencyCode: row.currencyCode,
-      odLimit: row.odLimit,
-      isActive: row.isActive,
-    };
   }
 
-  /** Cash and wallets have no institution, and only borrowing kinds take a limit. */
-  onTypeChange(): void {
-    if (this.form.accountType === 'Cash' || this.form.accountType === 'Wallet') {
-      this.form.bankId = null;
-      this.form.ifsc = null;
-    }
-
-    if (!this.canOverdraw) {
-      this.form.odLimit = null;
-    }
-  }
-
-  protected get needsBank(): boolean {
-    return this.form.accountType !== 'Cash' && this.form.accountType !== 'Wallet';
-  }
-
-  protected get canOverdraw(): boolean {
-    return ['OverDraft', 'CashCredit', 'CreditCard'].includes(this.form.accountType);
-  }
-
-  private validateForm(): boolean {
-    if (!this.hasText(this.form.accountName)) {
-      this.fail('Account name is required.');
-      return false;
-    }
-
-    if (!this.hasText(this.form.accountNumber)) {
-      this.fail('Account number is required.');
-      return false;
-    }
-
-    if (this.needsBank && this.form.bankId === null) {
-      this.fail('Choose a bank for this account type.');
-      return false;
-    }
-
-    if (!this.hasText(this.form.currencyCode)) {
-      this.fail('Currency is required.');
-      return false;
-    }
-
-    return true;
-  }
-
-  /** What the ledger account will be: a liability for anything that can be overdrawn. */
-  protected get ledgerNote(): string {
-    if (this.form.accountType === 'Cash' || this.form.accountType === 'Wallet') {
-      return 'Creates an Asset account under Cash in Hand.';
-    }
-
-    return this.canOverdraw
-      ? 'Creates a Liability account under Bank OD & Credit Cards — an overdrawn account is borrowing.'
-      : 'Creates an Asset account under Bank Accounts.';
-  }
-
-  async save(): Promise<void> {
-    const id = this.editingId();
-    if (!this.validateForm()) {
-      return;
-    }
-
-    const body = {
-      bankId: this.form.bankId,
-      accountName: this.form.accountName.trim(),
-      accountNumber: this.form.accountNumber.trim(),
-      accountType: this.form.accountType,
-      ifsc: this.cleanOptional(this.form.ifsc)?.toUpperCase() ?? null,
-      micr: this.cleanOptional(this.form.micr),
-      swiftCode: this.cleanOptional(this.form.swiftCode)?.toUpperCase() ?? null,
-      iban: this.cleanOptional(this.form.iban),
-      branchName: this.cleanOptional(this.form.branchName),
-      currencyCode: this.form.currencyCode.trim().toUpperCase(),
-      odLimit: this.form.odLimit,
-      isActive: this.form.isActive,
-    };
-
-    await this.run(async () => {
-      if (id === 0) {
-        await this.send('POST', '/api/bank-accounts', body);
-      } else {
-        await this.send('PUT', `/api/bank-accounts/${id}`, body);
-      }
-      this.editingId.set(null);
-    }, 'Bank account saved.');
+  /** The popup saved the account: close it, say so, and show the list as it now is. */
+  protected async onSaved(): Promise<void> {
+    this.editingId.set(null);
+    this.message.set('Bank account saved.');
+    this.messageIsError.set(false);
+    await this.load();
   }
 
   async linkLedger(row: BankAccount): Promise<void> {
@@ -332,23 +182,6 @@ export class BankAccountsPage implements OnInit {
     );
   }
 
-  private blank() {
-    return {
-      bankId: null as number | null,
-      accountName: '',
-      accountNumber: '',
-      accountType: 'Current' as AccountType,
-      ifsc: null as string | null,
-      micr: null as string | null,
-      swiftCode: null as string | null,
-      iban: null as string | null,
-      branchName: null as string | null,
-      currencyCode: 'INR',
-      odLimit: null as number | null,
-      isActive: true,
-    };
-  }
-
   private async run(action: () => Promise<unknown>, ok: string | null): Promise<void> {
     this.busy.set(true);
     this.message.set(null);
@@ -371,15 +204,6 @@ export class BankAccountsPage implements OnInit {
   private fail(text: string): void {
     this.message.set(text);
     this.messageIsError.set(true);
-  }
-
-  private hasText(value: string | null | undefined): boolean {
-    return (value ?? '').trim().length > 0;
-  }
-
-  private cleanOptional(value: string | null | undefined): string | null {
-    const cleaned = (value ?? '').trim();
-    return cleaned.length > 0 ? cleaned : null;
   }
 
   private get<T>(url: string): Promise<T> {

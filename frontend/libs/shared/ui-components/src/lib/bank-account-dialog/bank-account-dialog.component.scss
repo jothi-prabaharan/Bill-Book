@@ -1,0 +1,100 @@
+/*
+ * The popup is the app's standard dialog (the `.backdrop` and `.dialog` rules
+ * in the theme): a dimmed page, a panel centred over it, a header with a close
+ * button and actions at the foot. What is set here is what a long form needs on
+ * top of that: a body that scrolls alone, so the header and the Save button stay
+ * where they are, and a place above the till's own Tender window.
+ */
+
+.backdrop {
+  z-index: var(--z-modal-elevated, 1100);
+}
+
+.bad-dialog {
+  z-index: calc(var(--z-modal-elevated, 1100) + 1);
+  width: min(44rem, calc(100vw - 2rem));
+  max-height: min(90dvh, 46rem);
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+
+  header {
+    padding: 0.85rem 1.25rem;
+    flex: none;
+  }
+
+  .dialog-actions {
+    padding: 0.75rem 1.25rem;
+    flex: none;
+  }
+}
+
+.bad-form {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.bad-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 12px);
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 1rem 1.25rem;
+  opacity: 1;
+}
+
+.bad-note {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #5b6472);
+}
+
+.bad-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3, 12px) var(--space-4, 16px);
+  align-items: start;
+}
+
+.bad-wide {
+  grid-column: 1 / -1;
+}
+
+.bad-bank {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1, 4px);
+}
+
+.bad-link {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--color-accent-700, #965a3e);
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+/* A full-screen sheet on a phone, as every other popup is. */
+@media (max-width: 640px) {
+  .bad-dialog {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+  }
+
+  .bad-fields {
+    grid-template-columns: 1fr;
+  }
+}

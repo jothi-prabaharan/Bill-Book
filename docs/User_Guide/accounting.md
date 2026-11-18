@@ -151,6 +151,17 @@ A **bank** is the institution — HDFC Bank, State Bank of India. A **bank accou
 
 Cash in hand and wallets are bank accounts with no bank behind them. Everything else must name one.
 
+## Adding an account
+
+**New account** opens a popup over the list, in the style of the app's other popups: the page dims behind it, the heading and **Save** stay in view while the fields scroll, **Esc** or **✕** closes it, and on a phone it fills the screen. Clicking the dimmed page closes it too, unless you have typed something into it. The form used to open half-width at the top left of the page, over its heading, with nothing dimmed and no way to close it but **Cancel** (TK-268).
+
+- Give the account a **name**, which is shown wherever the account is picked, and choose its **type**. The line under the heading says which ledger account the type will create.
+- Everything but cash in hand and a wallet **names a bank** and has an **account number**; IFSC, branch, MICR, SWIFT and IBAN are optional. An overdraft, cash credit or credit card also takes a **limit**. Cash in hand takes a name and a reference of your own, such as *CASH*.
+- **A bank that is not on the list is typed in the popup.** With no bank on file the popup asks for the bank's name in place of the list; otherwise the **+** beside **Bank** does the same, and **Choose from the list** goes back. The bank is added under **Banking › Banks** when you save, and the account is saved under it.
+- **A refusal is shown inside the popup**, such as an account number already used at that bank, and what you typed stays.
+
+**Banks** opens its form the same way. The point of sale opens this same popup from the **Tender** window, beside **Into**, to add a cash or bank account where there is none (see [Invoices](#/invoices)).
+
 ## Every account gets a ledger account
 
 Creating a bank account creates a matching account in your **chart of accounts**, automatically. Without one there is nothing to post a receipt or a payment to; without the bank account there is no account number to reconcile against.

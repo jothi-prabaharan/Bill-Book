@@ -2,7 +2,7 @@
 
 <bb-status-tabs label="Bank status" [tabs]="statusTabs()" [value]="status()" (valueChange)="status.set($event)" />
 
-@if (message()) {
+@if (message() && editingId() === null) {
   <bb-message-box [messages]="[{ tone: messageIsError() ? 'error' : 'success', text: message()! }]" />
 }
 
@@ -32,24 +32,35 @@
 </section>
 
 @if (editingId() !== null) {
-  <div class="sheet narrow">
-    <h2>{{ editingId() === 0 ? 'New bank' : 'Edit bank' }}</h2>
-    <div class="fields">
-      <div class="field">
-        <bb-text-input label="Name"  [(ngModel)]="form.bankName" maxlength="100" />
-      </div>
-      <div class="field">
-        <bb-text-input label="Code" hint="Blank takes the next code from the numbering series."  [(ngModel)]="form.bankCode" maxlength="20" [disabled]="editingId() !== 0" />
-      </div>
-      <bb-checkbox
-        text="Active"
-        [(ngModel)]="form.isActive"
-      />
-    </div>
-    <div class="sheet-actions">
-      <button class="btn btn-primary" type="button" (click)="save()" [disabled]="busy() || !form.bankName">Save</button>
-      <button type="button" class="link" (click)="editingId.set(null)">Cancel</button>
-    </div>
-  </div>
-}
+  <div class="backdrop" aria-hidden="true" (click)="closeForm()"></div>
 
+  <section class="dialog dialog-sm" role="dialog" aria-modal="true" aria-labelledby="bank-dialog-title">
+    <header>
+      <h2 id="bank-dialog-title">{{ editingId() === 0 ? 'New bank' : 'Edit bank' }}</h2>
+      <button type="button" class="close-btn" aria-label="Close" (click)="closeForm()">✕</button>
+    </header>
+
+    <form (ngSubmit)="save()" novalidate>
+      <div class="dialog-body bank-fields">
+        @if (message() && messageIsError()) {
+          <bb-message-box [messages]="[{ tone: 'error', text: message()! }]" />
+        }
+        <bb-text-input label="Name" name="bankName" [required]="true" maxlength="100" [(ngModel)]="form.bankName" />
+        <bb-text-input
+          label="Code"
+          name="bankCode"
+          hint="Blank takes the next code from the numbering series."
+          maxlength="20"
+          [(ngModel)]="form.bankCode"
+          [disabled]="editingId() !== 0"
+        />
+        <bb-checkbox text="Active" name="isActive" [(ngModel)]="form.isActive" />
+      </div>
+
+      <footer class="dialog-actions">
+        <button type="button" class="btn btn-secondary" (click)="closeForm()" [disabled]="busy()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="busy() || !form.bankName">Save</button>
+      </footer>
+    </form>
+  </section>
+}
