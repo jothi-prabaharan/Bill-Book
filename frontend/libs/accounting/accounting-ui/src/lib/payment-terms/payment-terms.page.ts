@@ -141,6 +141,8 @@ export class PaymentTermsPage implements OnInit {
   }
 
   openAdd(): void {
+    // A refusal left from earlier would otherwise show inside the popup it did not come from.
+    this.message.set(null);
     this.editing.set(null);
     this.editingIsSystem.set(false);
     this.form = this.blank();
@@ -148,6 +150,7 @@ export class PaymentTermsPage implements OnInit {
   }
 
   openEdit(row: PaymentTerm): void {
+    this.message.set(null);
     this.editing.set(row.paymentTermId);
     this.editingIsSystem.set(row.isSystem);
     this.form = {

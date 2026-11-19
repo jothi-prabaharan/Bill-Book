@@ -5,6 +5,7 @@ import {
   DataGridCellTemplateDirective,
   DataGridComponent,
   BranchDateInputComponent,
+  MessageBoxComponent,
   NumberInputComponent,
   SelectComponent,
   TextInputComponent,
@@ -13,6 +14,7 @@ import {
   onCreateRequest,
 } from '@bill-book/ui-components';
 import { gtinCandidates, matchScannedItem, parseGs1 } from '@bill-book/scan-core';
+import { escapeIsForThisLayer } from '../overlay-escape';
 import { scanOntoSheet } from './stock-scan';
 import { HttpClient } from '@angular/common/http';
 import { ChangeDetectorRef, Component, OnInit, computed, inject, signal } from '@angular/core';
@@ -118,7 +120,9 @@ const REASONS: readonly { value: string; label: string }[] = [
     SelectComponent,
     ApprovalPanelComponent,
     ScanComponent,
+    MessageBoxComponent,
   ],
+  host: { '(document:keydown.escape)': 'onEscape($event)' },
   templateUrl: './stock-adjustments.page.html',
   styleUrl: './stock-adjustments.page.scss',
 })
@@ -273,6 +277,8 @@ export class StockAdjustmentsPage implements OnInit {
   }
 
   newSheet(kind: 'Adjustment' | 'PhysicalCount'): void {
+    // What the list last said would otherwise show inside the sheet it did not come from.
+    this.message.set(null);
     this.form = this.blank();
     this.form.kind = kind;
     this.form.reason = kind === 'PhysicalCount' ? 'CountCorrection' : 'Damage';
@@ -281,6 +287,7 @@ export class StockAdjustmentsPage implements OnInit {
   }
 
   async edit(row: Adjustment): Promise<void> {
+    this.message.set(null);
     const full = await this.get<Adjustment>(`/api/stock-adjustments/${row.stockAdjustmentId}`);
 
     this.form = {
@@ -310,9 +317,26 @@ export class StockAdjustmentsPage implements OnInit {
   }
 
   async view(row: Adjustment): Promise<void> {
+    this.message.set(null);
     this.viewing.set(
       await this.get<Adjustment>(`/api/stock-adjustments/${row.stockAdjustmentId}`),
     );
+  }
+
+  /**
+   * Escape closes the sheet that is open, unless the key was meant for something opened above it: a date
+   * calendar, or a confirm prompt.
+   */
+  onEscape(event: Event): void {
+    if (!escapeIsForThisLayer(event)) {
+      return;
+    }
+
+    if (this.editing() !== null) {
+      this.editing.set(null);
+    } else if (this.viewing() !== null) {
+      this.viewing.set(null);
+    }
   }
 
   /**

@@ -35,7 +35,10 @@ import { AuthService } from '@bill-book/auth';
     .nav a.active { color: #fff; font-weight: 500; }
     .link { color: #cbd5e1; text-decoration: none; }
     .link:hover { color: #fff; text-decoration: underline; }
-    .content { padding: 2rem; }
+    /* Positioned and as tall as the window under the bar, as the main shell's content cell is, so a page's
+       full-page editor (the global .sheet, which fills its nearest positioned ancestor) fills the space
+       under the bar and not the whole window. The padding is inside the height. */
+    .content { position: relative; box-sizing: border-box; min-height: calc(100vh - 48px); padding: 2rem; }
   `]
 })
 export class AdminShellComponent {

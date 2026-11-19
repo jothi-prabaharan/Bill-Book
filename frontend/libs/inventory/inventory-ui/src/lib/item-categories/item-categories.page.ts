@@ -67,7 +67,7 @@ import { InfoTooltipComponent } from '@bill-book/ui-components';
     RegisterHeaderComponent,
     StatusTabsComponent,
   ],
-  host: { class: 'register-page' },
+  host: { class: 'register-page', '(document:keydown.escape)': 'closeForm()' },
   templateUrl: './item-categories.page.html',
   styleUrl: './item-categories.page.scss',
 })
@@ -154,11 +154,14 @@ export class ItemCategoriesPage implements OnInit {
   }
 
   startAdd(parentId: number | null): void {
+    // A refusal left from earlier would otherwise show inside the popup it did not come from.
+    this.message.set(null);
     this.editingId.set(0);
     this.form = { ...this.blank(), parentCategoryId: parentId };
   }
 
   startEdit(row: Category): void {
+    this.message.set(null);
     this.editingId.set(row.itemCategoryId);
     this.form = {
       categoryCode: row.categoryCode,
@@ -169,6 +172,10 @@ export class ItemCategoriesPage implements OnInit {
       defaultUomTypeId: row.defaultUomTypeId,
       isActive: row.isActive,
     };
+  }
+
+  closeForm(): void {
+    this.editingId.set(null);
   }
 
   async save(): Promise<void> {

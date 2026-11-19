@@ -130,6 +130,8 @@ export class WarehousesPage implements OnInit {
   }
 
   startAdd(): void {
+    // A refusal left from earlier would otherwise show inside the popup it did not come from.
+    this.message.set(null);
     this.editingId.set(0);
     this.form = this.blank();
   }
@@ -141,6 +143,7 @@ export class WarehousesPage implements OnInit {
   }
 
   startEdit(row: Warehouse): void {
+    this.message.set(null);
     this.editingId.set(row.warehouseId);
     this.form = {
       warehouseCode: row.warehouseCode,

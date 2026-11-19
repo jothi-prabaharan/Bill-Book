@@ -11,6 +11,7 @@ import {
   DataGridCellTemplateDirective,
   DataGridComponent,
   IconButtonComponent,
+  MessageBoxComponent,
   NumberInputComponent,
   SelectComponent,
   TextInputComponent,
@@ -80,7 +81,9 @@ import { InfoTooltipComponent } from '@bill-book/ui-components';
     NumberInputComponent,
     CheckboxComponent,
     SelectComponent,
+    MessageBoxComponent,
   ],
+  host: { '(document:keydown.escape)': 'closeOverlay()' },
   templateUrl: './numbering-series.page.html',
   styleUrl: './numbering-series.page.scss',
 })
@@ -188,12 +191,15 @@ export class NumberingSeriesPage implements OnInit {
   }
 
   openAdd(): void {
+    // A refusal left from earlier would otherwise show inside the sheet it did not come from.
+    this.message.set(null);
     this.editing.set(null);
     this.form = this.blank();
     this.formOpen.set(true);
   }
 
   openEdit(row: NumberingSeries): void {
+    this.message.set(null);
     this.editing.set(row.numberingSeriesId);
     this.form = {
       seriesCode: row.seriesCode,
@@ -258,8 +264,26 @@ export class NumberingSeriesPage implements OnInit {
   }
 
   openCounter(row: NumberingSeries): void {
+    this.message.set(null);
     this.counterFor.set(row);
     this.counterValue = row.nextNumber;
+  }
+
+  closeForm(): void {
+    this.formOpen.set(false);
+  }
+
+  closeCounter(): void {
+    this.counterFor.set(null);
+  }
+
+  /** Escape closes whichever is open. Both are never open together: the Counter action is in the list, which the sheet covers. */
+  closeOverlay(): void {
+    if (this.counterFor()) {
+      this.closeCounter();
+    } else if (this.formOpen()) {
+      this.closeForm();
+    }
   }
 
   async saveCounter(): Promise<void> {

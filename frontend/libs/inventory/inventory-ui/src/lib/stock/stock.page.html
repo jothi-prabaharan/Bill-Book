@@ -11,7 +11,7 @@
   </div>
 </header>
 
-@if (message()) {
+@if (message() && !movementFor() && !ledgerFor()) {
   <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
 }
 
@@ -89,164 +89,187 @@
 </bb-data-grid>
 
 @if (movementFor(); as item) {
-  <div class="sheet">
-    <h2>Record a movement — {{ item.itemName }}</h2>
+  <div class="backdrop" aria-hidden="true" (click)="closeMovement()"></div>
 
-    <div class="fields">
-      <div class="field">
-        <bb-select
-          label="Type"
-          placeholder=""
-          [options]="movementTypes"
-          [(ngModel)]="form.movementType"
-          (ngModelChange)="loadIssues()"
-        />
-      </div>
+  <section class="dialog dialog-wide dialog-scroll" role="dialog" aria-modal="true" aria-labelledby="movement-dialog-title">
+    <header>
+      <h2 id="movement-dialog-title">Record a movement — {{ item.itemName }}</h2>
+      <button type="button" class="close-btn" aria-label="Close" (click)="closeMovement()">✕</button>
+    </header>
 
-      @if (directionEditable) {
-        <div class="field">
-          <bb-select
-            label="Direction"
-            placeholder=""
-            [options]="directionOptions"
-            [(ngModel)]="form.direction"
-          />
-        </div>
-      }
-
-      <div class="field">
-        <bb-branch-date-input label="Date"  [(ngModel)]="form.movementDate" />
-      </div>
-
-      <div class="field">
-        <bb-quantity-input label="Quantity" decimals="3" [(ngModel)]="form.quantity" />
-      </div>
-
-      <div class="field">
-        <bb-select
-          label="Unit"
-          placeholder=""
-          [hint]="unitHint(item.inventoryUomCode)"
-          [options]="unitOptions"
-          [(ngModel)]="form.uomId"
-        />
-      </div>
-
-      <div class="field">
-        <bb-select
-          label="Warehouse"
-          placeholder="Not recorded"
-          [options]="warehouseOptions()"
-          [(ngModel)]="form.warehouseId"
-        />
-      </div>
-
-      @if (isReturn) {
-        <div class="field wide">
-          <bb-select
-            label="Sale being returned"
-            placeholder="Not linked"
-            [options]="issueOptions()"
-            hint="Naming the sale puts the stock back on the layers it left from, at the cost it left at. Left unlinked it re-enters at the running average, which changes what the stock is worth."
-            [(ngModel)]="form.returnsStockMovementId"
-          />
-        </div>
-      }
-
-      @if (item.isBatchTracked || item.isSerialTracked) {
-        <!-- Pick a batch or add a serial by scanning (TK-163). -->
-        <div class="field wide">
-          <bb-scan
-            label="Scan"
-            [placeholder]="item.isSerialTracked ? 'Scan each piece’s serial number' : 'Scan the batch label or the pack’s GS1 code'"
-            ariaLabel="Scan a serial number or batch"
-            [global]="true"
-            (scanned)="onMovementScan($event)"
-          />
-        </div>
-      }
-
-      @if (item.isBatchTracked) {
-        @if (form.direction === 'In') {
-          <div class="field">
-            <bb-text-input label="Batch number" hint="An existing lot is reused; a new one is created."  [(ngModel)]="form.batchNumber" maxlength="50" />
-          </div>
-        } @else {
-          <div style="display: grid; gap: .25rem; font-size: .85rem; align-content: start;">
-            <span>Batch number</span>
-            <button class="btn btn-secondary"
-              type="button"
-              style="padding: .5rem .9rem; border: 1px solid #cdd1dc; border-radius: 6px; background: #fff; color: inherit; text-align: left; font: inherit; cursor: pointer;"
-              (click)="openBatchPicker()"
-            >
-              {{ form.batchNumber || 'Choose a batch' }}
-            </button>
-            <small style="color: #8a8f9e; font-size: .72rem;">Choose the lot this was taken from.</small>
-          </div>
+    <!-- Not a <form>: a scanner ends each scan with Enter, which a form would take as Save. -->
+    <div class="dialog-frame">
+      <div class="dialog-body">
+        @if (message() && messageIsError()) {
+          <bb-message-box [messages]="[{ tone: 'error', text: message()! }]" />
         }
-      }
 
-      @if (item.isExpiryTracked) {
-        <div class="field">
-          <bb-branch-date-input label="Batch expiry" hint="What FEFO orders by — the soonest to expire goes out first."  
-            [(ngModel)]="form.batchExpiryDate" 
-            [required]="item.costingType === 'Fefo'" />
+        <div class="fields">
+          <div class="field">
+            <bb-select
+              label="Type"
+              placeholder=""
+              [options]="movementTypes"
+              [(ngModel)]="form.movementType"
+              (ngModelChange)="loadIssues()"
+            />
+          </div>
+
+          @if (directionEditable) {
+            <div class="field">
+              <bb-select
+                label="Direction"
+                placeholder=""
+                [options]="directionOptions"
+                [(ngModel)]="form.direction"
+              />
+            </div>
+          }
+
+          <div class="field">
+            <bb-branch-date-input label="Date"  [(ngModel)]="form.movementDate" />
+          </div>
+
+          <div class="field">
+            <bb-quantity-input label="Quantity" decimals="3" [(ngModel)]="form.quantity" />
+          </div>
+
+          <div class="field">
+            <bb-select
+              label="Unit"
+              placeholder=""
+              [hint]="unitHint(item.inventoryUomCode)"
+              [options]="unitOptions"
+              [(ngModel)]="form.uomId"
+            />
+          </div>
+
+          <div class="field">
+            <bb-select
+              label="Warehouse"
+              placeholder="Not recorded"
+              [options]="warehouseOptions()"
+              [(ngModel)]="form.warehouseId"
+            />
+          </div>
+
+          @if (isReturn) {
+            <div class="field wide">
+              <bb-select
+                label="Sale being returned"
+                placeholder="Not linked"
+                [options]="issueOptions()"
+                hint="Naming the sale puts the stock back on the layers it left from, at the cost it left at. Left unlinked it re-enters at the running average, which changes what the stock is worth."
+                [(ngModel)]="form.returnsStockMovementId"
+              />
+            </div>
+          }
+
+          @if (item.isBatchTracked || item.isSerialTracked) {
+            <!-- Pick a batch or add a serial by scanning (TK-163). -->
+            <div class="field wide">
+              <bb-scan
+                label="Scan"
+                [placeholder]="item.isSerialTracked ? 'Scan each piece’s serial number' : 'Scan the batch label or the pack’s GS1 code'"
+                ariaLabel="Scan a serial number or batch"
+                [global]="true"
+                (scanned)="onMovementScan($event)"
+              />
+            </div>
+          }
+
+          @if (item.isBatchTracked) {
+            @if (form.direction === 'In') {
+              <div class="field">
+                <bb-text-input label="Batch number" hint="An existing lot is reused; a new one is created."  [(ngModel)]="form.batchNumber" maxlength="50" />
+              </div>
+            } @else {
+              <div style="display: grid; gap: .25rem; font-size: .85rem; align-content: start;">
+                <span>Batch number</span>
+                <button class="btn btn-secondary"
+                  type="button"
+                  style="padding: .5rem .9rem; border: 1px solid #cdd1dc; border-radius: 6px; background: #fff; color: inherit; text-align: left; font: inherit; cursor: pointer;"
+                  (click)="openBatchPicker()"
+                >
+                  {{ form.batchNumber || 'Choose a batch' }}
+                </button>
+                <small style="color: #8a8f9e; font-size: .72rem;">Choose the lot this was taken from.</small>
+              </div>
+            }
+          }
+
+          @if (item.isExpiryTracked) {
+            <div class="field">
+              <bb-branch-date-input label="Batch expiry" hint="What FEFO orders by — the soonest to expire goes out first."  
+                [(ngModel)]="form.batchExpiryDate" 
+                [required]="item.costingType === 'Fefo'" />
+            </div>
+          }
+
+          @if (item.isBatchTracked) {
+            <div class="field">
+              <bb-number-input label="Batch MRP" hint="Printed on this lot. Overrides the item's own MRP."  [(ngModel)]="form.batchMrp" min="0" step="0.01" />
+            </div>
+          }
+
+          @if (item.isSerialTracked) {
+            <div class="field wide">
+              <bb-textarea
+                label="Serial numbers"
+                hint="One per line — exactly one for every unit in the quantity."
+                rows="4"
+                [(ngModel)]="serialText"
+              />
+            </div>
+
+            <div class="field wide">
+              <bb-textarea
+                label="HUIDs"
+                hint="Optional, one per line, matching the serials above line for line."
+                rows="4"
+                [(ngModel)]="hallmarkText"
+              />
+            </div>
+          }
+
+          @if (costRequired) {
+            <div class="field">
+              <bb-number-input label="Cost per unit" hint="Per the unit chosen above. This is the only thing that moves the weighted average."  [(ngModel)]="form.unitCost" min="0" step="0.000001" />
+            </div>
+          }
+
+          <div class="field wide">
+            <bb-text-input label="Notes"  [(ngModel)]="form.notes" maxlength="300" />
+          </div>
         </div>
-      }
-
-      @if (item.isBatchTracked) {
-        <div class="field">
-          <bb-number-input label="Batch MRP" hint="Printed on this lot. Overrides the item's own MRP."  [(ngModel)]="form.batchMrp" min="0" step="0.01" />
-        </div>
-      }
-
-      @if (item.isSerialTracked) {
-        <div class="field wide">
-          <bb-textarea
-            label="Serial numbers"
-            hint="One per line — exactly one for every unit in the quantity."
-            rows="4"
-            [(ngModel)]="serialText"
-          />
-        </div>
-
-        <div class="field wide">
-          <bb-textarea
-            label="HUIDs"
-            hint="Optional, one per line, matching the serials above line for line."
-            rows="4"
-            [(ngModel)]="hallmarkText"
-          />
-        </div>
-      }
-
-      @if (costRequired) {
-        <div class="field">
-          <bb-number-input label="Cost per unit" hint="Per the unit chosen above. This is the only thing that moves the weighted average."  [(ngModel)]="form.unitCost" min="0" step="0.000001" />
-        </div>
-      }
-
-      <div class="field wide">
-        <bb-text-input label="Notes"  [(ngModel)]="form.notes" maxlength="300" />
       </div>
-    </div>
 
-    <div class="sheet-actions">
-      <button class="btn btn-primary"
-        type="button"
-        (click)="record()"
-        [disabled]="busy() || form.quantity <= 0 || (costRequired && form.unitCost === null)"
-      >
-        Record
-      </button>
-      <button type="button" class="link" (click)="movementFor.set(null)">Cancel</button>
+      <footer class="dialog-actions">
+        <button type="button" class="btn btn-secondary" (click)="closeMovement()" [disabled]="busy()">Cancel</button>
+        <button class="btn btn-primary"
+          type="button"
+          (click)="record()"
+          [disabled]="busy() || form.quantity <= 0 || (costRequired && form.unitCost === null)"
+        >
+          Record
+        </button>
+      </footer>
     </div>
-  </div>
+  </section>
 }
 
 @if (ledgerFor(); as item) {
   <div class="sheet">
-    <h2>Movement history — {{ item.itemName }}</h2>
+    <div class="sheet-header">
+      <h2>Movement history — {{ item.itemName }}</h2>
+      <div class="sheet-actions">
+        <button type="button" class="btn btn-ghost" (click)="closeLedger()">Close</button>
+      </div>
+    </div>
+
+    @if (message() && messageIsError()) {
+      <bb-message-box [messages]="[{ tone: 'error', text: message()! }]" />
+    }
 
     <bb-info-tooltip text="Every row shows the quantity as entered and again in {{ item.inventoryUomCode }}. The history is append-only: a mistake is corrected by an opposite movement, never by an edit."></bb-info-tooltip>
 
@@ -353,15 +376,6 @@
       </bb-data-grid>
     }
 
-    <div class="sheet-actions">
-      <button
-        type="button"
-        class="link"
-        (click)="ledgerFor.set(null); allocations.set([]); recostings.set([])"
-      >
-        Close
-      </button>
-    </div>
   </div>
 }
 

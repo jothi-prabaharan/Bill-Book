@@ -7,7 +7,7 @@
 
 <bb-status-tabs label="Unit type status" [tabs]="statusTabs()" [value]="status()" (valueChange)="status.set($event)" />
 
-@if (message()) {
+@if (message() && !expandedType()) {
   <bb-message-box [messages]="[{ tone: messageIsError() ? 'error' : 'success', text: message()! }]" />
 }
 
@@ -54,8 +54,19 @@
 </section>
 
 @if (expandedType(); as type) {
-  <div class="sheet child-card">
-    <h2>Units for {{ type.uomTypeName }}</h2>
+  <div class="sheet">
+    <div class="sheet-header">
+      <h2>Units for {{ type.uomTypeName }}</h2>
+      <div class="sheet-actions">
+        <button type="button" class="btn btn-ghost" (click)="closeUnits()">Close</button>
+      </div>
+    </div>
+
+    <!-- Units are added, edited and deleted in here, so what each did is told in here too. -->
+    @if (message()) {
+      <bb-message-box [messages]="[{ tone: messageIsError() ? 'error' : 'success', text: message()! }]" />
+    }
+
     <bb-data-grid stackOnPhone [gridCode]="'UNIT_TYPES_UNITS'" [columns]="unitColumns" [data]="type.units">
       <ng-template bbCellTemplate="isBaseUnit" let-row>
         <input
@@ -162,7 +173,6 @@
 
     <div class="sheet-actions">
       <button class="btn btn-primary" type="button" (click)="addUnit(type)" [disabled]="busy() || !newUnit.uomCode.trim() || !newUnit.uomName.trim()">+ Add unit</button>
-      <button type="button" class="link" (click)="expanded.set(null)">Close</button>
     </div>
   </div>
 }

@@ -6,7 +6,7 @@
   </div>
 </header>
 
-@if (message()) {
+@if (message() && !adding()) {
   <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
 }
 
@@ -73,7 +73,31 @@
 
 @if (adding()) {
   <div class="sheet">
-    <h2>New customer</h2>
+    <div class="sheet-header">
+      <h2>New customer</h2>
+      <div class="sheet-actions">
+        <button type="button" class="btn btn-ghost" (click)="closeForm()" [disabled]="busy()">Cancel</button>
+        <button class="btn btn-primary"
+          type="button"
+          (click)="create()"
+          [disabled]="
+            busy() ||
+            !form.displayName ||
+            !form.email ||
+            !form.password ||
+            !form.companyName ||
+            !form.organizationName
+          "
+        >
+          Create
+        </button>
+      </div>
+    </div>
+
+    <!-- A refusal is told here: the page's own message sits under the sheet. -->
+    @if (message() && messageIsError()) {
+      <bb-message-box [messages]="[{ tone: 'error', text: message()! }]" />
+    }
 
     <bb-info-tooltip text="Creates the head office and its first branch, then seeds both immediately. Statutory details (GSTIN, PAN, address) and further branches are the customer's own to fill in once they can sign in."></bb-info-tooltip>
 
@@ -155,23 +179,6 @@
       </div>
     </div>
 
-    <div class="sheet-actions">
-      <button class="btn btn-primary"
-        type="button"
-        (click)="create()"
-        [disabled]="
-          busy() ||
-          !form.displayName ||
-          !form.email ||
-          !form.password ||
-          !form.companyName ||
-          !form.organizationName
-        "
-      >
-        Create
-      </button>
-      <button type="button" class="link" (click)="adding.set(false)">Cancel</button>
-    </div>
   </div>
 }
 

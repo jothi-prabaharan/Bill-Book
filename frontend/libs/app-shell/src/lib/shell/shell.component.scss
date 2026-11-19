@@ -66,6 +66,10 @@
 
   &:has(.sheet) {
     overflow: hidden;
+    /* A sheet fills this cell from its top. `hidden` keeps the scroll position the list had, so a sheet opened
+       from a row far down a list on a phone came up scrolled away, its header and Close above the screen.
+       `clip` stops the cell being a scroller at all, which drops that position (TK-269). */
+    overflow: clip;
     padding: 0;
   }
 

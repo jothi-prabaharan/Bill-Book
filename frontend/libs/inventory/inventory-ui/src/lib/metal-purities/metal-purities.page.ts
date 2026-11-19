@@ -120,6 +120,8 @@ export class MetalPuritiesPage implements OnInit {
   }
 
   startEdit(row: Purity): void {
+    // A refusal left from earlier would otherwise show inside the popup it did not come from.
+    this.message.set(null);
     this.editingId.set(row.metalPurityId);
     this.form = {
       metalType: row.metalType,
@@ -130,6 +132,7 @@ export class MetalPuritiesPage implements OnInit {
   }
 
   startAdd(): void {
+    this.message.set(null);
     this.editingId.set(0);
     this.form = { metalType: 'Gold', purityName: '', purityFactor: 0.916, isActive: true };
   }

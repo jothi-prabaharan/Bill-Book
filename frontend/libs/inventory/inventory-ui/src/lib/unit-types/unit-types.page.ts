@@ -20,6 +20,7 @@ import { HttpClient } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { InfoTooltipComponent } from '@bill-book/ui-components';
+import { escapeIsForThisLayer } from '../overlay-escape';
 
 interface Unit {
   uomId: number;
@@ -72,7 +73,7 @@ interface UomType {
     RegisterHeaderComponent,
     StatusTabsComponent,
   ],
-  host: { class: 'register-page' },
+  host: { class: 'register-page', '(document:keydown.escape)': 'onEscape($event)' },
   templateUrl: './unit-types.page.html',
   styleUrl: './unit-types.page.scss',
 })
@@ -135,9 +136,33 @@ export class UnitTypesPage implements OnInit {
   }
 
   toggle(type: UomType): void {
+    // What the list last said would otherwise show inside the panel it did not come from.
+    this.message.set(null);
     this.expanded.set(this.expanded() === type.uomTypeId ? null : type.uomTypeId);
     this.editingUnitId.set(null);
     this.newUnit = this.blankUnit();
+  }
+
+  closeUnits(): void {
+    this.message.set(null);
+    this.expanded.set(null);
+    this.editingUnitId.set(null);
+  }
+
+  /**
+   * Escape cancels a unit being edited in its row first, and closes the panel when none is. It is left alone
+   * when it was meant for a confirm prompt opened above the panel (changing a base unit, deleting a unit).
+   */
+  onEscape(event: Event): void {
+    if (!escapeIsForThisLayer(event) || this.expanded() === null) {
+      return;
+    }
+
+    if (this.editingUnitId() !== null) {
+      this.editingUnitId.set(null);
+    } else {
+      this.closeUnits();
+    }
   }
 
   async addType(): Promise<void> {

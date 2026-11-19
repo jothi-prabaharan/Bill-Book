@@ -137,6 +137,7 @@ interface CreateCustomerForm {
     EmailInputComponent,
     PasswordInputComponent,
   ],
+  host: { '(document:keydown.escape)': 'closeForm()' },
   templateUrl: './customers.page.html',
   styleUrl: './customers.page.scss',
 })
@@ -234,8 +235,14 @@ export class CustomersPage implements OnInit {
   }
 
   startAdd(): void {
+    // What the list last said would otherwise show inside the sheet it did not come from.
+    this.message.set(null);
     this.adding.set(true);
     this.form = this.blank();
+  }
+
+  closeForm(): void {
+    this.adding.set(false);
   }
 
   async create(): Promise<void> {

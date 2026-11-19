@@ -17,7 +17,7 @@
   </div>
 </header>
 
-@if (message()) {
+@if (message() && !formOpen() && !counterFor()) {
   <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
 }
 
@@ -95,7 +95,17 @@
 
 @if (formOpen()) {
   <div class="sheet">
-    <h2>{{ editing() === null ? 'New series' : 'Edit series' }}</h2>
+    <div class="sheet-header">
+      <h2>{{ editing() === null ? 'New series' : 'Edit series' }}</h2>
+      <div class="sheet-actions">
+        <button type="button" class="btn btn-ghost" (click)="closeForm()" [disabled]="busy()">Cancel</button>
+        <button class="btn btn-primary" type="button" (click)="save()" [disabled]="busy() || !form.seriesName || !form.seriesCode">Save</button>
+      </div>
+    </div>
+
+    @if (message() && messageIsError()) {
+      <bb-message-box [messages]="[{ tone: 'error', text: message()! }]" />
+    }
 
     <div class="preview-box">
       <span class="preview-label">Next number will look like</span>
@@ -190,28 +200,35 @@
         [(ngModel)]="form.isActive"
       />
     </div>
-
-    <div class="sheet-actions">
-      <button class="btn btn-primary" type="button" (click)="save()" [disabled]="busy() || !form.seriesName || !form.seriesCode">
-        Save
-      </button>
-      <button type="button" class="link" (click)="formOpen.set(false)">Cancel</button>
-    </div>
   </div>
 }
 
 @if (counterFor(); as counter) {
-  <div class="sheet narrow">
-    <h2>Counter — {{ counter.seriesName }}</h2>
-    <bb-info-tooltip text="The next record saved from this series takes this number. Moving it backwards over numbers already issued will be refused at save time by the uniqueness check on the record itself."></bb-info-tooltip>
-    <div class="field">
-      <bb-number-input label="Next number"  [(ngModel)]="counterValue" [min]="counter.startNumber" />
-    </div>
-    <div class="sheet-actions">
-      <button class="btn btn-primary" type="button" (click)="saveCounter()" [disabled]="busy()">Update counter</button>
-      <button type="button" class="link" (click)="counterFor.set(null)">Cancel</button>
-    </div>
-  </div>
+  <div class="backdrop" aria-hidden="true" (click)="closeCounter()"></div>
+
+  <section class="dialog dialog-sm" role="dialog" aria-modal="true" aria-labelledby="counter-dialog-title">
+    <header>
+      <h2 id="counter-dialog-title">Counter — {{ counter.seriesName }}</h2>
+      <button type="button" class="close-btn" aria-label="Close" (click)="closeCounter()">✕</button>
+    </header>
+
+    <form (ngSubmit)="saveCounter()" novalidate>
+      <div class="dialog-body counter-body">
+        @if (message() && messageIsError()) {
+          <bb-message-box [messages]="[{ tone: 'error', text: message()! }]" />
+        }
+        <bb-info-tooltip text="The next record saved from this series takes this number. Moving it backwards over numbers already issued will be refused at save time by the uniqueness check on the record itself."></bb-info-tooltip>
+        <div class="field">
+          <bb-number-input label="Next number" name="counterValue" [(ngModel)]="counterValue" [min]="counter.startNumber" />
+        </div>
+      </div>
+
+      <footer class="dialog-actions">
+        <button type="button" class="btn btn-secondary" (click)="closeCounter()" [disabled]="busy()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="busy()">Update counter</button>
+      </footer>
+    </form>
+  </section>
 }
 
 

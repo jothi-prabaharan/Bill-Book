@@ -329,6 +329,8 @@ A generated code is assembled from up to four parts, joined by the separator, wi
 
 The screen shows a live preview as you type, so a prefix or a padding width that reads badly is obvious before any record uses it.
 
+**New series** and **Edit** open as a full page, with **Cancel** and **Save** at the top right and the preview above the fields. **Counter** opens a small popup for the one number (TK-269). **Esc** closes either, and a refusal is told inside it, with what you typed kept.
+
 ## Financial year and resetting
 
 The year segment follows your organization's **financial year**, not the calendar year — a series set to reset yearly restarts on 1 April, not 1 January.
@@ -616,6 +618,8 @@ Kilograms base at 1, grams at 0.001. Nothing else is stored, so nothing can disa
 
 Moving a type's base unit rescales every factor in it so the relationships hold. It is refused once any item uses a unit of that type — the rescale would restate quantities already recorded.
 
+A type's units are on a full page that opens when you click the type's name, with room for every column, and **Close** at the top right returns to the list (TK-269). Adding, editing or deleting a unit, or changing the base unit, is told on that page. **Esc** cancels a unit being edited in its row first, and closes the page when none is.
+
 ## The item's five unit fields
 
 | Field | What it decides |
@@ -865,6 +869,8 @@ Each row keeps the average cost as it stood immediately afterwards, so a disagre
 
 Movements that come from a document carry its type and id. That pair is **unique**, which is what stops a redelivered message moving stock twice — the message bus guarantees at-least-once delivery, so a duplicate has to be refused by the database rather than trusted not to arrive.
 
+**History** on the stock list opens an item's movement history as a full page, with room for every column; **Close** at the top right or **Esc** returns to the list. **Record** opens **Record a movement** as a popup over the list (TK-269): **Esc** or **✕** closes it, **Save** stays in view while the fields scroll, and a refused movement is told inside it with what you typed kept. If a date calendar or the batch picker is open in it, the first **Esc** closes just that.
+
 ## Transfers
 
 Warehouse to warehouse writes two movements — one out, one in — and changes the pool by nothing at all, because the pool was never split.
@@ -984,6 +990,8 @@ Stock could already be corrected one movement at a time from the [stock screen](
 A physical count is not that. Counting twenty items is **one event**: it happened on one date, for one reason, and one person authorised the whole of it. Recorded as twenty loose movements it keeps the quantities and loses every one of those facts — and the accounts show twenty unexplained adjustments where there was one count.
 
 So a sheet is a document: it has a number, a date, a reason, and lines.
+
+**Write-off** and **Physical count** open the sheet as a full page, with **Cancel** and **Save draft** at the top right; **View** on a posted sheet opens it the same way, with **Close** (TK-269). A refused save, or a scan that matches no item, is told at the top of the page, with what you keyed kept, and **Esc** closes the page. Before, the sheet opened as a half-width panel at the top left that cut off its line columns.
 
 ## Write-off or count
 

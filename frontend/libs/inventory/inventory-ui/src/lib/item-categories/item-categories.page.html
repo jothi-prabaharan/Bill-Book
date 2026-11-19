@@ -2,7 +2,7 @@
 
 <bb-status-tabs label="Category status" [tabs]="statusTabs()" [value]="status()" (valueChange)="status.set($event)" />
 
-@if (message()) {
+@if (message() && editingId() === null) {
   <bb-message-box [messages]="[{ tone: messageIsError() ? 'error' : 'success', text: message()! }]" />
 }
 
@@ -46,59 +46,77 @@
 </section>
 
 @if (editingId() !== null) {
-  <div class="sheet">
-    <h2>{{ editingId() === 0 ? 'New category' : 'Edit category' }}</h2>
-    <div class="fields">
-      <div class="field">
-        <bb-text-input label="Name"  [(ngModel)]="form.categoryName" maxlength="100" />
+  <div class="backdrop" aria-hidden="true" (click)="closeForm()"></div>
+
+  <section class="dialog dialog-wide dialog-scroll" role="dialog" aria-modal="true" aria-labelledby="category-dialog-title">
+    <header>
+      <h2 id="category-dialog-title">{{ editingId() === 0 ? 'New category' : 'Edit category' }}</h2>
+      <button type="button" class="close-btn" aria-label="Close" (click)="closeForm()">✕</button>
+    </header>
+
+    <form (ngSubmit)="save()" novalidate>
+      <div class="dialog-body">
+        @if (message() && messageIsError()) {
+          <bb-message-box [messages]="[{ tone: 'error', text: message()! }]" />
+        }
+
+        <div class="fields">
+          <div class="field">
+            <bb-text-input label="Name" name="categoryName" [required]="true" [(ngModel)]="form.categoryName" maxlength="100" />
+          </div>
+          <div class="field">
+            <bb-text-input label="Code" name="categoryCode" [required]="true" [(ngModel)]="form.categoryCode" maxlength="20" />
+          </div>
+          <div class="field">
+            <bb-select
+              label="Parent"
+              name="parentCategoryId"
+              placeholder="Top level"
+              [options]="parentCategoryOptions"
+              [(ngModel)]="form.parentCategoryId"
+            />
+          </div>
+          <div class="field">
+            <bb-select
+              label="Default profile"
+              name="defaultItemProfile"
+              placeholder="Not set"
+              [options]="profileOptions"
+              [(ngModel)]="form.defaultItemProfile"
+            />
+          </div>
+          <div class="field">
+            <bb-select
+              label="Default costing"
+              name="defaultCostingType"
+              placeholder="Not set"
+              [options]="costingOptions"
+              [(ngModel)]="form.defaultCostingType"
+            />
+          </div>
+          <div class="field">
+            <bb-select
+              label="Default unit type"
+              name="defaultUomTypeId"
+              placeholder="Not set"
+              [options]="uomTypeOptions()"
+              [(ngModel)]="form.defaultUomTypeId"
+            />
+          </div>
+          <bb-checkbox
+            text="Active"
+            name="isActive"
+            [(ngModel)]="form.isActive"
+          />
+        </div>
       </div>
-      <div class="field">
-        <bb-text-input label="Code"  [(ngModel)]="form.categoryCode" maxlength="20" />
-      </div>
-      <div class="field">
-        <bb-select
-          label="Parent"
-          placeholder="Top level"
-          [options]="parentCategoryOptions"
-          [(ngModel)]="form.parentCategoryId"
-        />
-      </div>
-      <div class="field">
-        <bb-select
-          label="Default profile"
-          placeholder="Not set"
-          [options]="profileOptions"
-          [(ngModel)]="form.defaultItemProfile"
-        />
-      </div>
-      <div class="field">
-        <bb-select
-          label="Default costing"
-          placeholder="Not set"
-          [options]="costingOptions"
-          [(ngModel)]="form.defaultCostingType"
-        />
-      </div>
-      <div class="field">
-        <bb-select
-          label="Default unit type"
-          placeholder="Not set"
-          [options]="uomTypeOptions()"
-          [(ngModel)]="form.defaultUomTypeId"
-        />
-      </div>
-      <bb-checkbox
-        text="Active"
-        [(ngModel)]="form.isActive"
-      />
-    </div>
-    <div class="sheet-actions">
-      <button class="btn btn-primary" type="button" (click)="save()" [disabled]="busy() || !form.categoryName || !form.categoryCode">
-        Save
-      </button>
-      <button type="button" class="link" (click)="editingId.set(null)">Cancel</button>
-    </div>
-  </div>
+
+      <footer class="dialog-actions">
+        <button type="button" class="btn btn-secondary" (click)="closeForm()" [disabled]="busy()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="busy() || !form.categoryName || !form.categoryCode">Save</button>
+      </footer>
+    </form>
+  </section>
 }
 
 

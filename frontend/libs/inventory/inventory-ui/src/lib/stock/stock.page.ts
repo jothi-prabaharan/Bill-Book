@@ -16,6 +16,7 @@ import {
   TextareaComponent,
   ScanComponent,
 } from '@bill-book/ui-components';
+import { escapeIsForThisLayer } from '../overlay-escape';
 import { addSerial, batchFromScan } from '../stock-adjustments/stock-scan';
 import { HttpClient } from '@angular/common/http';
 import { ChangeDetectorRef, Component, OnInit, computed, inject, signal } from '@angular/core';
@@ -173,6 +174,7 @@ const MANUAL_TYPES: readonly { value: string; label: string; needsCost: boolean 
     MessageBoxComponent,
     ScanComponent,
   ],
+  host: { '(document:keydown.escape)': 'onEscape($event)' },
   templateUrl: './stock.page.html',
   styleUrl: './stock.page.scss',
 })
@@ -461,6 +463,7 @@ export class StockPage implements OnInit {
   }
 
   async openLedger(row: StockPosition): Promise<void> {
+    this.message.set(null);
     this.busy.set(true);
     try {
       this.movements.set(
@@ -486,12 +489,40 @@ export class StockPage implements OnInit {
   }
 
   openMovement(row: StockPosition): void {
+    // A refusal left from earlier would otherwise show inside the popup it did not come from.
+    this.message.set(null);
     this.form = this.blankMovement();
     this.form.itemId = row.itemId;
     this.form.uomId = row.inventoryUomId;
     this.serialText = '';
     this.hallmarkText = '';
     this.movementFor.set(row);
+  }
+
+  closeMovement(): void {
+    this.movementFor.set(null);
+  }
+
+  closeLedger(): void {
+    this.ledgerFor.set(null);
+    this.allocations.set([]);
+    this.recostings.set([]);
+  }
+
+  /**
+   * Escape closes the popup or the sheet that is open, unless the key was meant for something opened above
+   * it: a date calendar, the batch picker or a confirm prompt close themselves on it first.
+   */
+  onEscape(event: Event): void {
+    if (!escapeIsForThisLayer(event)) {
+      return;
+    }
+
+    if (this.movementFor() !== null) {
+      this.closeMovement();
+    } else if (this.ledgerFor() !== null) {
+      this.closeLedger();
+    }
   }
 
   /** Which layers an issue drew from. Empty on a weighted-average item. */
@@ -521,7 +552,7 @@ export class StockPage implements OnInit {
         serialNumbers: lines(this.serialText),
         hallmarkNumbers: lines(this.hallmarkText),
       });
-      this.movementFor.set(null);
+      this.closeMovement();
       this.message.set('Stock movement recorded. Its cost settles shortly.');
       this.messageIsError.set(false);
       await this.load();

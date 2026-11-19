@@ -2,7 +2,7 @@
 
 <bb-status-tabs label="Purity status" [tabs]="statusTabs()" [value]="status()" (valueChange)="status.set($event)" />
 
-@if (message()) {
+@if (message() && editingId() === null) {
   <bb-message-box [messages]="[{ tone: messageIsError() ? 'error' : 'success', text: message()! }]" />
 }
 
@@ -61,6 +61,11 @@
       <button type="button" class="link close-btn" (click)="cancelEdit()" aria-label="Close dialog">✕</button>
     </header>
     <div class="dialog-body">
+      <!-- A refusal is told here: the page's own message sits behind the dimmed page. -->
+      @if (message() && messageIsError()) {
+        <bb-message-box [messages]="[{ tone: 'error', text: message()! }]" />
+      }
+
       <div class="fields-stack" style="display: flex; flex-direction: column; gap: 0.75rem;">
         <div class="field">
           <bb-select
