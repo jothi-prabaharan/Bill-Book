@@ -6,7 +6,7 @@ rewrites and stages it whenever the details file changes. **Never edit it by han
 status, edit the card's first line in the details file; the card there holds the rules, lanes,
 where to start, sub-tasks and notes.
 
-**Summary:** 253 completed, 0 working, 10 open, and 2 blocked (265 cards).
+**Summary:** 253 completed, 1 working, 10 open, and 2 blocked (266 cards).
 
 | Card | Title | Group | Status | Completed by | Completed at | Tests | Issue | Note |
 | :--- | :--- | :--- | :---: | :--- | :--- | :--- | :---: | :--- |
@@ -275,3 +275,4 @@ where to start, sub-tasks and notes.
 | [TK-266](./Task_Details.md#tk-266--every-sales-pdf-is-rendered-from-the-documents-print-template-and-the-fixed-pdf-layout-goes) | Every sales PDF is rendered from the document's print template, and the fixed PDF layout goes | Z | ✅ completed | Claude Sonnet 5.5 | 2026-11-12 | written, not run | [#255](https://github.com/jothi-prabaharan/Bill-Book/issues/255) | — |
 | [TK-267](./Task_Details.md#tk-267--print-template-editor-paper-type-first-panes-that-scroll-alone-click-a-cell-to-insert-a-field) | Print-template editor: paper type first, panes that scroll alone, click a cell to insert a field | Z | ✅ completed | Claude Sonnet 5.5 | 2026-11-18 | written, not run | [#256](https://github.com/jothi-prabaharan/Bill-Book/issues/256) | — |
 | [TK-268](./Task_Details.md#tk-268--a-payment-account-can-be-added-from-the-till-and-the-new-bank-account-form-is-a-real-popup) | A payment account can be added from the till, and the New bank account form is a real popup | Z | ✅ completed | Claude Sonnet 5.5 | 2026-11-18 | written, not run | [#257](https://github.com/jothi-prabaharan/Bill-Book/issues/257) | — |
+| [TK-269](./Task_Details.md#tk-269--forms-that-open-as-a-half-width-panel-pinned-over-the-page-heading-become-the-standard-popup) | Forms that open as a half-width panel pinned over the page heading become the standard popup | Z | 🔶 working | Claude Sonnet 5.5 (working) | since 2026-11-19 | — | [#258](https://github.com/jothi-prabaharan/Bill-Book/issues/258) | — |
