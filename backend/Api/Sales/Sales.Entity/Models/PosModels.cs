@@ -19,9 +19,20 @@ public class PosSaleRequest
     [Range(1, long.MaxValue, ErrorMessage = "Choose the customer.")]
     public long ContactId { get; set; }
 
+    /// <summary>
+    /// The customer's GSTIN, when they have one. Its first two digits are the
+    /// state the supply is made in, so a registered customer in another state
+    /// is an inter-state sale. The walk-in customer has none.
+    /// </summary>
     [MaxLength(15, ErrorMessage = "GSTIN must be 15 characters.")]
     public string? ContactGstin { get; set; }
 
+    /// <summary>
+    /// The two-digit state code the supply is made in. Left blank, with no
+    /// GSTIN either, the sale takes the branch's own state: a counter sale is
+    /// delivered at the shop, so it is intra-state (D-73). The till never sends
+    /// one.
+    /// </summary>
     [MaxLength(2, ErrorMessage = "Place of supply must be a 2-digit state code.")]
     public string? PlaceOfSupplyStateCode { get; set; }
 

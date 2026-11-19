@@ -144,7 +144,9 @@ public sealed class PosSaleTests
 
     private sealed record Till(SalesDbContext Db, PosSaleRepository Sales, RecordingLedger Ledger, InvoiceRepository Invoices);
 
-    private static Till OpenTill(PostgresFixture pg, Guid customerId, Guid orgId, IInventoryClient inventory)
+    private static Till OpenTill(
+        PostgresFixture pg, Guid customerId, Guid orgId, IInventoryClient inventory,
+        IBranchSettingsProvider? branch = null)
     {
         TenantContext tenant = new() { CustomerId = customerId, OrgId = orgId, CustomerCode = "0000000042" };
         SalesDbContext db = pg.CreateContext(customerId, orgId);
@@ -152,14 +154,18 @@ public sealed class PosSaleTests
         RecordingLedger ledger = new();
         StubCurrentUser cashier = new();
 
+        // One branch for the invoice and for the till on top of it, as in the service.
+        // Tamil Nadu (33) unless a test says otherwise.
+        IBranchSettingsProvider settings = branch ?? new StubBranchSettings();
+
         InvoiceRepository invoices = new(
             db, tenant,
             new NumberGenerator(db, Options.Create(new NumberingOptions()), new StubFinancialYear()),
-            new StubBaseCurrency(), new StubBranchSettings(), new StubTaxRates(),
+            new StubBaseCurrency(), settings, new StubTaxRates(),
             names, names, cashier, TimeProvider.System, inventory, ledger,
             new StubCreditCheck(), new StubUqcLookup(), new StubEInvoicing());
 
-        return new Till(db, new PosSaleRepository(invoices, db, cashier, TimeProvider.System), ledger, invoices);
+        return new Till(db, new PosSaleRepository(invoices, db, settings, cashier, TimeProvider.System), ledger, invoices);
     }
 
     private static async Task<(Guid CustomerId, Guid OrgId)> NewBranchAsync(PostgresFixture pg)
@@ -172,12 +178,16 @@ public sealed class PosSaleTests
         return (customerId, orgId);
     }
 
+    /// <summary>
+    /// A sale as the till sends it to the walk-in customer: no GSTIN and no place
+    /// of supply (D-73). It once stated a place of supply of its own, which is why
+    /// no test noticed that the till's real sale was refused.
+    /// </summary>
     private static PosSaleRequest Sale(params PosTenderRequest[] tenders) => new()
     {
         TillId = 1,
         DocumentDate = new DateOnly(2026, 9, 24),
         ContactId = WalkInId,
-        PlaceOfSupplyStateCode = "33",
         Lines =
         [
             new SaveInvoiceLineRequest
@@ -291,5 +301,204 @@ public sealed class PosSaleTests
         await using SalesDbContext check = _pg.CreateContext(customerId, orgId);
         Assert.Equal(1, await check.Invoices.CountAsync(i => i.TransactionTypeCode == "POS" && i.Status == DocumentStatus.Posted));
         Assert.Single(first.Ledger.Posts.Concat(second.Ledger.Posts));
+    }
+
+    // ── Place of supply (D-73, TK-270) ─────────────────────────────────
+    //
+    // Sale() sends what the till sends: the walk-in customer, no GSTIN and no
+    // place of supply. A test sets either one only when it is about that.
+
+    /// <summary>A till sale as stored, with the tax rows of every line, read back from the database.</summary>
+    private static async Task<(Invoice Invoice, List<InvoiceDetailTax> Taxes)> PostedAsync(
+        SalesDbContext db, long invoiceId)
+    {
+        Invoice invoice = await db.Invoices.AsNoTracking()
+            .Include(i => i.Lines).ThenInclude(l => l.Taxes)
+            .SingleAsync(i => i.InvoiceId == invoiceId);
+
+        return (invoice, [.. invoice.Lines.SelectMany(l => l.Taxes)]);
+    }
+
+    /// <summary>Branch settings that cannot be read: the transient-failure path.</summary>
+    private sealed class UnreadableBranchSettings : IBranchSettingsProvider
+    {
+        public Task<BranchSettings?> GetSettingsAsync(CancellationToken ct = default) =>
+            Task.FromResult<BranchSettings?>(null);
+    }
+
+    /// <summary>
+    /// The card's Done-when line. The walk-in customer is a Consumer and cannot hold a
+    /// GSTIN, and the till states no place of supply, so this sale was refused with
+    /// "Set a place of supply, or a GSTIN to take it from" until D-73.
+    /// </summary>
+    [SkippableFact]
+    public async Task A_sale_to_a_customer_with_no_gstin_takes_the_branchs_own_state()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason);
+
+        (Guid customerId, Guid orgId) = await NewBranchAsync(_pg);
+        Till till = OpenTill(_pg, customerId, orgId, new RecordingInventory());
+        await using SalesDbContext _ = till.Db;
+
+        PosSaleRequest sale = Sale(Tender(PosTenderMode.Cash, 118m));
+        Assert.Null(sale.ContactGstin);
+        Assert.Null(sale.PlaceOfSupplyStateCode);
+
+        PosSaleResult result = await till.Sales.SellAsync(sale, default);
+
+        Assert.Equal(PosSaleOutcome.Ok, result.Outcome);
+        Assert.Equal(118m, result.TotalAmount);
+
+        (Invoice invoice, List<InvoiceDetailTax> taxes) = await PostedAsync(till.Db, result.InvoiceId);
+
+        Assert.Equal(DocumentStatus.Posted, invoice.Status);
+        Assert.False(invoice.IsInterState);
+        Assert.Null(invoice.ContactGstin);
+
+        // 100 at 18% is nine and nine, and no IGST.
+        Assert.Equal(2, taxes.Count);
+        Assert.Contains(taxes, t => t.TaxComponent == TaxComponent.Cgst && t.Amount == 9m);
+        Assert.Contains(taxes, t => t.TaxComponent == TaxComponent.Sgst && t.Amount == 9m);
+    }
+
+    /// <summary>
+    /// The state is read from the branch, not fixed: every other test's branch is
+    /// in Tamil Nadu (33), so a default that was hard-coded there would pass them.
+    /// </summary>
+    [SkippableFact]
+    public async Task The_state_is_the_branchs_own_and_not_a_fixed_one()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason);
+
+        (Guid customerId, Guid orgId) = await NewBranchAsync(_pg);
+        Till till = OpenTill(_pg, customerId, orgId, new RecordingInventory(), new StubBranchSettings("29"));
+        await using SalesDbContext _ = till.Db;
+
+        PosSaleResult result = await till.Sales.SellAsync(Sale(Tender(PosTenderMode.Cash, 118m)), default);
+
+        Assert.Equal(PosSaleOutcome.Ok, result.Outcome);
+
+        (Invoice invoice, List<InvoiceDetailTax> taxes) = await PostedAsync(till.Db, result.InvoiceId);
+
+        Assert.False(invoice.IsInterState);
+        Assert.Equal(2, taxes.Count);
+        Assert.DoesNotContain(taxes, t => t.TaxComponent == TaxComponent.Igst);
+    }
+
+    [SkippableFact]
+    public async Task A_customer_gstin_in_another_state_still_makes_it_inter_state()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason);
+
+        (Guid customerId, Guid orgId) = await NewBranchAsync(_pg);
+        Till till = OpenTill(_pg, customerId, orgId, new RecordingInventory());
+        await using SalesDbContext _ = till.Db;
+
+        // The branch is in Tamil Nadu (33); this customer is registered in Karnataka (29).
+        PosSaleRequest sale = Sale(Tender(PosTenderMode.Cash, 118m));
+        sale.ContactGstin = "29AAAAA0000A1Z5";
+
+        PosSaleResult result = await till.Sales.SellAsync(sale, default);
+
+        Assert.Equal(PosSaleOutcome.Ok, result.Outcome);
+
+        (Invoice invoice, List<InvoiceDetailTax> taxes) = await PostedAsync(till.Db, result.InvoiceId);
+
+        Assert.True(invoice.IsInterState);
+        InvoiceDetailTax igst = Assert.Single(taxes);
+        Assert.Equal(TaxComponent.Igst, igst.TaxComponent);
+        Assert.Equal(18m, igst.Amount);
+    }
+
+    [SkippableFact]
+    public async Task A_stated_place_of_supply_is_kept_and_not_replaced_by_the_branchs()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason);
+
+        (Guid customerId, Guid orgId) = await NewBranchAsync(_pg);
+        Till till = OpenTill(_pg, customerId, orgId, new RecordingInventory());
+        await using SalesDbContext _ = till.Db;
+
+        // A customer with no GSTIN, but a place of supply that is not the branch's.
+        PosSaleRequest sale = Sale(Tender(PosTenderMode.Cash, 118m));
+        sale.PlaceOfSupplyStateCode = "29";
+
+        PosSaleResult result = await till.Sales.SellAsync(sale, default);
+
+        Assert.Equal(PosSaleOutcome.Ok, result.Outcome);
+
+        (Invoice invoice, List<InvoiceDetailTax> taxes) = await PostedAsync(till.Db, result.InvoiceId);
+
+        Assert.True(invoice.IsInterState);
+        Assert.Equal(TaxComponent.Igst, Assert.Single(taxes).TaxComponent);
+    }
+
+    /// <summary>The default fills a gap and settles no disagreement: the two stay refused.</summary>
+    [SkippableFact]
+    public async Task A_gstin_that_contradicts_a_stated_place_of_supply_is_still_refused()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason);
+
+        (Guid customerId, Guid orgId) = await NewBranchAsync(_pg);
+        Till till = OpenTill(_pg, customerId, orgId, new RecordingInventory());
+        await using SalesDbContext _ = till.Db;
+
+        PosSaleRequest sale = Sale(Tender(PosTenderMode.Cash, 118m));
+        sale.ContactGstin = "29AAAAA0000A1Z5";
+        sale.PlaceOfSupplyStateCode = "33";
+
+        PosSaleResult result = await till.Sales.SellAsync(sale, default);
+
+        Assert.Equal(PosSaleOutcome.InvoiceRefused, result.Outcome);
+        Assert.Equal(InvoiceOutcome.PlaceOfSupplyRefused, result.Refusal);
+        Assert.Contains("registered in state 29", result.Detail);
+        Assert.Empty(till.Ledger.Posts);
+    }
+
+    /// <summary>
+    /// The branch's state is needed and cannot be read: the sale is refused as
+    /// unavailable, which is a 503, and not as a missing place of supply, which
+    /// would send the cashier looking for a field the till does not have.
+    /// </summary>
+    [SkippableFact]
+    public async Task Branch_settings_that_cannot_be_read_refuse_the_sale_as_unavailable()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason);
+
+        (Guid customerId, Guid orgId) = await NewBranchAsync(_pg);
+        Till till = OpenTill(_pg, customerId, orgId, new RecordingInventory(), new UnreadableBranchSettings());
+        await using SalesDbContext _ = till.Db;
+
+        PosSaleResult result = await till.Sales.SellAsync(Sale(Tender(PosTenderMode.Cash, 118m)), default);
+
+        Assert.Equal(PosSaleOutcome.InvoiceRefused, result.Outcome);
+        Assert.Equal(InvoiceOutcome.RatesUnavailable, result.Refusal);
+        Assert.Contains("Branch settings", result.Detail);
+        Assert.Empty(till.Ledger.Posts);
+    }
+
+    /// <summary>
+    /// The default belongs to the till alone: any other invoice, with no GSTIN
+    /// and no place of supply, must still say where its supply is made.
+    /// </summary>
+    [SkippableFact]
+    public async Task An_ordinary_invoice_with_no_gstin_and_no_place_of_supply_is_still_refused()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason);
+
+        (Guid customerId, Guid orgId) = await NewBranchAsync(_pg);
+        Till till = OpenTill(_pg, customerId, orgId, new RecordingInventory());
+        await using SalesDbContext _ = till.Db;
+
+        InvoiceResult result = await till.Invoices.CreateAsync(new SaveInvoiceRequest
+        {
+            DocumentDate = new DateOnly(2026, 9, 24),
+            DueDate = new DateOnly(2026, 10, 24),
+            ContactId = WalkInId,
+            Lines = Sale(Tender(PosTenderMode.Cash, 118m)).Lines,
+        }, default);
+
+        Assert.Equal(InvoiceOutcome.PlaceOfSupplyRefused, result.Outcome);
+        Assert.Contains("Set a place of supply", result.Detail);
     }
 }

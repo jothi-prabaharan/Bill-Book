@@ -236,7 +236,7 @@ The till opens on an empty cart for the branch's **walk-in customer** — the co
 
 - **Add item** searches items by name or code. Adding the same item again raises its quantity rather than starting a second line.
 - Each line's **quantity** and **price** can be changed where they stand; a quantity of zero removes the line. The price starts at the item's sales price, or at its MRP when it has none — and an MRP always includes GST.
-- **Change** picks another customer. A customer registered in a different state turns CGST and SGST into IGST on every line at once.
+- **Change** picks another customer. A customer registered in a different state turns CGST and SGST into IGST on every line at once. A customer with no GSTIN, the walk-in customer included, is supplied at the counter, so the sale is made in the branch's own state and carries CGST and SGST.
 - The GST under each line and the totals beneath the cart are a **preview**, worked out exactly as the invoice form works them out. The server recalculates them when the sale is saved.
 
 A taxable item with no current sales rate in the tax master shows a warning on its line and carries no GST until the rate is fixed.
@@ -249,6 +249,7 @@ A taxable item with no current sales rate in the tax master shows a warning on i
 - **A paid till sale owes nothing.** Posting debits each tender's bank or cash account, less the change from cash, rather than the customer's receivable. A till sale saved without tenders is posted as owed, like any invoice.
 - **Stock is taken at once.** If another till sold the last unit a moment earlier, the sale is refused with the item named (409), and the whole sale is undone.
 - The sale takes its number from the branch's `POS` series.
+- **A sale to a customer with no GSTIN takes the branch's own state** (TK-270). A counter sale is delivered at the shop, so with no GSTIN to read a state from, the sale is an intra-state supply and carries CGST and SGST, as the till's preview shows. The branch's state is the one set under **Settings › Organization**. The customer's GSTIN still decides the state when there is one, so a registered customer in another state is charged IGST. Before this, the server refused the sale with "Set a place of supply, or a GSTIN to take it from", which stopped every sale to the walk-in customer, who has no GSTIN. Every other invoice still needs a place of supply or a GSTIN.
 
 Until this change a till sale could not be posted at all. It debited an account called "Cash", which no chart of accounts has.
 

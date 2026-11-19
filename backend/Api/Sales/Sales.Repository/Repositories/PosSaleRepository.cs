@@ -5,6 +5,7 @@ using Sales.Entity.Models;
 using Sales.Entity.TableEntities;
 using Sales.Repository;
 using Shared.Kernel.Interfaces;
+using Shared.Kernel.Tenancy;
 
 namespace Sales.Repository.Repositories;
 
@@ -17,6 +18,18 @@ namespace Sales.Repository.Repositories;
 /// issue and the ledger are the invoice's own. What the till adds is the
 /// tenders: they replace the customer's receivable with the accounts the money
 /// went into, so a paid sale leaves nothing owing.
+///
+/// <b>A counter sale is made in the branch's own state</b> (D-73, TK-270). The
+/// place of supply decides CGST + SGST against IGST, and an invoice with neither
+/// a stated place nor a GSTIN to read one from is refused. The walk-in customer
+/// is a Consumer and cannot hold a GSTIN, so without this its sale could never
+/// be made. A till hands the goods over at the shop, so with no GSTIN and no
+/// place of supply stated, the sale states the branch's state and is
+/// intra-state. A GSTIN still decides, a stated place is kept, and one that
+/// contradicts the GSTIN is still refused, which the invoice's own check sees
+/// to. It is stated here and not inside <c>InvoiceRepository.CreateAsync</c>,
+/// as restaurant bills do, so that every other invoice must still say where its
+/// supply is made.
 ///
 /// <b>The stock decrement is the invoice's, and it is synchronous.</b> Posting
 /// calls Inventory's guarded issue inside this request, so two tills selling the
@@ -31,13 +44,20 @@ public sealed class PosSaleRepository
 {
     private readonly IInvoiceRepository _invoices;
     private readonly SalesDbContext _db;
+    private readonly IBranchSettingsProvider _branch;
     private readonly ICurrentUser _user;
     private readonly TimeProvider _clock;
 
-    public PosSaleRepository(IInvoiceRepository invoices, SalesDbContext db, ICurrentUser user, TimeProvider clock)
+    public PosSaleRepository(
+        IInvoiceRepository invoices,
+        SalesDbContext db,
+        IBranchSettingsProvider branch,
+        ICurrentUser user,
+        TimeProvider clock)
     {
         _invoices = invoices;
         _db = db;
+        _branch = branch;
         _user = user;
         _clock = clock;
     }
@@ -54,6 +74,25 @@ public sealed class PosSaleRepository
             ? request.Tenders[0].Mode.ToString()
             : "Split";
 
+        // A counter sale is delivered at the shop (D-73): with no GSTIN to read a
+        // state from and none stated, the supply is made in the branch's own state.
+        // Blank counts as absent, as it does in PlaceOfSupply.Resolve.
+        string? placeOfSupply = request.PlaceOfSupplyStateCode;
+        if (string.IsNullOrWhiteSpace(placeOfSupply) && string.IsNullOrWhiteSpace(request.ContactGstin))
+        {
+            BranchSettings? branch = await _branch.GetSettingsAsync(ct);
+            if (branch is null)
+            {
+                // Not guessed, and not passed on to the invoice as a missing place
+                // of supply, which would blame the cashier for what is the
+                // service's own trouble.
+                return Refused(new InvoiceResult(
+                    InvoiceOutcome.RatesUnavailable, Detail: "Branch settings could not be read."));
+            }
+
+            placeOfSupply = branch.StateCode;
+        }
+
         InvoiceResult created = await _invoices.CreateAsync(new SaveInvoiceRequest
         {
             DocumentDate = date,
@@ -63,7 +102,7 @@ public sealed class PosSaleRepository
             CashierUserId = _user.UserId,
             PaymentMode = paymentMode,
             ContactGstin = request.ContactGstin,
-            PlaceOfSupplyStateCode = request.PlaceOfSupplyStateCode,
+            PlaceOfSupplyStateCode = placeOfSupply,
             Notes = request.Notes,
             Lines = request.Lines,
         }, ct);
